@@ -19,13 +19,17 @@ const NOTES = [
 
 export default function ContactAside() {
   return (
-    <aside className="border border-white/10 p-6 lg:p-8">
-      <p className="text-[11px] uppercase tracking-[0.22em] text-[#d4af37]">Before you write</p>
-      <ul className="mt-6 space-y-5">
+    <aside className="rounded-2xl border border-slate-200 bg-white/80 p-7 shadow-sm lg:p-9">
+      <p className="text-sm font-medium uppercase tracking-[0.2em] text-indigo-600 sm:text-base">
+        Before you write
+      </p>
+      <ul className="mt-7 space-y-6">
         {NOTES.map((note) => (
           <li key={note.title}>
-            <p className="text-sm text-white">{note.title}</p>
-            <p className="mt-1 text-sm leading-6 text-white/50">{note.body}</p>
+            <p className="text-lg font-semibold text-slate-900">{note.title}</p>
+            <p className="mt-2 text-base leading-7 text-slate-600 sm:text-lg sm:leading-8">
+              {note.body}
+            </p>
           </li>
         ))}
       </ul>

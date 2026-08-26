@@ -3,7 +3,7 @@ import { LINKS, sectionHref } from "../../TopHeader/_builder/links";
 
 export default function FooterLinks({ pathname }) {
   return (
-    <nav className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm">
+    <nav className="flex flex-wrap items-center gap-x-5 gap-y-2 text-base">
       {LINKS.map((link) => (
         <Link
           key={link.href}

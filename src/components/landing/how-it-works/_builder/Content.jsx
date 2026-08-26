@@ -19,18 +19,22 @@ const STEPS = [
 
 export default function Content() {
   return (
-    <div className="grid gap-12 lg:grid-cols-[0.7fr_1.3fr]">
+    <div className="grid gap-12 lg:grid-cols-[0.75fr_1.25fr]">
       <div>
-        <p className="text-[11px] uppercase tracking-[0.25em] text-white/40">Flow</p>
-        <h2 className="mt-3 font-heading text-3xl text-white">From signup to a QR in the client’s hand</h2>
+        <p className="text-sm font-medium uppercase tracking-[0.22em] text-indigo-600 sm:text-base">
+          Flow
+        </p>
+        <h2 className="mt-4 font-heading text-4xl leading-tight text-slate-900 sm:text-5xl">
+          From signup to a QR in the client’s hand
+        </h2>
       </div>
-      <ol className="relative border-l border-white/15 pl-8">
+      <ol className="relative border-l-2 border-slate-200 pl-10">
         {STEPS.map((step, index) => (
-          <li key={step.t} className="relative pb-10 last:pb-0">
-            <span className="absolute top-1.5 -left-[39px] size-3 rounded-full bg-[#d4af37]" />
-            <p className="text-xs text-white/35">{String(index + 1).padStart(2, "0")}</p>
-            <h3 className="mt-1 text-lg text-white">{step.t}</h3>
-            <p className="mt-1 max-w-md text-sm text-white/55">{step.d}</p>
+          <li key={step.t} className="relative pb-12 last:pb-0">
+            <span className="absolute top-2 -left-[49px] size-4 rounded-full bg-linear-to-r from-indigo-500 to-sky-500 shadow" />
+            <p className="text-sm text-slate-400">{String(index + 1).padStart(2, "0")}</p>
+            <h3 className="mt-2 text-2xl font-semibold text-slate-900">{step.t}</h3>
+            <p className="mt-2 max-w-xl text-lg leading-8 text-slate-600">{step.d}</p>
           </li>
         ))}
       </ol>

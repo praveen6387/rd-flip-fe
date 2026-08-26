@@ -5,7 +5,7 @@ import { sectionHref } from "../../TopHeader/_builder/links";
 export default function Brand({ pathname }) {
   return (
     <Link href={sectionHref(pathname, "#home")}>
-      <BrandMark />
+      <BrandMark light />
     </Link>
   );
 }

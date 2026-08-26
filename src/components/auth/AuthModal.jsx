@@ -31,16 +31,13 @@ export default function AuthModal() {
     <>
       <div className="flex items-center gap-2">
         <Button
-          variant="outline"
-          size="sm"
-          className="border-white/25 bg-transparent text-white hover:bg-white/10 hover:text-white"
+          className="rounded-full bg-linear-to-r from-rose-500 to-pink-500 px-5 text-base text-white shadow-md hover:from-rose-400 hover:to-pink-400"
           onClick={() => setMode("login")}
         >
           Login
         </Button>
         <Button
-          size="sm"
-          className="bg-linear-to-r from-[#d4af37] to-[#f0c14b] text-black hover:from-[#e0bc4a] hover:to-[#f5d06a]"
+          className="rounded-full bg-linear-to-r from-indigo-500 to-sky-600 px-5 text-base text-white shadow-md hover:from-indigo-600 hover:to-sky-700"
           onClick={() => setMode("signup")}
         >
           Signup

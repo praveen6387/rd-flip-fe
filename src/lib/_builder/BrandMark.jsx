@@ -1,14 +1,26 @@
 import { cn } from "@/lib/cn";
 
-export default function BrandMark({ className }) {
+export default function BrandMark({ className, light = false }) {
   return (
-    <span className={cn("flex items-center gap-2.5", className)}>
-      <span className="grid h-9 w-9 place-items-center rounded-lg border border-[#d4af37] text-[17px] font-semibold leading-none text-[#f3e6c0] shadow-[0_0_12px_rgba(212,175,55,0.25)]">
+    <span className={cn("flex items-center gap-3", className)}>
+      <span className="grid h-11 w-11 place-items-center rounded-xl bg-linear-to-br from-rose-500 to-pink-500 text-lg font-bold leading-none text-white shadow-lg shadow-rose-500/25">
         R
       </span>
       <span className="flex flex-col leading-tight">
-        <span className="text-[15px] font-semibold tracking-tight text-white">RD Flip</span>
-        <span className="text-[9px] font-medium tracking-[0.22em] text-white/55 uppercase">
+        <span
+          className={cn(
+            "text-lg font-semibold tracking-tight",
+            light ? "text-white" : "text-slate-900",
+          )}
+        >
+          RD Flip
+        </span>
+        <span
+          className={cn(
+            "text-[11px] font-medium tracking-[0.2em] uppercase",
+            light ? "text-white/60" : "text-slate-500",
+          )}
+        >
           Flip studio
         </span>
       </span>

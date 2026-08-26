@@ -30,7 +30,7 @@ export default function RootLayout({ children }) {
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} ${playfair.variable} h-full scroll-smooth antialiased`}
     >
-      <body className="relative min-h-full flex flex-col bg-[#0a0a0a] text-white">
+      <body className="relative flex min-h-full flex-col bg-[#faf1fb] text-slate-900">
         <Background />
         <TooltipProvider>
           <div className="relative z-10 flex min-h-full flex-1 flex-col">

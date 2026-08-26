@@ -5,7 +5,7 @@ import Particles from "./_builder/Particles";
 
 export default function Background() {
   return (
-    <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden bg-[#0a0a0a]">
+    <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden bg-linear-to-br from-white via-[#faf1fb] to-slate-50">
       <Grid />
       <Glows />
       <Orb />

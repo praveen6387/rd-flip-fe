@@ -5,6 +5,11 @@ import { useEffect, useRef } from "react";
 const COUNT = 3;
 const MIN_RADIUS = 5;
 const MAX_RADIUS = 8;
+const STROKES = [
+  "rgba(244, 114, 182,",
+  "rgba(129, 140, 248,",
+  "rgba(192, 132, 252,",
+];
 
 function createOrb(width, height, spawnAnywhere = true) {
   return {
@@ -12,7 +17,8 @@ function createOrb(width, height, spawnAnywhere = true) {
     y: spawnAnywhere ? Math.random() * height : height + 12,
     r: MIN_RADIUS + Math.random() * (MAX_RADIUS - MIN_RADIUS),
     speed: 0.08 + Math.random() * 0.14,
-    alpha: 0.45 + Math.random() * 0.35,
+    alpha: 0.35 + Math.random() * 0.35,
+    color: STROKES[Math.floor(Math.random() * STROKES.length)],
   };
 }
 
@@ -55,9 +61,9 @@ export default function Orb() {
 
         ctx.beginPath();
         ctx.arc(orb.x, orb.y, orb.r, 0, Math.PI * 2);
-        ctx.strokeStyle = `rgba(255, 255, 255, ${orb.alpha})`;
-        ctx.lineWidth = 1;
-        ctx.shadowColor = "rgba(255, 255, 255, 0.35)";
+        ctx.strokeStyle = `${orb.color}${orb.alpha})`;
+        ctx.lineWidth = 1.25;
+        ctx.shadowColor = `${orb.color}0.35)`;
         ctx.shadowBlur = 8;
         ctx.stroke();
         ctx.shadowBlur = 0;

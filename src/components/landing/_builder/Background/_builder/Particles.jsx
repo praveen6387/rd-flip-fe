@@ -3,10 +3,10 @@
 import { useEffect, useRef } from "react";
 
 const COLORS = [
-  "rgba(255,255,255,",
-  "rgba(232,201,90,",
-  "rgba(186,214,255,",
-  "rgba(255,170,120,",
+  "rgba(251,113,133,",
+  "rgba(244,114,182,",
+  "rgba(192,132,252,",
+  "rgba(129,140,248,",
 ];
 
 export default function Particles() {
@@ -35,9 +35,9 @@ export default function Particles() {
       particles = Array.from({ length: Math.min(Math.max(count, 40), 110) }, () => ({
         x: Math.random() * window.innerWidth,
         y: Math.random() * window.innerHeight,
-        r: Math.random() * 1.3 + 0.25,
+        r: Math.random() * 1.6 + 0.4,
         speed: Math.random() * 0.22 + 0.06,
-        alpha: Math.random() * 0.45 + 0.12,
+        alpha: Math.random() * 0.35 + 0.2,
         color: COLORS[Math.floor(Math.random() * COLORS.length)],
       }));
     };

@@ -12,13 +12,13 @@ export default function NavLinks({ pathname, active }) {
             key={link.href}
             href={sectionHref(pathname, link.href)}
             className={cn(
-              "relative rounded-md px-3 py-2 text-sm transition-colors",
-              isActive ? "font-medium text-white" : "text-white/55 hover:text-white",
+              "relative rounded-md px-3 py-2 text-base transition-colors",
+              isActive ? "font-medium text-slate-900" : "text-slate-500 hover:text-slate-900",
             )}
           >
             {link.label}
             {isActive ? (
-              <span className="absolute inset-x-3 -bottom-[13px] h-px rounded-full bg-[#d4af37]" />
+              <span className="absolute inset-x-3 -bottom-[13px] h-0.5 rounded-full bg-linear-to-r from-indigo-500 to-sky-500" />
             ) : null}
           </Link>
         );

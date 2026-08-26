@@ -33,38 +33,44 @@ const PLANS = [
 export default function Content() {
   return (
     <div>
-      <div className="max-w-xl">
-        <p className="text-[11px] uppercase tracking-[0.25em] text-white/40">Plans</p>
-        <h2 className="mt-3 font-heading text-3xl text-white">Studio or Lab</h2>
-        <p className="mt-3 text-sm text-white/50">
+      <div className="max-w-2xl">
+        <p className="text-sm font-medium uppercase tracking-[0.22em] text-indigo-600 sm:text-base">
+          Plans
+        </p>
+        <h2 className="mt-4 font-heading text-4xl leading-tight text-slate-900 sm:text-5xl">
+          Studio or Lab
+        </h2>
+        <p className="mt-5 text-lg leading-8 text-slate-600 sm:text-xl sm:leading-9">
           Both plans keep generated links open — no countdown on the client URL.
           Signup still includes 1 free credit for 7 days. A book made only on
           that free credit expires in 30 days if you never recharge.
         </p>
       </div>
-      <div className="mt-10 grid gap-4 md:grid-cols-2">
+      <div className="mt-12 grid gap-5 md:grid-cols-2">
         {PLANS.map((plan) => (
           <article
             key={plan.name}
             className={cn(
-              "flex flex-col border border-white/10 p-8",
-              plan.featured && "border-[#d4af37]/50 bg-[#d4af37]/5",
+              "flex flex-col rounded-2xl border p-8 shadow-sm sm:p-10",
+              plan.featured
+                ? "border-indigo-200 bg-linear-to-br from-indigo-50 to-sky-50"
+                : "border-slate-200 bg-white/80",
             )}
           >
-            <p className="text-xs uppercase tracking-widest text-white/40">{plan.who}</p>
-            <h3 className="mt-2 font-heading text-3xl text-white">{plan.name}</h3>
-            <p className="mt-3 text-sm leading-6 text-white/55">{plan.detail}</p>
-            <ul className="mt-6 flex flex-1 flex-col gap-2 text-sm text-white/70">
+            <p className="text-sm uppercase tracking-widest text-slate-400">{plan.who}</p>
+            <h3 className="mt-3 font-heading text-4xl text-slate-900 sm:text-5xl">{plan.name}</h3>
+            <p className="mt-4 text-lg leading-8 text-slate-600">{plan.detail}</p>
+            <ul className="mt-7 flex flex-1 flex-col gap-3 text-base text-slate-700 sm:text-lg">
               {plan.points.map((point) => (
                 <li key={point}>— {point}</li>
               ))}
             </ul>
             <Button
               className={cn(
-                "mt-8 h-10 w-fit rounded-none px-5",
+                "mt-8 h-12 w-fit rounded-full px-6 text-base",
                 plan.featured
-                  ? "bg-[#d4af37] text-black hover:bg-[#e4c35a]"
-                  : "border border-white/25 bg-transparent text-white hover:bg-white/10",
+                  ? "bg-linear-to-r from-indigo-500 to-sky-600 text-white hover:from-indigo-600 hover:to-sky-700"
+                  : "border border-slate-300 bg-white text-slate-800 hover:bg-slate-50",
               )}
               variant={plan.featured ? "default" : "outline"}
             >
