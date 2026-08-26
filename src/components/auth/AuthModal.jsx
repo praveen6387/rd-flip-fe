@@ -1,31 +1,13 @@
 "use client";
 
 import { useState } from "react";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import LoginForm from "./_builder/LoginForm";
 import SignupForm from "./_builder/SignupForm";
 
-const COPY = {
-  login: {
-    title: "Login",
-    description: "Welcome back. Enter your details to continue.",
-  },
-  signup: {
-    title: "Signup",
-    description: "Open the dashboard. One free credit lasts 7 days.",
-  },
-};
-
 export default function AuthModal() {
   const [mode, setMode] = useState(null);
-  const copy = mode ? COPY[mode] : COPY.login;
 
   return (
     <>
@@ -45,11 +27,13 @@ export default function AuthModal() {
       </div>
 
       <Dialog open={mode !== null} onOpenChange={(open) => !open && setMode(null)}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>{copy.title}</DialogTitle>
-            <DialogDescription>{copy.description}</DialogDescription>
-          </DialogHeader>
+        <DialogContent
+          showCloseButton
+          className="max-h-[min(92vh,880px)] gap-0 overflow-y-auto overflow-x-hidden rounded-3xl border-0 bg-white p-0 shadow-2xl ring-0 sm:max-w-3xl md:max-w-4xl"
+        >
+          <DialogTitle className="sr-only">
+            {mode === "signup" ? "Create Account" : "Login"}
+          </DialogTitle>
           {mode === "signup" ? (
             <SignupForm onSwitch={() => setMode("login")} />
           ) : (

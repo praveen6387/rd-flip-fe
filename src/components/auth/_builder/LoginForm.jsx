@@ -1,34 +1,88 @@
 "use client";
 
+import { useState } from "react";
+import { Eye, EyeOff, Lock, Phone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import AuthPanel, { AuthOrb } from "./AuthPanel";
 
 export default function LoginForm({ onSwitch }) {
+  const [showPassword, setShowPassword] = useState(false);
+
   return (
-    <form
-      className="grid gap-4"
-      onSubmit={(event) => {
-        event.preventDefault();
-      }}
-    >
-      <div className="grid gap-2">
-        <Label htmlFor="login-email">Email</Label>
-        <Input id="login-email" type="email" placeholder="you@example.com" required />
+    <div className="grid min-h-[420px] md:grid-cols-[0.95fr_1.15fr]">
+      <AuthPanel
+        title="Welcome back"
+        body="Your flipbooks are waiting. Let’s continue creating something beautiful."
+      />
+
+      <div className="relative flex flex-col justify-center overflow-hidden bg-white px-6 py-8 sm:px-10">
+        <AuthOrb className="-right-8 -bottom-10 size-32 opacity-90" />
+
+        <div className="relative z-10">
+          <h3 className="text-2xl font-semibold tracking-tight text-slate-900">
+            Login
+          </h3>
+
+          <form
+            className="mt-8 space-y-4"
+            onSubmit={(event) => event.preventDefault()}
+          >
+            <label className="flex h-12 items-center gap-3 rounded-full bg-slate-100 px-4 transition focus-within:bg-slate-50 focus-within:ring-2 focus-within:ring-blue-200">
+              <Phone className="size-4 shrink-0 text-slate-400" />
+              <Input
+                id="login-phone"
+                type="tel"
+                inputMode="tel"
+                placeholder="Phone number"
+                required
+                className="h-auto border-0 bg-transparent p-0 text-base text-slate-900 shadow-none placeholder:text-slate-400 focus-visible:ring-0"
+              />
+            </label>
+
+            <label className="flex h-12 items-center gap-3 rounded-full bg-slate-100 px-4 transition focus-within:bg-slate-50 focus-within:ring-2 focus-within:ring-blue-200">
+              <Lock className="size-4 shrink-0 text-slate-400" />
+              <Input
+                id="login-password"
+                type={showPassword ? "text" : "password"}
+                placeholder="Password"
+                required
+                className="h-auto flex-1 border-0 bg-transparent p-0 text-base text-slate-900 shadow-none placeholder:text-slate-400 focus-visible:ring-0"
+              />
+              <button
+                type="button"
+                className="shrink-0 text-slate-400 transition hover:text-blue-600"
+                onClick={() => setShowPassword((value) => !value)}
+                aria-label={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? (
+                  <EyeOff className="size-4" />
+                ) : (
+                  <Eye className="size-4" />
+                )}
+              </button>
+            </label>
+
+            <Button
+              type="button"
+              className="mt-2 h-12 w-full rounded-xl bg-blue-700 text-base font-semibold text-white hover:bg-blue-800"
+            >
+              Login
+            </Button>
+          </form>
+
+          <p className="mt-6 text-center text-sm text-slate-500">
+            Don&apos;t have an account?{" "}
+            <button
+              type="button"
+              className="font-semibold text-blue-600 hover:text-blue-700"
+              onClick={onSwitch}
+            >
+              Sign Up
+            </button>
+          </p>
+        </div>
       </div>
-      <div className="grid gap-2">
-        <Label htmlFor="login-password">Password</Label>
-        <Input id="login-password" type="password" required />
-      </div>
-      <Button type="submit" className="w-full">
-        Login
-      </Button>
-      <p className="text-center text-sm text-muted-foreground">
-        Need an account?{" "}
-        <button type="button" className="font-medium text-foreground underline-offset-4 hover:underline" onClick={onSwitch}>
-          Signup
-        </button>
-      </p>
-    </form>
+    </div>
   );
 }
