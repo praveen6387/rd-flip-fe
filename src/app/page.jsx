@@ -5,7 +5,7 @@ import {
   GallerySection,
   HomeSection,
   HowItWorksSection,
-  PricingSection,
+  PlansSection,
 } from "@/components/landing";
 
 export default function Home() {
@@ -15,7 +15,7 @@ export default function Home() {
       <AboutSection />
       <FeaturesSection />
       <HowItWorksSection />
-      <PricingSection />
+      <PlansSection />
       <GallerySection />
       <ContactSection />
     </main>

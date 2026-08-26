@@ -3,7 +3,7 @@ export const LINKS = [
   // { href: "#about", label: "About" },
   { href: "#features", label: "Features" },
   { href: "#how-it-works", label: "How it works" },
-  { href: "#pricing", label: "Pricing" },
+  { href: "#plans", label: "Plans" },
   { href: "#gallery", label: "Gallery" },
   { href: "#contact", label: "Contact" },
 ];

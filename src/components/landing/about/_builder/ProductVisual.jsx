@@ -46,7 +46,7 @@ export default function ProductVisual() {
               </div>
 
               {/* Floating Cards */}
-              <div className="absolute -bottom-6 -left-6 bg-white/70 backdrop-blur-md rounded-2xl p-4 shadow-xl border border-white/60 transform rotate-3 hover:rotate-0 transition-transform duration-300">
+              <div className="absolute -bottom-6 -left-6 bg-white/20 backdrop-blur-xs rounded-2xl p-4 shadow-xl border border-white/60 transform rotate-3 hover:rotate-0 transition-transform duration-300">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-sky-500 rounded-full flex items-center justify-center">
                     <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -65,7 +65,7 @@ export default function ProductVisual() {
                 </div>
               </div>
 
-              <div className="absolute -top-6 -right-6 bg-white/70 backdrop-blur-md rounded-2xl p-4 shadow-xl border border-white/60 transform -rotate-3 hover:rotate-0 transition-transform duration-300">
+              <div className="absolute -top-6 -right-6 bg-white/20 backdrop-blur-xs rounded-2xl p-4 shadow-xl border border-white/60 transform -rotate-3 hover:rotate-0 transition-transform duration-300">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-full flex items-center justify-center">
                     <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">

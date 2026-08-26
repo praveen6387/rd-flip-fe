@@ -1,35 +1,52 @@
+import { Mail, MapPin, Phone } from "lucide-react";
+
 const NOTES = [
   {
     title: "Free credit",
-    body: "Signup gives 1 flipbook credit. It expires in 7 days if unused.",
+    body: "Signup includes limited free credit with a short window to use it.",
   },
   {
-    title: "Free books",
-    body: "A flipbook made only on that free credit expires in 30 days unless you recharge once.",
-  },
-  {
-    title: "Paid links",
-    body: "After you recharge, share links and QR codes have no time limit.",
+    title: "Paid books",
+    body: "After recharge, created flipbooks and QR links stay open.",
   },
   {
     title: "Find a book",
-    body: "Search the dashboard by client name, date, or studio name (Lab).",
+    body: "Search by client name, date, or studio name in the library.",
+  },
+];
+
+const CONTACTS = [
+  {
+    icon: Mail,
+    label: "rdphotography570@gmail.com",
+    href: "mailto:rdphotography570@gmail.com",
+    tone: "from-teal-400 to-cyan-500",
+  },
+  {
+    icon: Phone,
+    label: "+91 9792098570",
+    href: "tel:+919792098570",
+    tone: "from-sky-400 to-blue-500",
+  },
+  {
+    icon: MapPin,
+    label: "Basti, UP, India",
+    href: null,
+    tone: "from-orange-400 to-amber-500",
   },
 ];
 
 export default function ContactAside() {
   return (
-    <aside className="rounded-2xl border border-slate-200 bg-white/80 p-7 shadow-sm lg:p-9">
-      <p className="text-sm font-medium uppercase tracking-[0.2em] text-indigo-600 sm:text-base">
-        Before you write
+    <aside className="rounded-3xl border border-white/70 bg-white/45 p-6 shadow-[0_12px_40px_-24px_rgba(79,70,229,0.3)] ring-1 ring-white/40 backdrop-blur-xl sm:p-8">
+      <p className="text-xs font-semibold tracking-[0.18em] text-slate-400 uppercase">
+        Quick notes
       </p>
-      <ul className="mt-7 space-y-6">
+      <ul className="mt-5 space-y-4">
         {NOTES.map((note) => (
           <li key={note.title}>
-            <p className="text-lg font-semibold text-slate-900">{note.title}</p>
-            <p className="mt-2 text-base leading-7 text-slate-600 sm:text-lg sm:leading-8">
-              {note.body}
-            </p>
+            <p className="text-base font-semibold text-slate-900">{note.title}</p>
+            <p className="mt-1 text-sm leading-6 text-slate-500">{note.body}</p>
           </li>
         ))}
       </ul>
