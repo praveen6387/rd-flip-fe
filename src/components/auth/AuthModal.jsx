@@ -1,23 +1,40 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { ROUTES } from "@/lib/routes";
 import { useAuth } from "./AuthProvider";
 import LoginForm from "./_builder/LoginForm";
 import SignupForm from "./_builder/SignupForm";
 import UserMenu from "./_builder/UserMenu";
 
 export default function AuthModal() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const { user, logout, ready } = useAuth();
   const [mode, setMode] = useState(null);
+
+  useEffect(() => {
+    if (!ready || user) return;
+    if (searchParams.get("login") === "1") {
+      setMode("login");
+      router.replace(ROUTES.home, { scroll: false });
+    }
+  }, [ready, user, searchParams, router]);
+
+  function handleLogout() {
+    logout();
+    router.push(ROUTES.home);
+  }
 
   if (!ready) {
     return <div className="h-10 w-28" aria-hidden />;
   }
 
   if (user) {
-    return <UserMenu user={user} onLogout={logout} />;
+    return <UserMenu user={user} onLogout={handleLogout} />;
   }
 
   return (

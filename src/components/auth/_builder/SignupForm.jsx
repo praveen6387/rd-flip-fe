@@ -1,11 +1,13 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { CalendarDays, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { ROUTES } from "@/lib/routes";
 import { useAuth } from "../AuthProvider";
 import AuthPanel, { AuthOrb } from "./AuthPanel";
 
@@ -31,6 +33,7 @@ function SoftInput({ className = "", ...props }) {
 }
 
 export default function SignupForm({ onSwitch, onSuccess }) {
+  const router = useRouter();
   const { signup } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
@@ -64,7 +67,7 @@ export default function SignupForm({ onSwitch, onSuccess }) {
       await signup(payload);
       toast.success("Signup successful");
       onSuccess?.();
-      // TODO: redirect user to dashboard
+      router.push(ROUTES.dashboard);
     } catch (error) {
       toast.error(error.message || "Signup failed");
     } finally {

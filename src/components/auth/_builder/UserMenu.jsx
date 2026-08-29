@@ -1,6 +1,7 @@
 "use client";
 
-import { ChevronDown, LayoutDashboard, LogOut } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
+import { ChevronDown, Globe, LayoutDashboard, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -9,6 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { ROUTES } from "@/lib/routes";
 
 function getInitials(user) {
   const first = user?.first_name?.[0] ?? "";
@@ -18,6 +20,9 @@ function getInitials(user) {
 }
 
 export default function UserMenu({ user, onLogout }) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const onDashboard = pathname.startsWith(ROUTES.dashboard);
   const displayName =
     [user?.first_name, user?.last_name].filter(Boolean).join(" ") || "Account";
   const initials = getInitials(user);
@@ -27,7 +32,7 @@ export default function UserMenu({ user, onLogout }) {
       <DropdownMenuTrigger asChild>
         <Button
           variant="ghost"
-          className="h-11 gap-2.5 rounded-full border border-indigo-100/80 bg-white/90 py-1 pr-3 pl-1.5 text-slate-800 shadow-[0_4px_14px_-6px_rgba(99,102,241,0.45)] ring-1 ring-indigo-500/10 transition hover:bg-indigo-50/80 hover:ring-indigo-500/20"
+          className="h-11 gap-2.5 rounded-full border-0 bg-transparent py-1 pr-3 pl-1.5 text-slate-800 shadow-none ring-0 transition hover:bg-indigo-50/70"
         >
           <span className="flex size-8 items-center justify-center rounded-full bg-linear-to-br from-indigo-500 to-sky-500 text-xs font-semibold tracking-wide text-white shadow-inner">
             {initials}
@@ -59,13 +64,23 @@ export default function UserMenu({ user, onLogout }) {
 
         <DropdownMenuSeparator className="my-1.5" />
 
-        <DropdownMenuItem
-          disabled
-          className="rounded-lg px-2.5 py-2 text-slate-500"
-        >
-          <LayoutDashboard className="size-4" />
-          Dashboard
-        </DropdownMenuItem>
+        {onDashboard ? (
+          <DropdownMenuItem
+            className="rounded-lg px-2.5 py-2"
+            onClick={() => router.push(ROUTES.home)}
+          >
+            <Globe className="size-4" />
+            Go to website
+          </DropdownMenuItem>
+        ) : (
+          <DropdownMenuItem
+            className="rounded-lg px-2.5 py-2"
+            onClick={() => router.push(ROUTES.dashboard)}
+          >
+            <LayoutDashboard className="size-4" />
+            Dashboard
+          </DropdownMenuItem>
+        )}
         <DropdownMenuItem
           variant="destructive"
           className="rounded-lg px-2.5 py-2"

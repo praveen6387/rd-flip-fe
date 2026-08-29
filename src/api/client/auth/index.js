@@ -32,6 +32,19 @@ export function clearAuth() {
   clearAuthCookies();
 }
 
+export function getAccessToken() {
+  if (typeof document === "undefined") return null;
+
+  const match = document.cookie.match(
+    /(?:^|; )dashboard_access_token=([^;]*)/
+  );
+  return match ? decodeURIComponent(match[1]) : null;
+}
+
+export function hasAccessToken() {
+  return Boolean(getAccessToken());
+}
+
 async function authRequest(url, payload, fallbackMessage) {
   const response = await fetch(url, {
     method: "POST",
@@ -51,7 +64,6 @@ async function authRequest(url, payload, fallbackMessage) {
     setAuthCookies(result.data.tokens);
   }
 
-  // TODO: redirect user to dashboard on success
   return result;
 }
 

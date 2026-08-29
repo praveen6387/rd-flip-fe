@@ -2,8 +2,6 @@ import { Geist, Geist_Mono, Playfair_Display } from "next/font/google";
 import Providers from "@/components/Providers";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { Background } from "@/components/landing";
-import { Footer, TopHeader } from "@/lib";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -33,14 +31,9 @@ export default function RootLayout({ children }) {
       className={`${geistSans.variable} ${geistMono.variable} ${playfair.variable} h-full scroll-smooth antialiased`}
     >
       <body className="relative flex min-h-full flex-col bg-[#faf1fb] text-slate-900">
-        <Background />
         <TooltipProvider>
           <Providers>
-            <div className="relative z-10 flex min-h-full flex-1 flex-col">
-              <TopHeader />
-              {children}
-              <Footer />
-            </div>
+            {children}
             <Toaster />
           </Providers>
         </TooltipProvider>

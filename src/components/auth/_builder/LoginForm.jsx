@@ -1,14 +1,17 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Eye, EyeOff, Lock, Phone } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { ROUTES } from "@/lib/routes";
 import { useAuth } from "../AuthProvider";
 import AuthPanel, { AuthOrb } from "./AuthPanel";
 
 export default function LoginForm({ onSwitch, onSuccess }) {
+  const router = useRouter();
   const { login } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -33,7 +36,7 @@ export default function LoginForm({ onSwitch, onSuccess }) {
       await login(payload);
       toast.success("Login successful");
       onSuccess?.();
-      // TODO: redirect user to dashboard
+      router.push(ROUTES.dashboard);
     } catch (error) {
       toast.error(error.message || "Login failed");
     } finally {
