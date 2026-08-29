@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Menu } from "lucide-react";
 import { useAuth } from "@/components/auth";
 import UserMenu from "@/components/auth/_builder/UserMenu";
-import MobileSidebar from "@/components/dashboard/Sidebar/MobileSidebar";
+import MobileSidebar from "@/lib/dashboard/Sidebar/MobileSidebar";
 import { Button } from "@/components/ui/button";
 import { ROUTES } from "@/lib/routes";
 

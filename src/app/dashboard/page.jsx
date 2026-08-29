@@ -1,9 +1,9 @@
-import { Overview } from "@/components/dashboard";
+import { Profile } from "@/components/dashboard";
 
 export const metadata = {
-  title: "Dashboard | RD Flip",
+  title: "Profile | RD Flip",
 };
 
 export default function DashboardPage() {
-  return <Overview />;
+  return <Profile />;
 }

@@ -1,5 +1,5 @@
-import Sidebar from "@/components/dashboard/Sidebar";
-import DashboardHeader from "@/components/dashboard/Header";
+import Sidebar from "@/lib/dashboard/Sidebar";
+import DashboardHeader from "@/lib/dashboard/Header";
 
 export default function DashboardShell({ children }) {
   return (
