@@ -12,6 +12,7 @@ const Toaster = ({
   return (
     <Sonner
       theme={theme}
+      richColors
       className="toaster group"
       icons={{
         success: (
@@ -35,12 +36,17 @@ const Toaster = ({
           "--normal-bg": "var(--popover)",
           "--normal-text": "var(--popover-foreground)",
           "--normal-border": "var(--border)",
+          "--error-bg": "var(--destructive)",
+          "--error-text": "#ffffff",
+          "--error-border": "var(--destructive)",
           "--border-radius": "var(--radius)"
         }
       }
       toastOptions={{
         classNames: {
           toast: "cn-toast",
+          error:
+            "!border-destructive !bg-destructive !text-white [&_[data-title]]:!text-white [&_[data-icon]]:!text-white",
         },
       }}
       {...props} />

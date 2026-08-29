@@ -2,9 +2,11 @@
 
 import { useState } from "react";
 import { CalendarDays, Eye, EyeOff } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useAuth } from "../AuthProvider";
 import AuthPanel, { AuthOrb } from "./AuthPanel";
 
 function Field({ id, label, required, children }) {
@@ -28,9 +30,47 @@ function SoftInput({ className = "", ...props }) {
   );
 }
 
-export default function SignupForm({ onSwitch }) {
+export default function SignupForm({ onSwitch, onSuccess }) {
+  const { signup } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  async function handleSubmit(event) {
+    event.preventDefault();
+
+    const formData = new FormData(event.currentTarget);
+    const password = String(formData.get("password") || "");
+    const confirmPassword = String(formData.get("confirm_password") || "");
+
+    if (password !== confirmPassword) {
+      toast.error("Passwords do not match.");
+      return;
+    }
+
+    const payload = {
+      first_name: String(formData.get("first_name") || "").trim(),
+      last_name: String(formData.get("last_name") || "").trim(),
+      email: String(formData.get("email") || "").trim(),
+      phone: String(formData.get("phone") || "").trim(),
+      password,
+      dob: String(formData.get("dob") || "").trim() || undefined,
+      studio_name: String(formData.get("studio_name") || "").trim() || undefined,
+    };
+
+    setIsSubmitting(true);
+
+    try {
+      await signup(payload);
+      toast.success("Signup successful");
+      onSuccess?.();
+      // TODO: redirect user to dashboard
+    } catch (error) {
+      toast.error(error.message || "Signup failed");
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
 
   return (
     <div className="grid min-h-[560px] md:grid-cols-[0.85fr_1.35fr]">
@@ -58,27 +98,21 @@ export default function SignupForm({ onSwitch }) {
 
           <form
             className="mt-5 grid gap-3.5 sm:grid-cols-2"
-            onSubmit={(event) => event.preventDefault()}
+            onSubmit={handleSubmit}
           >
             <Field id="signup-first-name" label="First Name" required>
-              <SoftInput id="signup-first-name" placeholder="First name" required />
-            </Field>
-            <Field id="signup-last-name" label="Last Name" required>
-              <SoftInput id="signup-last-name" placeholder="Last name" required />
-            </Field>
-
-            <Field id="signup-studio" label="Studio Name" required>
               <SoftInput
-                id="signup-studio"
-                placeholder="Enter studio name"
+                id="signup-first-name"
+                name="first_name"
+                placeholder="First name"
                 required
               />
             </Field>
-            <Field id="signup-email" label="Email Address" required>
+            <Field id="signup-last-name" label="Last Name" required>
               <SoftInput
-                id="signup-email"
-                type="email"
-                placeholder="you@studio.in"
+                id="signup-last-name"
+                name="last_name"
+                placeholder="Last name"
                 required
               />
             </Field>
@@ -86,16 +120,37 @@ export default function SignupForm({ onSwitch }) {
             <Field id="signup-phone" label="Phone" required>
               <SoftInput
                 id="signup-phone"
+                name="phone"
                 type="tel"
                 inputMode="tel"
                 placeholder="Phone number"
                 required
               />
             </Field>
+            <Field id="signup-email" label="Email Address" required>
+              <SoftInput
+                id="signup-email"
+                name="email"
+                type="email"
+                placeholder="you@studio.in"
+                required
+              />
+            </Field>
+
+            <Field id="signup-studio" label="Studio Name" required>
+              <SoftInput
+                id="signup-studio"
+                name="studio_name"
+                placeholder="Enter studio name"
+                required
+              />
+            </Field>
+
             <Field id="signup-dob" label="Date of Birth" required>
               <div className="relative">
                 <SoftInput
                   id="signup-dob"
+                  name="dob"
                   type="date"
                   required
                   className="pr-10"
@@ -108,8 +163,10 @@ export default function SignupForm({ onSwitch }) {
               <div className="relative">
                 <SoftInput
                   id="signup-password"
+                  name="password"
                   type={showPassword ? "text" : "password"}
                   placeholder="Create password"
+                  minLength={8}
                   required
                   className="pr-10"
                 />
@@ -131,8 +188,10 @@ export default function SignupForm({ onSwitch }) {
               <div className="relative">
                 <SoftInput
                   id="signup-confirm"
+                  name="confirm_password"
                   type={showConfirm ? "text" : "password"}
                   placeholder="Re-enter password"
+                  minLength={8}
                   required
                   className="pr-10"
                 />
@@ -153,10 +212,11 @@ export default function SignupForm({ onSwitch }) {
 
             <div className="sm:col-span-2">
               <Button
-                type="button"
+                type="submit"
+                disabled={isSubmitting}
                 className="mt-1 h-11 w-full rounded-xl bg-linear-to-r from-blue-600 to-sky-500 text-base font-semibold text-white hover:from-blue-700 hover:to-sky-600"
               >
-                Create account
+                {isSubmitting ? "Creating account…" : "Create account"}
               </Button>
             </div>
           </form>

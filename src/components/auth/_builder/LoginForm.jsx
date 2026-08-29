@@ -2,12 +2,44 @@
 
 import { useState } from "react";
 import { Eye, EyeOff, Lock, Phone } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useAuth } from "../AuthProvider";
 import AuthPanel, { AuthOrb } from "./AuthPanel";
 
-export default function LoginForm({ onSwitch }) {
+export default function LoginForm({ onSwitch, onSuccess }) {
+  const { login } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  async function handleSubmit(event) {
+    event.preventDefault();
+
+    const formData = new FormData(event.currentTarget);
+    const identifier = String(formData.get("identifier") || "").trim();
+    const password = String(formData.get("password") || "");
+
+    const payload = { password };
+    if (identifier.includes("@")) {
+      payload.email = identifier;
+    } else {
+      payload.phone = identifier;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      await login(payload);
+      toast.success("Login successful");
+      onSuccess?.();
+      // TODO: redirect user to dashboard
+    } catch (error) {
+      toast.error(error.message || "Login failed");
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
 
   return (
     <div className="grid min-h-[420px] md:grid-cols-[0.95fr_1.15fr]">
@@ -24,17 +56,15 @@ export default function LoginForm({ onSwitch }) {
             Login
           </h3>
 
-          <form
-            className="mt-8 space-y-4"
-            onSubmit={(event) => event.preventDefault()}
-          >
+          <form className="mt-8 space-y-4" onSubmit={handleSubmit}>
             <label className="flex h-12 items-center gap-3 rounded-full bg-slate-100 px-4 transition focus-within:bg-slate-50 focus-within:ring-2 focus-within:ring-blue-200">
               <Phone className="size-4 shrink-0 text-slate-400" />
               <Input
-                id="login-phone"
-                type="tel"
-                inputMode="tel"
-                placeholder="Phone number"
+                id="login-identifier"
+                name="identifier"
+                type="text"
+                inputMode="email"
+                placeholder="Phone or email"
                 required
                 className="h-auto border-0 bg-transparent p-0 text-base text-slate-900 shadow-none placeholder:text-slate-400 focus-visible:ring-0"
               />
@@ -44,6 +74,7 @@ export default function LoginForm({ onSwitch }) {
               <Lock className="size-4 shrink-0 text-slate-400" />
               <Input
                 id="login-password"
+                name="password"
                 type={showPassword ? "text" : "password"}
                 placeholder="Password"
                 required
@@ -64,10 +95,11 @@ export default function LoginForm({ onSwitch }) {
             </label>
 
             <Button
-              type="button"
+              type="submit"
+              disabled={isSubmitting}
               className="mt-2 h-12 w-full rounded-xl bg-blue-700 text-base font-semibold text-white hover:bg-blue-800"
             >
-              Login
+              {isSubmitting ? "Logging in…" : "Login"}
             </Button>
           </form>
 

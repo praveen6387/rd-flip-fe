@@ -3,11 +3,22 @@
 import { useState } from "react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "./AuthProvider";
 import LoginForm from "./_builder/LoginForm";
 import SignupForm from "./_builder/SignupForm";
+import UserMenu from "./_builder/UserMenu";
 
 export default function AuthModal() {
+  const { user, logout, ready } = useAuth();
   const [mode, setMode] = useState(null);
+
+  if (!ready) {
+    return <div className="h-10 w-28" aria-hidden />;
+  }
+
+  if (user) {
+    return <UserMenu user={user} onLogout={logout} />;
+  }
 
   return (
     <>
@@ -35,9 +46,15 @@ export default function AuthModal() {
             {mode === "signup" ? "Create Account" : "Login"}
           </DialogTitle>
           {mode === "signup" ? (
-            <SignupForm onSwitch={() => setMode("login")} />
+            <SignupForm
+              onSwitch={() => setMode("login")}
+              onSuccess={() => setMode(null)}
+            />
           ) : (
-            <LoginForm onSwitch={() => setMode("signup")} />
+            <LoginForm
+              onSwitch={() => setMode("signup")}
+              onSuccess={() => setMode(null)}
+            />
           )}
         </DialogContent>
       </Dialog>
