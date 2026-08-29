@@ -10,6 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { cn } from "@/lib/cn";
 import { ROUTES } from "@/lib/routes";
 
 function getInitials(user) {
@@ -19,10 +20,11 @@ function getInitials(user) {
   return initials || "U";
 }
 
-export default function UserMenu({ user, onLogout }) {
+export default function UserMenu({ user, onLogout, appearance = "light" }) {
   const router = useRouter();
   const pathname = usePathname();
   const onDashboard = pathname.startsWith(ROUTES.dashboard);
+  const isDark = appearance === "dark";
   const displayName =
     [user?.first_name, user?.last_name].filter(Boolean).join(" ") || "Account";
   const initials = getInitials(user);
@@ -32,41 +34,80 @@ export default function UserMenu({ user, onLogout }) {
       <DropdownMenuTrigger asChild>
         <Button
           variant="ghost"
-          className="h-11 gap-2.5 rounded-full border-0 bg-transparent py-1 pr-3 pl-1.5 text-slate-800 shadow-none ring-0 transition hover:bg-indigo-50/70"
+          className={cn(
+            "h-11 gap-2.5 rounded-full border py-1 pr-3 pl-1.5 shadow-none transition",
+            isDark
+              ? "border-white/10 bg-white/5 text-white hover:bg-white/10"
+              : "border-[#d9cfc0]/70 bg-white/50 text-stone-800 backdrop-blur-md hover:bg-white/75"
+          )}
         >
-          <span className="flex size-8 items-center justify-center rounded-full bg-linear-to-br from-indigo-500 to-sky-500 text-xs font-semibold tracking-wide text-white shadow-inner">
+          <span className="flex size-8 items-center justify-center rounded-full bg-linear-to-br from-sky-500 to-rose-500 text-xs font-semibold tracking-wide text-white shadow-inner">
             {initials}
           </span>
           <span className="hidden max-w-36 truncate text-sm font-semibold tracking-tight sm:inline">
             {displayName}
           </span>
-          <ChevronDown className="size-4 text-indigo-400" />
+          <ChevronDown
+            className={cn(
+              "size-4",
+              isDark ? "text-slate-400" : "text-indigo-400"
+            )}
+          />
         </Button>
       </DropdownMenuTrigger>
 
       <DropdownMenuContent
         align="end"
-        className="min-w-52 rounded-2xl border-indigo-100/80 p-1.5 shadow-xl"
+        className={cn(
+          "min-w-52 rounded-2xl p-1.5 shadow-xl",
+            isDark
+              ? "border-white/15 bg-[#44516a]/95 text-slate-100 backdrop-blur-xl"
+              : "border-indigo-100/80 bg-popover"
+        )}
       >
-        <div className="flex items-center gap-3 rounded-xl bg-linear-to-br from-indigo-50 to-sky-50 px-3 py-2.5">
-          <span className="flex size-9 items-center justify-center rounded-full bg-linear-to-br from-indigo-500 to-sky-500 text-xs font-semibold text-white">
+        <div
+          className={cn(
+            "flex items-center gap-3 rounded-xl px-3 py-2.5",
+            isDark
+              ? "bg-white/5"
+              : "bg-linear-to-br from-indigo-50 to-sky-50"
+          )}
+        >
+          <span className="flex size-9 items-center justify-center rounded-full bg-linear-to-br from-sky-500 to-rose-500 text-xs font-semibold text-white">
             {initials}
           </span>
           <div className="min-w-0">
-            <p className="truncate text-sm font-semibold text-slate-900">
+            <p
+              className={cn(
+                "truncate text-sm font-semibold",
+                isDark ? "text-white" : "text-slate-900"
+              )}
+            >
               {displayName}
             </p>
             {user?.email ? (
-              <p className="truncate text-xs text-slate-500">{user.email}</p>
+              <p
+                className={cn(
+                  "truncate text-xs",
+                  isDark ? "text-slate-400" : "text-slate-500"
+                )}
+              >
+                {user.email}
+              </p>
             ) : null}
           </div>
         </div>
 
-        <DropdownMenuSeparator className="my-1.5" />
+        <DropdownMenuSeparator
+          className={cn("my-1.5", isDark && "bg-white/10")}
+        />
 
         {onDashboard ? (
           <DropdownMenuItem
-            className="rounded-lg px-2.5 py-2"
+            className={cn(
+              "rounded-lg px-2.5 py-2",
+              isDark && "focus:bg-white/10 focus:text-white"
+            )}
             onClick={() => router.push(ROUTES.home)}
           >
             <Globe className="size-4" />

@@ -1,14 +1,28 @@
+import Link from "next/link";
+import PagePanel from "@/components/dashboard/_builder/PagePanel";
+import { ROUTES } from "@/lib/routes";
+
 export default function Flipbook() {
   return (
-    <section className="space-y-4">
-      <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
-        <h2 className="text-xl font-semibold tracking-tight text-slate-900">
-          Flipbook
-        </h2>
-        <p className="mt-2 text-sm leading-6 text-slate-500">
-          View and manage your flipbooks here.
+    <PagePanel
+      eyebrow="Library"
+      title="Flipbook"
+      description="Browse and manage the flipbooks you’ve published for your studio."
+      actions={
+        <Link
+          href={ROUTES.dashboardCreateFlipbook}
+          className="inline-flex h-10 items-center justify-center rounded-full bg-linear-to-r from-sky-500 to-rose-500 px-5 text-sm font-semibold text-white transition hover:brightness-110 active:scale-[0.98]"
+        >
+          Create new
+        </Link>
+      }
+    >
+      <div className="rounded-2xl border border-dashed border-stone-300 bg-white/50 px-5 py-10 text-center">
+        <p className="text-sm font-semibold text-slate-900">No flipbooks yet</p>
+        <p className="mt-2 text-sm text-slate-600">
+          When you create one, it will show up in this glass shelf.
         </p>
       </div>
-    </section>
+    </PagePanel>
   );
 }

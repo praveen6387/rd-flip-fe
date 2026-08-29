@@ -129,3 +129,102 @@
     @apply font-sans;
   }
 }
+
+@keyframes dash-float {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(2%, -3%, 0) scale(1.05);
+  }
+}
+
+@keyframes dash-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes dash-nav-in {
+  from {
+    opacity: 0;
+    transform: translateX(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes dash-twinkle {
+  0%,
+  100% {
+    opacity: 0.15;
+    transform: scale(0.7);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes dash-glass-shine {
+  0% {
+    transform: translateX(-120%) rotate(18deg);
+  }
+  100% {
+    transform: translateX(180%) rotate(18deg);
+  }
+}
+
+.dash-atmosphere-orb {
+  animation: dash-float 14s ease-in-out infinite;
+}
+
+.dash-atmosphere-orb-delayed {
+  animation: dash-float 18s ease-in-out infinite reverse;
+}
+
+.dash-fade-up {
+  animation: dash-fade-up 0.45s ease-out both;
+}
+
+.dash-nav-item {
+  animation: dash-nav-in 0.35s ease-out both;
+}
+
+.dash-twinkle {
+  animation: dash-twinkle ease-in-out infinite;
+}
+
+.dash-glass-shine::after {
+  content: "";
+  position: absolute;
+  inset: -40% -20%;
+  width: 40%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgb(255 255 255 / 35%),
+    transparent
+  );
+  animation: dash-glass-shine 9s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dash-atmosphere-orb,
+  .dash-atmosphere-orb-delayed,
+  .dash-twinkle,
+  .dash-glass-shine::after,
+  .dash-fade-up,
+  .dash-nav-item {
+    animation: none !important;
+  }
+}
