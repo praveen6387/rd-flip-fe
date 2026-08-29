@@ -13,7 +13,7 @@ export default function TopHeader() {
 
   return (
     <header className="sticky top-0 z-50 border-b border-slate-200/80 bg-white/75 font-sans backdrop-blur-md">
-      <div className="mx-auto flex h-20 w-full max-w-6xl items-center justify-between gap-6 px-6">
+      <div className="mx-auto flex h-20 w-full max-w-6xl items-center justify-between gap-6 px-4">
         <Logo pathname={pathname} />
         <NavLinks pathname={pathname} active={active} />
         <AuthButtons />

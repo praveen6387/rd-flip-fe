@@ -37,7 +37,7 @@ export default function UserMenu({ user, onLogout }) {
           <span className="flex size-8 items-center justify-center rounded-full bg-linear-to-br from-indigo-500 to-sky-500 text-xs font-semibold tracking-wide text-white shadow-inner">
             {initials}
           </span>
-          <span className="max-w-36 truncate text-sm font-semibold tracking-tight">
+          <span className="hidden max-w-36 truncate text-sm font-semibold tracking-tight sm:inline">
             {displayName}
           </span>
           <ChevronDown className="size-4 text-indigo-400" />

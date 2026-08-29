@@ -8,9 +8,9 @@ export default function Overview() {
 
   return (
     <section className="space-y-4">
-      <div className="rounded-2xl border border-indigo-100 bg-white p-6 shadow-sm">
+      <div className="rounded-2xl border border-indigo-100 bg-white p-4 shadow-sm sm:p-6">
         <p className="text-sm font-medium text-indigo-600">Welcome back</p>
-        <h2 className="mt-1 text-2xl font-semibold tracking-tight text-slate-900">
+        <h2 className="mt-1 text-xl font-semibold tracking-tight text-slate-900 sm:text-2xl">
           Hi, {name}
         </h2>
         <p className="mt-2 max-w-xl text-sm leading-6 text-slate-500">
