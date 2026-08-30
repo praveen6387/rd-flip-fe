@@ -16,16 +16,16 @@ function ShellInner({ children }) {
     <div
       data-dashboard-theme={isDark ? "dark" : "light"}
       className={cn(
-        "relative flex min-h-full flex-1 overflow-hidden transition-colors duration-300",
+        "relative flex h-dvh overflow-hidden transition-colors duration-300",
         isDark ? "text-slate-100" : "text-slate-900"
       )}
     >
       <Atmosphere />
-      <div className="relative z-10 flex min-h-full flex-1">
+      <div className="relative z-10 flex min-h-0 min-w-0 flex-1">
         <Sidebar />
-        <div className="flex min-w-0 flex-1 flex-col">
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
           <DashboardHeader />
-          <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
+          <main className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4 sm:p-6 lg:p-8">
             {children}
           </main>
         </div>

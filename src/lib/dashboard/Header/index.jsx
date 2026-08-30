@@ -37,7 +37,7 @@ export default function DashboardHeader() {
     <>
       <header
         className={cn(
-          "sticky top-0 z-20 flex h-14 items-center justify-between gap-3 border-b px-3 backdrop-blur-2xl transition-colors duration-300 sm:h-16 sm:px-6",
+          "z-20 flex h-14 shrink-0 items-center justify-between gap-3 border-b px-3 backdrop-blur-2xl transition-colors duration-300 sm:h-16 sm:px-6",
           isDark
             ? "border-white/10 bg-[#0f1419]/70 shadow-[inset_0_-1px_0_rgba(255,255,255,0.06)]"
             : "border-[#d9cfc0]/55 bg-[#f4efe6]/55 shadow-[inset_0_-1px_0_rgba(255,255,255,0.45)]"

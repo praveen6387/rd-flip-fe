@@ -4,7 +4,7 @@ import SidebarTwinkles from "./_builder/SidebarTwinkles";
 
 export default function Sidebar() {
   return (
-    <aside className="relative hidden w-72 shrink-0 flex-col overflow-hidden border-r border-white/15 bg-[#1a1614] shadow-[8px_0_32px_-12px_rgba(26,22,20,0.45)] backdrop-blur-2xl md:flex">
+    <aside className="relative hidden h-full w-72 shrink-0 flex-col overflow-hidden border-r border-white/15 bg-[#1a1614] shadow-[8px_0_32px_-12px_rgba(26,22,20,0.45)] backdrop-blur-2xl md:flex">
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0 z-0 bg-[linear-gradient(160deg,rgba(255,255,255,0.14)_0%,rgba(255,255,255,0.04)_22%,transparent_45%,rgba(244,239,230,0.06)_100%)]"
