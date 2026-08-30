@@ -1,11 +1,13 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { BookOpen, CalendarDays, Copy, Search } from "lucide-react";
+import { BookOpen, CalendarDays, Copy, Eye, Search } from "lucide-react";
+import Link from "next/link";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import SignedImg from "@/components/dashboard/_builder/SignedImg";
 import { useDashboardTheme } from "@/lib/dashboard/ThemeProvider";
+import { ROUTES } from "@/lib/routes";
 import { cn } from "@/lib/cn";
 
 function formatDate(value) {
@@ -93,13 +95,14 @@ export default function FlipbookTable({ flipbooks }) {
               <th className={headClass}>Date</th>
               <th className={headClass}>Studio</th>
               <th className={headClass}>ID</th>
+              <th className={headClass}>View</th>
             </tr>
           </thead>
           <tbody>
             {filtered.length === 0 ? (
               <tr>
                 <td
-                  colSpan={4}
+                  colSpan={5}
                   className={cn(
                     "px-4 py-10 text-center",
                     isDark ? "text-slate-400" : "text-slate-500"
@@ -204,6 +207,24 @@ export default function FlipbookTable({ flipbooks }) {
                           <Copy className="size-3" />
                           {item.flip_id}
                         </button>
+                      ) : (
+                        "—"
+                      )}
+                    </td>
+                    <td className="px-4 py-3">
+                      {item.flip_id ? (
+                        <Link
+                          href={ROUTES.flipbookView(item.flip_id)}
+                          className={cn(
+                            "inline-flex h-8 items-center gap-1.5 rounded-lg border px-2.5 text-xs font-medium",
+                            isDark
+                              ? "border-white/15 text-white hover:bg-white/10"
+                              : "border-stone-300 text-slate-800 hover:bg-white/80"
+                          )}
+                        >
+                          <Eye className="size-3.5" />
+                          View
+                        </Link>
                       ) : (
                         "—"
                       )}

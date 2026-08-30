@@ -43,3 +43,26 @@ export async function listFlipbooks() {
     unauthorized: false,
   };
 }
+
+export async function getPublicFlipbook(flip_id) {
+  const response = await fetch(
+    backendUrl(`${ENDPOINTS.flipbooks}${encodeURIComponent(flip_id)}/`),
+    {
+      cache: "force-cache",
+      next: { revalidate: 1800, tags: [`flipbook-${flip_id}`] },
+    }
+  );
+  const result = await response.json().catch(() => null);
+
+  if (!response.ok || result?.status === "fail") {
+    return {
+      flipbook: null,
+      error: result?.message || "Flipbook not found.",
+    };
+  }
+
+  return {
+    flipbook: result.data?.flipbook ?? null,
+    error: null,
+  };
+}
