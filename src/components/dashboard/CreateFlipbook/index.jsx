@@ -1,13 +1,18 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { CalendarDays, Phone, Type } from "lucide-react";
 import { toast } from "sonner";
 import PagePanel from "@/components/dashboard/_builder/PagePanel";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Progress } from "@/components/ui/progress";
 import { useDashboardTheme } from "@/lib/dashboard/ThemeProvider";
+import { createFlipbook } from "@/lib/api/client/flipbook";
+import { uploadCoverImages } from "@/lib/api/client/s3";
+import { ROUTES } from "@/lib/routes";
 import ImageCovers from "./_builder/ImageCovers";
 import { cn } from "@/lib/cn";
 
@@ -97,6 +102,7 @@ function glassInput(isDark) {
 }
 
 export default function CreateFlipbook({ user, error }) {
+  const router = useRouter();
   const { isDark } = useDashboardTheme();
   const lab = isLabPlan(user?.plan);
 
@@ -114,26 +120,36 @@ export default function CreateFlipbook({ user, error }) {
     back: [],
     middle: [],
   });
+  const [submitState, setSubmitState] = useState(null);
+  const [formError, setFormError] = useState("");
 
   function update(key, value) {
     setForm((current) => ({ ...current, [key]: value }));
   }
 
-  function handleSubmit(event) {
+  function fail(message) {
+    setFormError(message);
+    toast.error(message);
+  }
+
+  async function handleSubmit(event) {
     event.preventDefault();
 
+    if (submitState) return;
+    setFormError("");
+
     if (!form.title.trim()) {
-      toast.error("Please add a flipbook title.");
+      fail("Please add a flipbook title.");
       return;
     }
 
     if (!form.date) {
-      toast.error("Please choose a date.");
+      fail("Please choose a date.");
       return;
     }
 
     if (lab && !form.studio_name.trim()) {
-      toast.error("Studio name is required for lab flipbooks.");
+      fail("Studio name is required for lab flipbooks.");
       return;
     }
 
@@ -141,11 +157,39 @@ export default function CreateFlipbook({ user, error }) {
       covers.front.length + covers.back.length + covers.middle.length;
 
     if (!photoCount) {
-      toast.error("Add at least one photo.");
+      fail("Add at least one photo.");
       return;
     }
 
-    toast.success("Details saved. Upload steps will plug in next.");
+    try {
+      setSubmitState({ phase: "upload", current: 0, total: photoCount });
+      const images = await uploadCoverImages(covers, (progress) => {
+        setSubmitState({ phase: "upload", ...progress });
+      });
+
+      setSubmitState({ phase: "save", current: photoCount, total: photoCount });
+
+      const payload = {
+        title: form.title.trim(),
+        date: form.date,
+        description: form.description.trim(),
+        images,
+      };
+
+      if (lab) {
+        payload.studio_name = form.studio_name.trim();
+        payload.whatsapp_number = form.whatsapp_number.trim();
+        payload.instagram_url = form.instagram_url.trim();
+        payload.facebook_url = form.facebook_url.trim();
+      }
+
+      await createFlipbook(payload);
+      toast.success("Flipbook created.");
+      router.push(ROUTES.dashboardFlipbook);
+    } catch (submitError) {
+      fail(submitError.message || "Could not create flipbook.");
+      setSubmitState(null);
+    }
   }
 
   if (error || !user) {
@@ -181,7 +225,20 @@ export default function CreateFlipbook({ user, error }) {
           : "Give this flipbook a title and date. Description can wait."
       }
     >
-      <form onSubmit={handleSubmit} className="dash-stagger space-y-8">
+      <form onSubmit={handleSubmit} className="dash-stagger relative space-y-8">
+        {formError ? (
+          <div
+            role="alert"
+            className={cn(
+              "rounded-2xl border px-4 py-3 text-sm",
+              isDark
+                ? "border-rose-400/35 bg-rose-500/15 text-rose-100"
+                : "border-rose-200 bg-rose-50 text-rose-800"
+            )}
+          >
+            {formError}
+          </div>
+        ) : null}
         <section
           className={cn(
             "space-y-5 rounded-[1.6rem] border p-5 sm:p-6",
@@ -416,11 +473,16 @@ export default function CreateFlipbook({ user, error }) {
           </section>
         ) : null}
 
-        <ImageCovers covers={covers} onChange={setCovers} isDark={isDark} />
+        <ImageCovers
+          covers={covers}
+          onChange={setCovers}
+          isDark={isDark}
+        />
 
         <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
           <Button
             type="submit"
+            disabled={Boolean(submitState)}
             className={cn(
               "h-10 rounded-full px-6 text-sm",
               isDark
@@ -428,9 +490,52 @@ export default function CreateFlipbook({ user, error }) {
                 : "bg-slate-900 text-white hover:bg-slate-800"
             )}
           >
-            Continue
+            {submitState ? "Saving…" : "Create flipbook"}
           </Button>
         </div>
+
+        {submitState ? (
+          <div className="absolute inset-0 z-20 flex items-center justify-center rounded-[2rem] bg-black/45 p-6 backdrop-blur-sm">
+            <div
+              className={cn(
+                "w-full max-w-sm rounded-2xl border px-5 py-5",
+                isDark
+                  ? "border-white/15 bg-slate-900/90 text-white"
+                  : "border-white/70 bg-white/95 text-slate-900"
+              )}
+            >
+              <p className="text-[11px] font-medium tracking-[0.18em] uppercase text-sky-600">
+                {submitState.phase === "save" ? "Saving" : "Uploading"}
+              </p>
+              <p className="mt-2 text-3xl font-semibold tracking-tight">
+                {submitState.phase === "save"
+                  ? "Almost done"
+                  : `${submitState.current} / ${submitState.total}`}
+              </p>
+              <p
+                className={cn(
+                  "mt-1 text-sm",
+                  isDark ? "text-slate-300" : "text-slate-500"
+                )}
+              >
+                {submitState.phase === "save"
+                  ? "Writing flipbook details"
+                  : "Sending photos to storage"}
+              </p>
+              <Progress
+                value={
+                  submitState.phase === "save"
+                    ? 100
+                    : Math.round(
+                        (submitState.current / Math.max(submitState.total, 1)) *
+                          100
+                      )
+                }
+                className="mt-4 h-1.5"
+              />
+            </div>
+          </div>
+        ) : null}
       </form>
     </PagePanel>
   );
