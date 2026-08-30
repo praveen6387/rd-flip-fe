@@ -1,5 +1,5 @@
-import { ENDPOINTS } from "@/api/endpoints";
-import { getAuthHeaders } from "@/api/server/cookies";
+import { backendUrl, ENDPOINTS } from "@/lib/api/endpoints";
+import { getAuthHeaders } from "@/lib/api/server/cookies";
 
 export async function getProfile() {
   const headers = await getAuthHeaders();
@@ -8,7 +8,7 @@ export async function getProfile() {
     return { user: null, error: "Authentication credentials were not provided." };
   }
 
-  const response = await fetch(ENDPOINTS.me, {
+  const response = await fetch(backendUrl(ENDPOINTS.me), {
     headers,
     cache: "no-store",
   });

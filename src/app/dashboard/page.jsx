@@ -1,4 +1,4 @@
-import { getProfile } from "@/api/server/auth";
+import { getProfile } from "@/lib/api/server/auth";
 import { Profile } from "@/components/dashboard";
 
 export const metadata = {

@@ -1,4 +1,4 @@
-import { ENDPOINTS } from "@/api/endpoints";
+import { ENDPOINTS } from "@/lib/api/endpoints";
 
 const USER_STORAGE_KEY = "dashboard_user";
 

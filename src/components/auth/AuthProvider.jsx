@@ -7,7 +7,7 @@ import {
   login as loginRequest,
   setStoredUser,
   signup as signupRequest,
-} from "@/api/client/auth";
+} from "@/lib/api/client/auth";
 
 const AuthContext = createContext(null);
 

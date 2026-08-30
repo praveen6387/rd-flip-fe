@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Link2, Pencil, Phone, Sparkles, X } from "lucide-react";
 import { toast } from "sonner";
-import { updateSocialLinks } from "@/api/client/auth";
+import { updateSocialLinks } from "@/lib/api/client/auth";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,

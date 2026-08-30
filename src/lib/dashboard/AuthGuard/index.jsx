@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { hasAccessToken } from "@/api/client/auth";
+import { hasAccessToken } from "@/lib/api/client/auth";
 import { useAuth } from "@/components/auth";
 import { ROUTES } from "@/lib/routes";
 
