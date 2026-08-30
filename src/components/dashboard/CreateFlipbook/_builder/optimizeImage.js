@@ -1,9 +1,9 @@
 const ACCEPT = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
 
-export const TARGET_PHOTO_BYTES = 200 * 1024;
-const MIN_QUALITY = 0.4;
-const MIN_EDGE = 640;
-const START_EDGE = 1920;
+export const TARGET_PHOTO_BYTES = 250 * 1024;
+const MIN_QUALITY = 0.78;
+const MIN_EDGE = 960;
+const START_EDGE = 2048;
 
 export function isAcceptedImage(file) {
   return ACCEPT.includes(file.type);
@@ -32,6 +32,8 @@ function paint(bitmap, width, height) {
   }
   context.fillStyle = "#ffffff";
   context.fillRect(0, 0, width, height);
+  context.imageSmoothingEnabled = true;
+  context.imageSmoothingQuality = "high";
   context.drawImage(bitmap, 0, 0, width, height);
   return canvas;
 }
@@ -49,7 +51,7 @@ export async function optimizeImage(
   );
   let width = Math.max(1, Math.round(bitmap.width * startScale));
   let height = Math.max(1, Math.round(bitmap.height * startScale));
-  let quality = 0.8;
+  let quality = 0.86;
   onProgress?.(28);
 
   let canvas = paint(bitmap, width, height);
@@ -59,16 +61,16 @@ export async function optimizeImage(
   let steps = 0;
   while (blob.size > targetBytes && steps < 16) {
     steps += 1;
-    if (quality > MIN_QUALITY + 0.04) {
-      quality = Math.max(MIN_QUALITY, quality - 0.12);
-    } else {
-      const longEdge = Math.max(width, height);
-      if (longEdge <= MIN_EDGE) break;
-      const nextScale = Math.max(MIN_EDGE / longEdge, 0.8);
+    const longEdge = Math.max(width, height);
+    if (longEdge > MIN_EDGE) {
+      const nextScale = Math.max(MIN_EDGE / longEdge, 0.88);
       width = Math.max(1, Math.round(width * nextScale));
       height = Math.max(1, Math.round(height * nextScale));
-      quality = 0.72;
       canvas = paint(bitmap, width, height);
+    } else if (quality > MIN_QUALITY + 0.02) {
+      quality = Math.max(MIN_QUALITY, quality - 0.04);
+    } else {
+      break;
     }
     blob = await toJpeg(canvas, quality);
     onProgress?.(48 + Math.min(44, steps * 3));

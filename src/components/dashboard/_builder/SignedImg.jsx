@@ -20,6 +20,7 @@ export default function SignedImg({ src, alt = "", className, fallbackClassName 
     <img
       src={s3DisplaySrc(src)}
       alt={alt}
+      decoding="async"
       referrerPolicy="no-referrer"
       className={className}
       onError={() => setFailed(true)}

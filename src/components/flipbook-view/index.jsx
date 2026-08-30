@@ -45,12 +45,12 @@ export default function FlipbookView({ flipbook, error }) {
             key={`${page.page_number}-${page.image_url}`}
             className="overflow-hidden rounded-2xl border border-stone-200 bg-white/70"
           >
-            <div className="relative aspect-[4/3] bg-stone-100">
+            <div className="bg-stone-100">
               <SignedImg
                 src={page.image_url}
                 alt={`Page ${page.page_number}`}
-                className="size-full object-cover"
-                fallbackClassName="text-slate-400"
+                className="h-auto w-full object-contain"
+                fallbackClassName="min-h-48 text-slate-400"
               />
             </div>
             <p className="px-3 py-2 text-xs text-slate-500">

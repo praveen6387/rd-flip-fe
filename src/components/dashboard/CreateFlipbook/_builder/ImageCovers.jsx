@@ -200,8 +200,7 @@ export default function ImageCovers({ covers, onChange, isDark }) {
             )}
           >
             Front, then back, then the middle pages. A new upload in a section
-            replaces the photos already there. Each photo is compressed to about
-            200 KB.
+            replaces the photos already there.
           </p>
         </div>
         <p
