@@ -74,3 +74,32 @@ export async function signup(payload) {
 export async function login(payload) {
   return authRequest(ENDPOINTS.login, payload, "Login failed");
 }
+
+export async function updateSocialLinks(payload) {
+  const accessToken = getAccessToken();
+
+  if (!accessToken) {
+    throw new Error("Authentication credentials were not provided.");
+  }
+
+  const response = await fetch(ENDPOINTS.updateProfile, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify(payload),
+  });
+
+  const result = await response.json();
+
+  if (!response.ok || result.status === "fail") {
+    throw new Error(result.message || "Failed to update social links");
+  }
+
+  if (result.data?.user) {
+    setStoredUser(result.data.user);
+  }
+
+  return result;
+}

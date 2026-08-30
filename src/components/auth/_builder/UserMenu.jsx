@@ -37,7 +37,7 @@ export default function UserMenu({ user, onLogout, appearance = "light" }) {
           className={cn(
             "h-11 gap-2.5 rounded-full border py-1 pr-3 pl-1.5 shadow-none transition",
             isDark
-              ? "border-white/10 bg-white/5 text-white hover:bg-white/10"
+              ? "border-white/15 bg-white/10 text-white hover:bg-white/15"
               : "border-[#d9cfc0]/70 bg-white/50 text-stone-800 backdrop-blur-md hover:bg-white/75"
           )}
         >
@@ -61,7 +61,7 @@ export default function UserMenu({ user, onLogout, appearance = "light" }) {
         className={cn(
           "min-w-52 rounded-2xl p-1.5 shadow-xl",
             isDark
-              ? "border-white/15 bg-[#44516a]/95 text-slate-100 backdrop-blur-xl"
+              ? "border-white/15 bg-[#1a222d]/95 text-slate-100 backdrop-blur-xl"
               : "border-indigo-100/80 bg-popover"
         )}
       >

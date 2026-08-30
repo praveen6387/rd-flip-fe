@@ -1,6 +1,12 @@
+"use client";
+
 import PagePanel from "@/components/dashboard/_builder/PagePanel";
+import { useDashboardTheme } from "@/lib/dashboard/ThemeProvider";
+import { cn } from "@/lib/cn";
 
 export default function CreateFlipbook() {
+  const { isDark } = useDashboardTheme();
+
   return (
     <PagePanel
       eyebrow="Studio tools"
@@ -11,13 +17,30 @@ export default function CreateFlipbook() {
         {["Upload pages", "Brand cover", "Share link"].map((step, index) => (
           <div
             key={step}
-            className="rounded-2xl border border-stone-200/80 bg-white/70 p-4 transition duration-300 hover:-translate-y-0.5 hover:border-rose-300 hover:bg-white hover:shadow-md"
+            className={cn(
+              "rounded-2xl border p-4 transition duration-300 hover:-translate-y-0.5 hover:shadow-md",
+              isDark
+                ? "border-white/15 bg-white/10 hover:border-rose-400/40 hover:bg-white/14"
+                : "border-stone-200/80 bg-white/70 hover:border-rose-300 hover:bg-white"
+            )}
             style={{ animationDelay: `${120 + index * 60}ms` }}
           >
-            <p className="text-[11px] font-medium tracking-[0.16em] text-sky-700 uppercase">
+            <p
+              className={cn(
+                "text-[11px] font-medium tracking-[0.16em] uppercase",
+                isDark ? "text-sky-300" : "text-sky-700"
+              )}
+            >
               Step {index + 1}
             </p>
-            <p className="mt-2 text-sm font-semibold text-slate-900">{step}</p>
+            <p
+              className={cn(
+                "mt-2 text-sm font-semibold",
+                isDark ? "text-white" : "text-slate-900"
+              )}
+            >
+              {step}
+            </p>
           </div>
         ))}
       </div>
