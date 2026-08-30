@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { BookOpen, CalendarDays, Copy, Search } from "lucide-react";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
+import SignedImg from "@/components/dashboard/_builder/SignedImg";
 import { useDashboardTheme } from "@/lib/dashboard/ThemeProvider";
 import { cn } from "@/lib/cn";
 
@@ -129,10 +130,13 @@ export default function FlipbookTable({ flipbooks }) {
                           )}
                         >
                           {item.thumbnail ? (
-                            <img
+                            <SignedImg
                               src={item.thumbnail}
                               alt=""
                               className="size-full object-cover"
+                              fallbackClassName={
+                                isDark ? "text-slate-500" : "text-slate-400"
+                              }
                             />
                           ) : (
                             <div
