@@ -10,6 +10,7 @@ export const ENDPOINTS = {
   me: "/api/auth/me/",
   updateProfile: "/api/auth/me/",
   flipbooks: "/api/flipbooks/",
+  flipbooksCreate: "/api/flipbooks/create/",
 };
 
 export function backendUrl(path) {

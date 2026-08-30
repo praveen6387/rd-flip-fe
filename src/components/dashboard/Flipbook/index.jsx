@@ -5,15 +5,25 @@ import PagePanel from "@/components/dashboard/_builder/PagePanel";
 import { useDashboardTheme } from "@/lib/dashboard/ThemeProvider";
 import { ROUTES } from "@/lib/routes";
 import { cn } from "@/lib/cn";
+import FlipbookTable from "./_builder/FlipbookTable";
 
-export default function Flipbook() {
+export default function Flipbook({ flipbooks = [], error }) {
   const { isDark } = useDashboardTheme();
+  const count = flipbooks.length;
 
   return (
     <PagePanel
+      simple
+      wide
       eyebrow="Library"
       title="Flipbook"
-      description="Browse and manage the flipbooks you’ve published for your studio."
+      description={
+        error
+          ? "We couldn’t load your albums right now."
+          : count
+            ? `${count} album${count === 1 ? "" : "s"} in your studio.`
+            : "Browse and open the flipbooks you’ve published for your studio."
+      }
       actions={
         <Link
           href={ROUTES.dashboardCreateFlipbook}
@@ -23,31 +33,47 @@ export default function Flipbook() {
         </Link>
       }
     >
-      <div
-        className={cn(
-          "rounded-2xl border border-dashed px-5 py-10 text-center",
-          isDark
-            ? "border-white/20 bg-white/8"
-            : "border-stone-300 bg-white/50"
-        )}
-      >
-        <p
+      {error ? (
+        <div
           className={cn(
-            "text-sm font-semibold",
-            isDark ? "text-white" : "text-slate-900"
+            "rounded-2xl border px-5 py-8 text-center text-sm",
+            isDark
+              ? "border-rose-400/30 bg-rose-500/10 text-rose-100"
+              : "border-rose-200/80 bg-rose-50/80 text-rose-700"
           )}
         >
-          No flipbooks yet
-        </p>
-        <p
+          {error}
+        </div>
+      ) : count === 0 ? (
+        <div
           className={cn(
-            "mt-2 text-sm",
-            isDark ? "text-slate-300" : "text-slate-600"
+            "rounded-2xl border border-dashed px-5 py-10 text-center",
+            isDark
+              ? "border-white/20 bg-white/8"
+              : "border-stone-300 bg-white/50"
           )}
         >
-          When you create one, it will show up in this glass shelf.
-        </p>
-      </div>
+          <p
+            className={cn(
+              "text-sm font-semibold",
+              isDark ? "text-white" : "text-slate-900"
+            )}
+          >
+            No flipbooks yet
+          </p>
+          <p
+            className={cn(
+              "mt-2 text-sm",
+              isDark ? "text-slate-300" : "text-slate-600"
+            )}
+          >
+            Create one and it will land here with its cover, date, and page
+            count.
+          </p>
+        </div>
+      ) : (
+        <FlipbookTable flipbooks={flipbooks} />
+      )}
     </PagePanel>
   );
 }

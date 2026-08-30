@@ -11,11 +11,12 @@ export default function PagePanel({
   actions,
   lead,
   simple,
+  wide,
 }) {
   const { isDark } = useDashboardTheme();
 
   return (
-    <section className="dash-fade-up mx-auto max-w-5xl">
+    <section className={cn("dash-fade-up mx-auto", wide ? "max-w-6xl" : "max-w-5xl")}>
       <div
         className={cn(
           "relative rounded-[2rem] border p-6 shadow-[0_24px_80px_-40px_rgba(15,23,42,0.45)] backdrop-blur-2xl backdrop-saturate-150 transition-colors duration-300 sm:p-8 lg:p-10",
