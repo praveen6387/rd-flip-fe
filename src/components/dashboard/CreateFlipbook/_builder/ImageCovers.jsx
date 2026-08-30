@@ -62,7 +62,7 @@ export default function ImageCovers({ covers, onChange, isDark }) {
     const files = Array.from(fileList || []);
     if (!files.length || progress) return;
 
-    const room = IMAGE_LIMITS.total - totalCount(covers);
+    const room = IMAGE_LIMITS.total - (totalCount(covers) - covers[zone].length);
 
     if (room <= 0) {
       toast.error("You can upload about 60 photos in total.");
@@ -80,6 +80,10 @@ export default function ImageCovers({ covers, onChange, isDark }) {
     }
 
     if (!queued.length) return;
+
+    if (queued.length < files.length && files.length > room) {
+      toast.error(`Only ${room} more photo${room === 1 ? "" : "s"} fit in the 60 total.`);
+    }
 
     const created = [];
     try {
@@ -109,9 +113,10 @@ export default function ImageCovers({ covers, onChange, isDark }) {
         await new Promise((resolve) => setTimeout(resolve, 0));
       }
 
+      covers[zone].forEach((item) => URL.revokeObjectURL(item.previewUrl));
       onChange({
         ...covers,
-        [zone]: [...covers[zone], ...created],
+        [zone]: created,
       });
     } catch (error) {
       created.forEach((item) => URL.revokeObjectURL(item.previewUrl));
@@ -194,8 +199,9 @@ export default function ImageCovers({ covers, onChange, isDark }) {
               isDark ? "text-slate-300" : "text-slate-600"
             )}
           >
-            Front, then back, then the middle pages. Drag to rearrange. Each
-            photo is optimized before it shows.
+            Front, then back, then the middle pages. A new upload in a section
+            replaces the photos already there. Each photo is compressed to about
+            200 KB.
           </p>
         </div>
         <p
@@ -217,7 +223,9 @@ export default function ImageCovers({ covers, onChange, isDark }) {
             isDark={isDark}
             dense={zone.key === "middle"}
             disabled={Boolean(progress)}
-            canAdd={used < IMAGE_LIMITS.total}
+            canAdd={
+              used - covers[zone.key].length < IMAGE_LIMITS.total
+            }
             dragging={dragging}
             dropTarget={dropTarget}
             onFiles={(files) => addFiles(zone.key, files)}
@@ -340,7 +348,7 @@ function CoverZone({
           )}
         >
           <ImagePlus className="size-3.5" />
-          Add
+          {images.length ? "Replace" : "Add"}
         </button>
         <input
           ref={inputRef}
@@ -400,7 +408,7 @@ function CoverZone({
                 }}
                 onDragEnd={onDragEnd}
                 className={cn(
-                  "group relative aspect-[3/4] overflow-hidden rounded-xl border bg-black/10",
+                  "group relative aspect-[4/3] overflow-hidden rounded-xl border bg-black/10",
                   isDark ? "border-white/15" : "border-white/70",
                   isDrop && "ring-2 ring-sky-400",
                   isDrag && "opacity-50"
