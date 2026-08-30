@@ -2,24 +2,20 @@
 
 import { cn } from "@/lib/cn";
 import { useDashboardTheme } from "@/lib/dashboard/ThemeProvider";
+import Particles from "@/components/landing/_builder/Background/_builder/Particles";
 
-const TWINKLES = [
-  { top: "8%", left: "12%", size: 2, delay: "0s", duration: "3.2s" },
-  { top: "14%", left: "72%", size: 3, delay: "0.6s", duration: "4.1s" },
-  { top: "22%", left: "38%", size: 2, delay: "1.4s", duration: "3.6s" },
-  { top: "28%", left: "88%", size: 2, delay: "0.2s", duration: "4.8s" },
-  { top: "36%", left: "18%", size: 3, delay: "1.8s", duration: "3.9s" },
-  { top: "42%", left: "55%", size: 2, delay: "0.9s", duration: "4.4s" },
-  { top: "48%", left: "8%", size: 2, delay: "2.1s", duration: "3.5s" },
-  { top: "54%", left: "78%", size: 3, delay: "0.4s", duration: "5s" },
-  { top: "62%", left: "32%", size: 2, delay: "1.1s", duration: "3.8s" },
-  { top: "68%", left: "64%", size: 2, delay: "2.4s", duration: "4.2s" },
-  { top: "74%", left: "22%", size: 3, delay: "0.7s", duration: "3.7s" },
-  { top: "80%", left: "90%", size: 2, delay: "1.6s", duration: "4.6s" },
-  { top: "18%", left: "48%", size: 2, delay: "2.8s", duration: "3.3s" },
-  { top: "58%", left: "42%", size: 2, delay: "1.3s", duration: "4.9s" },
-  { top: "86%", left: "50%", size: 3, delay: "0.5s", duration: "3.4s" },
-  { top: "12%", left: "28%", size: 2, delay: "2s", duration: "4.3s" },
+const DARK_COLORS = [
+  "rgba(255,255,255,",
+  "rgba(125,211,252,",
+  "rgba(253,164,175,",
+  "rgba(129,140,248,",
+];
+
+const LIGHT_COLORS = [
+  "rgba(14,165,233,",
+  "rgba(244,63,94,",
+  "rgba(99,102,241,",
+  "rgba(244,114,182,",
 ];
 
 export default function Atmosphere() {
@@ -72,26 +68,7 @@ export default function Atmosphere() {
             : "bg-[linear-gradient(to_right,rgba(90,70,50,0.035)_1px,transparent_1px),linear-gradient(to_bottom,rgba(90,70,50,0.035)_1px,transparent_1px)]"
         )}
       />
-
-      {TWINKLES.map((spark, index) => (
-        <span
-          key={index}
-          className={cn(
-            "dash-twinkle absolute rounded-full",
-            isDark
-              ? "bg-white shadow-[0_0_8px_rgba(255,255,255,0.55)]"
-              : "bg-sky-500/70 shadow-[0_0_8px_rgba(14,165,233,0.45)]"
-          )}
-          style={{
-            top: spark.top,
-            left: spark.left,
-            width: spark.size,
-            height: spark.size,
-            animationDelay: spark.delay,
-            animationDuration: spark.duration,
-          }}
-        />
-      ))}
+      <Particles colors={isDark ? DARK_COLORS : LIGHT_COLORS} />
     </div>
   );
 }

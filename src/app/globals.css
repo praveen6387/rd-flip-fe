@@ -162,27 +162,6 @@
   }
 }
 
-@keyframes dash-twinkle {
-  0%,
-  100% {
-    opacity: 0.15;
-    transform: scale(0.7);
-  }
-  50% {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-@keyframes dash-glass-shine {
-  0% {
-    transform: translateX(-120%) rotate(18deg);
-  }
-  100% {
-    transform: translateX(180%) rotate(18deg);
-  }
-}
-
 .dash-atmosphere-orb {
   animation: dash-float 14s ease-in-out infinite;
 }
@@ -197,25 +176,6 @@
 
 .dash-nav-item {
   animation: dash-nav-in 0.35s ease-out both;
-}
-
-.dash-twinkle {
-  animation: dash-twinkle ease-in-out infinite;
-}
-
-.dash-glass-shine::after {
-  content: "";
-  position: absolute;
-  inset: -40% -20%;
-  width: 40%;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgb(255 255 255 / 35%),
-    transparent
-  );
-  animation: dash-glass-shine 9s ease-in-out infinite;
-  pointer-events: none;
 }
 
 .dash-stagger > * {
@@ -238,14 +198,40 @@
   animation-delay: 0.28s;
 }
 
+@keyframes dash-nav-progress {
+  0% {
+    transform: scaleX(0);
+  }
+  80% {
+    transform: scaleX(1);
+  }
+  100% {
+    transform: scaleX(1);
+  }
+}
+
+.dash-nav-progress {
+  width: 100%;
+  transform: scaleX(0);
+  transform-origin: left center;
+  background: linear-gradient(90deg, #38bdf8 0%, #f43f5e 100%);
+  box-shadow:
+    0 0 0 1px #ffffff,
+    0 0 14px 2px rgb(244 63 94 / 70%);
+  animation: dash-nav-progress 1.1s linear infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .dash-atmosphere-orb,
   .dash-atmosphere-orb-delayed,
-  .dash-twinkle,
-  .dash-glass-shine::after,
   .dash-fade-up,
   .dash-nav-item,
   .dash-stagger > * {
     animation: none !important;
+  }
+
+  .dash-nav-progress {
+    animation: none !important;
+    transform: scaleX(1);
   }
 }

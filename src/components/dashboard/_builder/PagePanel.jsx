@@ -18,7 +18,7 @@ export default function PagePanel({
     <section className="dash-fade-up mx-auto max-w-5xl">
       <div
         className={cn(
-          "dash-glass-shine relative rounded-[2rem] border p-6 shadow-[0_24px_80px_-40px_rgba(15,23,42,0.45)] backdrop-blur-2xl backdrop-saturate-150 transition-colors duration-300 sm:p-8 lg:p-10",
+          "relative rounded-[2rem] border p-6 shadow-[0_24px_80px_-40px_rgba(15,23,42,0.45)] backdrop-blur-2xl backdrop-saturate-150 transition-colors duration-300 sm:p-8 lg:p-10",
           isDark
             ? "border-white/18 bg-white/[0.07]"
             : "border-white/60 bg-white/28"

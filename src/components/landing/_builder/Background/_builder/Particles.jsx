@@ -9,7 +9,7 @@ const COLORS = [
   "rgba(129,140,248,",
 ];
 
-export default function Particles() {
+export default function Particles({ colors = COLORS, density = 18000 }) {
   const canvasRef = useRef(null);
 
   useEffect(() => {
@@ -22,35 +22,44 @@ export default function Particles() {
     const media = window.matchMedia("(prefers-reduced-motion: reduce)");
     let frame = 0;
     let particles = [];
+    let width = 0;
+    let height = 0;
+    const palette = colors.length ? colors : COLORS;
+
+    const spawn = () => ({
+      x: Math.random() * width,
+      y: Math.random() * height,
+      r: Math.random() * 1.6 + 0.4,
+      speed: Math.random() * 0.22 + 0.06,
+      alpha: Math.random() * 0.35 + 0.2,
+      color: palette[Math.floor(Math.random() * palette.length)],
+    });
 
     const resize = () => {
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
-      canvas.width = Math.floor(window.innerWidth * dpr);
-      canvas.height = Math.floor(window.innerHeight * dpr);
-      canvas.style.width = `${window.innerWidth}px`;
-      canvas.style.height = `${window.innerHeight}px`;
+      const rect = canvas.getBoundingClientRect();
+      width = Math.max(rect.width, 1);
+      height = Math.max(rect.height, 1);
+      canvas.width = Math.floor(width * dpr);
+      canvas.height = Math.floor(height * dpr);
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-      const count = Math.round((window.innerWidth * window.innerHeight) / 18000);
-      particles = Array.from({ length: Math.min(Math.max(count, 40), 110) }, () => ({
-        x: Math.random() * window.innerWidth,
-        y: Math.random() * window.innerHeight,
-        r: Math.random() * 1.6 + 0.4,
-        speed: Math.random() * 0.22 + 0.06,
-        alpha: Math.random() * 0.35 + 0.2,
-        color: COLORS[Math.floor(Math.random() * COLORS.length)],
-      }));
+      const count = Math.round((width * height) / density);
+      particles = Array.from(
+        { length: Math.min(Math.max(count, 16), 110) },
+        spawn
+      );
     };
 
     const draw = () => {
-      ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+      ctx.clearRect(0, 0, width, height);
 
       for (const particle of particles) {
         if (!media.matches) {
           particle.y -= particle.speed;
           if (particle.y < -4) {
-            particle.y = window.innerHeight + 4;
-            particle.x = Math.random() * window.innerWidth;
+            particle.y = height + 4;
+            particle.x = Math.random() * width;
           }
         }
 
@@ -65,13 +74,17 @@ export default function Particles() {
 
     resize();
     draw();
+
+    const observer = new ResizeObserver(resize);
+    observer.observe(canvas);
     window.addEventListener("resize", resize);
 
     return () => {
       cancelAnimationFrame(frame);
+      observer.disconnect();
       window.removeEventListener("resize", resize);
     };
-  }, []);
+  }, [colors, density]);
 
   return (
     <canvas

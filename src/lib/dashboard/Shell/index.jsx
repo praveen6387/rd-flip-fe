@@ -3,6 +3,7 @@
 import Atmosphere from "@/lib/dashboard/_builder/Atmosphere";
 import Sidebar from "@/lib/dashboard/Sidebar";
 import DashboardHeader from "@/lib/dashboard/Header";
+import NavProgress from "@/lib/dashboard/_builder/NavProgress";
 import {
   DashboardThemeProvider,
   useDashboardTheme,
@@ -25,11 +26,14 @@ function ShellInner({ children }) {
         <Sidebar />
         <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
           <DashboardHeader />
-          <main className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4 sm:p-6 lg:p-8">
-            {children}
-          </main>
+          <div className="relative min-h-0 flex-1">
+            <main className="h-full overflow-y-auto overscroll-contain p-4 sm:p-6 lg:p-8">
+              {children}
+            </main>
+          </div>
         </div>
       </div>
+      <NavProgress />
     </div>
   );
 }
