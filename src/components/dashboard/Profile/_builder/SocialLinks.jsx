@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Link2, Pencil, Phone, Sparkles, X } from "lucide-react";
+import { Pencil, Phone, Sparkles, X } from "lucide-react";
 import { toast } from "sonner";
 import { updateSocialLinks } from "@/lib/api/client/auth";
 import { Button } from "@/components/ui/button";
@@ -91,10 +91,10 @@ function SocialCard({ platform, value, isDark }) {
   return (
     <div
       className={cn(
-        "group relative overflow-hidden rounded-2xl border p-4 transition duration-300 hover:-translate-y-0.5 hover:shadow-lg",
+        "group relative overflow-hidden rounded-[1.4rem] border p-5 transition duration-500 hover:-translate-y-0.5",
         isDark
-          ? "border-white/15 bg-white/8 hover:border-white/25 hover:bg-white/12"
-          : "border-stone-200/80 bg-white/80 hover:border-stone-300 hover:bg-white"
+          ? "border-white/12 bg-white/[0.05] hover:border-white/20 hover:bg-white/[0.08]"
+          : "border-white/45 bg-white/25 hover:border-white/70 hover:bg-white/40"
       )}
     >
       <div
@@ -268,56 +268,36 @@ export default function SocialLinks({ user, isDark }) {
   }
 
   return (
-    <section className="space-y-3">
-      <div
-        className={cn(
-          "flex flex-col gap-3 rounded-2xl border p-4 sm:flex-row sm:items-center sm:justify-between",
-          isDark
-            ? "border-white/12 bg-linear-to-r from-white/6 via-sky-500/8 to-fuchsia-500/8"
-            : "border-stone-200/80 bg-linear-to-r from-white via-sky-50/60 to-rose-50/60"
-        )}
-      >
-        <div className="flex items-start gap-3">
-          <span
+    <section className="space-y-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h3
             className={cn(
-              "grid size-10 shrink-0 place-items-center rounded-xl",
-              isDark
-                ? "bg-white/10 text-sky-200"
-                : "bg-linear-to-br from-sky-100 to-indigo-100 text-sky-600"
+              "font-heading text-lg tracking-tight",
+              isDark ? "text-slate-100" : "text-slate-900"
             )}
           >
-            <Link2 className="size-4.5" />
-          </span>
-          <div>
-            <h3
-              className={cn(
-                "text-sm font-semibold tracking-tight",
-                isDark ? "text-slate-100" : "text-slate-800"
-              )}
-            >
-              Social links
-            </h3>
-            <p
-              className={cn(
-                "mt-0.5 text-xs",
-                isDark ? "text-slate-400" : "text-slate-500"
-              )}
-            >
-              {connectedCount} of {PLATFORMS.length} connected — shown on your
-              flipbooks
-            </p>
-          </div>
+            Social links
+          </h3>
+          <p
+            className={cn(
+              "mt-1 text-sm",
+              isDark ? "text-slate-400" : "text-slate-500"
+            )}
+          >
+            {connectedCount} of {PLATFORMS.length} connected — shown on your
+            flipbooks
+          </p>
         </div>
-
         <Button
           type="button"
           size="sm"
           onClick={openEditor}
           className={cn(
-            "h-9 shrink-0 gap-1.5 rounded-full px-4 shadow-md",
+            "h-9 shrink-0 gap-1.5 rounded-full px-4",
             isDark
-              ? "bg-linear-to-r from-sky-500 to-indigo-500 text-white hover:from-sky-400 hover:to-indigo-400"
-              : "bg-linear-to-r from-sky-600 to-indigo-600 text-white hover:from-sky-500 hover:to-indigo-500"
+              ? "bg-white/10 text-white hover:bg-white/16"
+              : "bg-slate-900 text-white hover:bg-slate-800"
           )}
         >
           <Pencil className="size-3.5" />

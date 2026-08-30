@@ -218,13 +218,34 @@
   pointer-events: none;
 }
 
+.dash-stagger > * {
+  animation: dash-fade-up 0.55s ease-out both;
+}
+
+.dash-stagger > *:nth-child(1) {
+  animation-delay: 0.04s;
+}
+.dash-stagger > *:nth-child(2) {
+  animation-delay: 0.1s;
+}
+.dash-stagger > *:nth-child(3) {
+  animation-delay: 0.16s;
+}
+.dash-stagger > *:nth-child(4) {
+  animation-delay: 0.22s;
+}
+.dash-stagger > *:nth-child(5) {
+  animation-delay: 0.28s;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .dash-atmosphere-orb,
   .dash-atmosphere-orb-delayed,
   .dash-twinkle,
   .dash-glass-shine::after,
   .dash-fade-up,
-  .dash-nav-item {
+  .dash-nav-item,
+  .dash-stagger > * {
     animation: none !important;
   }
 }
