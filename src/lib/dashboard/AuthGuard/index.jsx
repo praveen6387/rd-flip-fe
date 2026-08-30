@@ -1,21 +1,18 @@
 "use client";
 
 import { useEffect } from "react";
-import { useRouter } from "next/navigation";
 import { hasAccessToken } from "@/lib/api/client/auth";
 import { useAuth } from "@/components/auth";
-import { ROUTES } from "@/lib/routes";
 
 export default function AuthGuard({ children }) {
-  const router = useRouter();
-  const { ready } = useAuth();
+  const { ready, expireSession } = useAuth();
 
   useEffect(() => {
     if (!ready) return;
     if (!hasAccessToken()) {
-      router.replace(ROUTES.login);
+      expireSession();
     }
-  }, [ready, router]);
+  }, [ready, expireSession]);
 
   if (!ready || !hasAccessToken()) {
     return (

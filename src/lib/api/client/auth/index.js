@@ -1,15 +1,33 @@
 import { ENDPOINTS } from "@/lib/api/endpoints";
+import { ACCESS_COOKIE, REFRESH_COOKIE } from "@/lib/api/cookie-names";
 
 const USER_STORAGE_KEY = "dashboard_user";
 
-function setAuthCookies({ access, refresh }) {
-  document.cookie = `dashboard_access_token=${access}; path=/; SameSite=Lax`;
-  document.cookie = `dashboard_refresh_token=${refresh}; path=/; SameSite=Lax`;
+function readCookie(name) {
+  if (typeof document === "undefined") return null;
+
+  const match = document.cookie.match(
+    new RegExp(`(?:^|; )${name}=([^;]*)`)
+  );
+  return match ? decodeURIComponent(match[1]) : null;
+}
+
+function writeCookie(name, value) {
+  document.cookie = `${name}=${encodeURIComponent(value)}; path=/; SameSite=Lax`;
+}
+
+function clearCookie(name) {
+  document.cookie = `${name}=; path=/; Max-Age=0; SameSite=Lax`;
+}
+
+export function setAuthCookies({ access, refresh }) {
+  if (access) writeCookie(ACCESS_COOKIE, access);
+  if (refresh) writeCookie(REFRESH_COOKIE, refresh);
 }
 
 function clearAuthCookies() {
-  document.cookie = "dashboard_access_token=; path=/; Max-Age=0; SameSite=Lax";
-  document.cookie = "dashboard_refresh_token=; path=/; Max-Age=0; SameSite=Lax";
+  clearCookie(ACCESS_COOKIE);
+  clearCookie(REFRESH_COOKIE);
 }
 
 export function getStoredUser() {
@@ -33,16 +51,75 @@ export function clearAuth() {
 }
 
 export function getAccessToken() {
-  if (typeof document === "undefined") return null;
+  return readCookie(ACCESS_COOKIE);
+}
 
-  const match = document.cookie.match(
-    /(?:^|; )dashboard_access_token=([^;]*)/
-  );
-  return match ? decodeURIComponent(match[1]) : null;
+export function getRefreshToken() {
+  return readCookie(REFRESH_COOKIE);
 }
 
 export function hasAccessToken() {
   return Boolean(getAccessToken());
+}
+
+export const SESSION_EXPIRED_EVENT = "rd-flip:session-expired";
+
+function goToLogin() {
+  clearAuth();
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new Event(SESSION_EXPIRED_EVENT));
+  }
+}
+
+let refreshInFlight = null;
+
+async function refreshSession() {
+  if (refreshInFlight) return refreshInFlight;
+
+  refreshInFlight = (async () => {
+    const refresh = getRefreshToken();
+    if (!refresh) return false;
+
+    const response = await fetch(ENDPOINTS.refresh, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ refresh }),
+    });
+    const result = await response.json().catch(() => null);
+
+    if (!response.ok || result?.status !== "success" || !result.data?.tokens?.access) {
+      return false;
+    }
+
+    setAuthCookies(result.data.tokens);
+    return true;
+  })().finally(() => {
+    refreshInFlight = null;
+  });
+
+  return refreshInFlight;
+}
+
+export async function authenticatedFetch(url, options = {}) {
+  const headers = new Headers(options.headers);
+  const access = getAccessToken();
+
+  if (access) {
+    headers.set("Authorization", `Bearer ${access}`);
+  }
+
+  const response = await fetch(url, { ...options, headers });
+  if (response.status !== 401) return response;
+
+  const refreshed = await refreshSession();
+  if (!refreshed) {
+    goToLogin();
+    return response;
+  }
+
+  const retryHeaders = new Headers(options.headers);
+  retryHeaders.set("Authorization", `Bearer ${getAccessToken()}`);
+  return fetch(url, { ...options, headers: retryHeaders });
 }
 
 async function authRequest(url, payload, fallbackMessage) {
@@ -76,17 +153,10 @@ export async function login(payload) {
 }
 
 export async function updateSocialLinks(payload) {
-  const accessToken = getAccessToken();
-
-  if (!accessToken) {
-    throw new Error("Authentication credentials were not provided.");
-  }
-
-  const response = await fetch(ENDPOINTS.updateProfile, {
+  const response = await authenticatedFetch(ENDPOINTS.updateProfile, {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${accessToken}`,
     },
     body: JSON.stringify(payload),
   });
