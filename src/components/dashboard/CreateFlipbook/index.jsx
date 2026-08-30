@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useDashboardTheme } from "@/lib/dashboard/ThemeProvider";
+import ImageCovers from "./_builder/ImageCovers";
 import { cn } from "@/lib/cn";
 
 function FacebookIcon({ className }) {
@@ -50,8 +51,8 @@ function FieldShell({ label, hint, htmlFor, required, isDark, children }) {
         <Label
           htmlFor={htmlFor}
           className={cn(
-            "text-[11px] font-medium tracking-[0.18em] uppercase",
-            isDark ? "text-slate-300" : "text-slate-600"
+            "text-sm font-semibold",
+            isDark ? "text-white" : "text-slate-900"
           )}
         >
           {label}
@@ -62,19 +63,19 @@ function FieldShell({ label, hint, htmlFor, required, isDark, children }) {
           ) : (
             <span
               className={cn(
-                "ml-2 text-[10px] font-normal tracking-[0.12em] uppercase",
-                isDark ? "text-slate-500" : "text-slate-400"
+                "ml-2 text-xs font-medium",
+                isDark ? "text-slate-300" : "text-slate-600"
               )}
             >
-              Optional
+              optional
             </span>
           )}
         </Label>
         {hint ? (
           <span
             className={cn(
-              "text-xs",
-              isDark ? "text-slate-500" : "text-slate-400"
+              "text-xs font-medium",
+              isDark ? "text-slate-300" : "text-slate-600"
             )}
           >
             {hint}
@@ -108,6 +109,11 @@ export default function CreateFlipbook({ user, error }) {
     instagram_url: user?.instagram_url || "",
     facebook_url: user?.facebook_url || "",
   });
+  const [covers, setCovers] = useState({
+    front: [],
+    back: [],
+    middle: [],
+  });
 
   function update(key, value) {
     setForm((current) => ({ ...current, [key]: value }));
@@ -131,12 +137,21 @@ export default function CreateFlipbook({ user, error }) {
       return;
     }
 
+    const photoCount =
+      covers.front.length + covers.back.length + covers.middle.length;
+
+    if (!photoCount) {
+      toast.error("Add at least one photo.");
+      return;
+    }
+
     toast.success("Details saved. Upload steps will plug in next.");
   }
 
   if (error || !user) {
     return (
       <PagePanel
+        simple
         eyebrow="Create"
         title="New flipbook"
         description="We couldn't load your studio plan right now."
@@ -157,6 +172,7 @@ export default function CreateFlipbook({ user, error }) {
 
   return (
     <PagePanel
+      simple
       eyebrow="Create"
       title="New flipbook"
       description={
@@ -177,7 +193,7 @@ export default function CreateFlipbook({ user, error }) {
           <div>
             <h3
               className={cn(
-                "font-heading text-lg tracking-tight",
+                "text-base font-semibold tracking-tight",
                 isDark ? "text-white" : "text-slate-900"
               )}
             >
@@ -186,7 +202,7 @@ export default function CreateFlipbook({ user, error }) {
             <p
               className={cn(
                 "mt-1 text-sm",
-                isDark ? "text-slate-400" : "text-slate-500"
+                isDark ? "text-slate-300" : "text-slate-600"
               )}
             >
               The basics clients will see first.
@@ -276,7 +292,7 @@ export default function CreateFlipbook({ user, error }) {
             <div>
               <p
                 className={cn(
-                  "text-[11px] font-medium tracking-[0.22em] uppercase",
+                  "text-xs font-medium",
                   isDark ? "text-sky-300" : "text-sky-800/80"
                 )}
               >
@@ -284,7 +300,7 @@ export default function CreateFlipbook({ user, error }) {
               </p>
               <h3
                 className={cn(
-                  "font-heading mt-1 text-lg tracking-tight",
+                  "mt-1 text-base font-semibold tracking-tight",
                   isDark ? "text-white" : "text-slate-900"
                 )}
               >
@@ -293,7 +309,7 @@ export default function CreateFlipbook({ user, error }) {
               <p
                 className={cn(
                   "mt-1 max-w-xl text-sm",
-                  isDark ? "text-slate-400" : "text-slate-500"
+                  isDark ? "text-slate-300" : "text-slate-600"
                 )}
               >
                 These details can appear on this flipbook. Prefills come from
@@ -301,24 +317,24 @@ export default function CreateFlipbook({ user, error }) {
               </p>
             </div>
 
-            <FieldShell
-              label="Studio name"
-              htmlFor="studio_name"
-              required
-              isDark={isDark}
-            >
-              <Input
-                id="studio_name"
-                name="studio_name"
+            <div className="grid gap-4 sm:grid-cols-2">
+              <FieldShell
+                label="Studio name"
+                htmlFor="studio_name"
                 required
-                placeholder="Praveen Studio"
-                value={form.studio_name}
-                onChange={(event) => update("studio_name", event.target.value)}
-                className={glassInput(isDark)}
-              />
-            </FieldShell>
+                isDark={isDark}
+              >
+                <Input
+                  id="studio_name"
+                  name="studio_name"
+                  required
+                  placeholder="Praveen Studio"
+                  value={form.studio_name}
+                  onChange={(event) => update("studio_name", event.target.value)}
+                  className={glassInput(isDark)}
+                />
+              </FieldShell>
 
-            <div className="grid gap-5 sm:grid-cols-2">
               <FieldShell
                 label="WhatsApp number"
                 htmlFor="whatsapp_number"
@@ -371,36 +387,36 @@ export default function CreateFlipbook({ user, error }) {
                 </div>
               </FieldShell>
 
-              <div className="sm:col-span-2">
-                <FieldShell
-                  label="Facebook URL"
-                  htmlFor="facebook_url"
-                  isDark={isDark}
-                >
-                  <div className="relative">
-                    <FacebookIcon
-                      className={cn(
-                        "pointer-events-none absolute top-1/2 left-3 size-3.5 -translate-y-1/2",
-                        isDark ? "text-slate-500" : "text-slate-400"
-                      )}
-                    />
-                    <Input
-                      id="facebook_url"
-                      name="facebook_url"
-                      type="url"
-                      placeholder="https://facebook.com/studio"
-                      value={form.facebook_url}
-                      onChange={(event) =>
-                        update("facebook_url", event.target.value)
-                      }
-                      className={cn(glassInput(isDark), "pl-9")}
-                    />
-                  </div>
-                </FieldShell>
-              </div>
+              <FieldShell
+                label="Facebook URL"
+                htmlFor="facebook_url"
+                isDark={isDark}
+              >
+                <div className="relative">
+                  <FacebookIcon
+                    className={cn(
+                      "pointer-events-none absolute top-1/2 left-3 size-3.5 -translate-y-1/2",
+                      isDark ? "text-slate-500" : "text-slate-400"
+                    )}
+                  />
+                  <Input
+                    id="facebook_url"
+                    name="facebook_url"
+                    type="url"
+                    placeholder="https://facebook.com/studio"
+                    value={form.facebook_url}
+                    onChange={(event) =>
+                      update("facebook_url", event.target.value)
+                    }
+                    className={cn(glassInput(isDark), "pl-9")}
+                  />
+                </div>
+              </FieldShell>
             </div>
           </section>
         ) : null}
+
+        <ImageCovers covers={covers} onChange={setCovers} isDark={isDark} />
 
         <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
           <Button

@@ -10,6 +10,7 @@ export default function PagePanel({
   children,
   actions,
   lead,
+  simple,
 }) {
   const { isDark } = useDashboardTheme();
 
@@ -61,7 +62,10 @@ export default function PagePanel({
             ) : null}
             <h2
               className={cn(
-                "font-heading mt-2 text-3xl leading-[1.1] tracking-tight sm:text-4xl lg:text-[2.75rem]",
+                "mt-2 leading-[1.15] tracking-tight",
+                simple
+                  ? "text-2xl font-semibold sm:text-3xl"
+                  : "font-heading text-3xl sm:text-4xl lg:text-[2.75rem]",
                 isDark ? "text-white" : "text-slate-900"
               )}
             >
