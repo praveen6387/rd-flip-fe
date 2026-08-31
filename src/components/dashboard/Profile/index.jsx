@@ -156,7 +156,7 @@ export default function Profile({ user, error }) {
           className={cn(
             "relative overflow-hidden rounded-[1.6rem] border px-5 py-5 sm:px-6",
             isDark
-              ? "border-white/12 bg-white/[0.06]"
+              ? "border-white/12 bg-[#151b22]/92"
               : "border-white/50 bg-white/25"
           )}
         >
@@ -224,7 +224,7 @@ export default function Profile({ user, error }) {
             className={cn(
               "grid overflow-hidden rounded-[1.6rem] border sm:grid-cols-2",
               isDark
-                ? "divide-y divide-white/10 border-white/12 bg-white/[0.04] sm:divide-x sm:divide-y-0"
+                ? "divide-y divide-white/10 border-white/12 bg-[#151b22]/92 sm:divide-x sm:divide-y-0"
                 : "divide-y divide-white/50 border-white/45 bg-white/20 sm:divide-x sm:divide-y-0"
             )}
           >
@@ -276,7 +276,7 @@ export default function Profile({ user, error }) {
             className={cn(
               "grid overflow-hidden rounded-[1.6rem] border sm:grid-cols-2",
               isDark
-                ? "divide-y divide-white/10 border-white/12 bg-white/[0.04] sm:divide-x sm:divide-y-0"
+                ? "divide-y divide-white/10 border-white/12 bg-[#151b22]/92 sm:divide-x sm:divide-y-0"
                 : "divide-y divide-white/50 border-white/45 bg-white/20 sm:divide-x sm:divide-y-0"
             )}
           >
@@ -314,7 +314,7 @@ export default function Profile({ user, error }) {
             className={cn(
               "grid grid-cols-2 gap-y-6 rounded-[1.6rem] border px-4 py-5 sm:grid-cols-3 lg:grid-cols-5 sm:px-3 sm:py-6",
               isDark
-                ? "border-white/12 bg-white/[0.04]"
+                ? "border-white/12 bg-[#151b22]/92"
                 : "border-white/45 bg-white/20"
             )}
           >

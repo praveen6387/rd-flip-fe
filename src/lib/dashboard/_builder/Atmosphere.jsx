@@ -64,11 +64,13 @@ export default function Atmosphere() {
         className={cn(
           "absolute inset-0 bg-size-[48px_48px]",
           isDark
-            ? "bg-[linear-gradient(to_right,rgba(255,255,255,0.045)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.045)_1px,transparent_1px)]"
+            ? "bg-[linear-gradient(to_right,rgba(255,255,255,0.018)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.018)_1px,transparent_1px)] opacity-70"
             : "bg-[linear-gradient(to_right,rgba(90,70,50,0.035)_1px,transparent_1px),linear-gradient(to_bottom,rgba(90,70,50,0.035)_1px,transparent_1px)]"
         )}
       />
-      <Particles colors={isDark ? DARK_COLORS : LIGHT_COLORS} />
+      {isDark ? (
+        <div className="absolute inset-0 bg-[#0f1419]/35" />
+      ) : null}      <Particles colors={isDark ? DARK_COLORS : LIGHT_COLORS} />
     </div>
   );
 }

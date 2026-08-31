@@ -27,7 +27,7 @@ function ShellInner({ children }) {
         <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
           <DashboardHeader />
           <div className="relative min-h-0 flex-1">
-            <main className="h-full overflow-y-auto overscroll-contain p-4 sm:p-6 lg:p-8">
+            <main className="h-full overflow-y-auto overscroll-contain px-6 py-4 sm:px-8 sm:py-6 lg:px-12 lg:py-8">
               {children}
             </main>
           </div>

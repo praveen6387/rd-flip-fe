@@ -179,7 +179,7 @@ export default function ImageCovers({ covers, onChange, isDark }) {
       className={cn(
         "relative space-y-5 rounded-[1.6rem] border p-5 sm:p-6",
         isDark
-          ? "border-white/25 bg-white/[0.04]"
+          ? "border-white/12 bg-[#151b22]/92"
           : "border-stone-300/55 bg-white/20"
       )}
     >

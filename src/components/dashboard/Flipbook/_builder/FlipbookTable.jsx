@@ -50,10 +50,15 @@ export default function FlipbookTable({ flipbooks }) {
     }
   }
 
+  const cellBorder = isDark ? "border-white/10" : "border-stone-200/80";
   const headClass = cn(
-    "px-4 py-3 text-left text-[11px] font-medium tracking-[0.16em] uppercase",
-    isDark ? "text-slate-400" : "text-slate-500"
+    "border-b px-4 py-2.5 text-left text-[11px] font-medium tracking-[0.16em] uppercase",
+    cellBorder,
+    isDark
+      ? "bg-white/[0.06] text-slate-400"
+      : "bg-white/55 text-slate-500"
   );
+  const cellClass = cn("border-b px-4 py-3", cellBorder);
 
   return (
     <div className="space-y-4">
@@ -79,22 +84,19 @@ export default function FlipbookTable({ flipbooks }) {
 
       <div
         className={cn(
-          "overflow-x-auto rounded-[1.4rem] border",
-          isDark ? "border-white/12" : "border-stone-300/55"
+          "overflow-x-auto rounded-xl border",
+          isDark
+            ? "border-white/12 bg-[#151b22]/92"
+            : "border-stone-300/60 bg-white/40"
         )}
       >
         <table className="min-w-[640px] w-full border-collapse text-sm">
           <thead>
-            <tr
-              className={cn(
-                "border-b",
-                isDark ? "border-white/10" : "border-stone-200/80"
-              )}
-            >
-              <th className={headClass}>Album</th>
-              <th className={headClass}>Date</th>
-              <th className={headClass}>Studio</th>
-              <th className={headClass}>ID</th>
+            <tr>
+              <th className={cn(headClass, "border-r")}>Album</th>
+              <th className={cn(headClass, "border-r")}>Date</th>
+              <th className={cn(headClass, "border-r")}>Studio</th>
+              <th className={cn(headClass, "border-r")}>ID</th>
               <th className={headClass}>View</th>
             </tr>
           </thead>
@@ -118,13 +120,13 @@ export default function FlipbookTable({ flipbooks }) {
                   <tr
                     key={item.id ?? item.flip_id}
                     className={cn(
-                      "border-b last:border-b-0",
+                      "last:[&>td]:border-b-0",
                       isDark
-                        ? "border-white/8 hover:bg-white/[0.04]"
-                        : "border-stone-200/70 hover:bg-white/45"
+                        ? "hover:bg-white/[0.04]"
+                        : "hover:bg-white/50"
                     )}
                   >
-                    <td className="px-4 py-3">
+                    <td className={cn(cellClass, "border-r")}>
                       <div className="flex items-center gap-3">
                         <div
                           className={cn(
@@ -173,7 +175,7 @@ export default function FlipbookTable({ flipbooks }) {
                         </div>
                       </div>
                     </td>
-                    <td className="px-4 py-3 whitespace-nowrap">
+                    <td className={cn(cellClass, "border-r whitespace-nowrap")}>
                       <span
                         className={cn(
                           "inline-flex items-center gap-1.5",
@@ -186,13 +188,14 @@ export default function FlipbookTable({ flipbooks }) {
                     </td>
                     <td
                       className={cn(
-                        "px-4 py-3",
+                        cellClass,
+                        "border-r",
                         isDark ? "text-slate-200" : "text-slate-700"
                       )}
                     >
                       {item.studio_name || "—"}
                     </td>
-                    <td className="px-4 py-3">
+                    <td className={cn(cellClass, "border-r")}>
                       {item.flip_id ? (
                         <button
                           type="button"
@@ -211,7 +214,7 @@ export default function FlipbookTable({ flipbooks }) {
                         "—"
                       )}
                     </td>
-                    <td className="px-4 py-3">
+                    <td className={cellClass}>
                       {item.flip_id ? (
                         <Link
                           href={ROUTES.flipbookView(item.flip_id)}

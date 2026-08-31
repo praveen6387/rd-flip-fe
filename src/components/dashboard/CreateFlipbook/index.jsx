@@ -96,7 +96,7 @@ function glassInput(isDark) {
   return cn(
     "h-10 rounded-xl border px-3 text-sm shadow-none",
     isDark
-      ? "border-white/20 bg-white/[0.06] text-white placeholder:text-slate-500 focus-visible:border-sky-400/50 focus-visible:bg-white/10 focus-visible:ring-sky-400/20"
+      ? "border-white/15 bg-[#1a222d] text-white placeholder:text-slate-500 focus-visible:border-sky-400/50 focus-visible:bg-[#1f2936] focus-visible:ring-sky-400/20"
       : "border-stone-300/60 bg-white/45 text-slate-900 placeholder:text-slate-400 focus-visible:border-sky-400/60 focus-visible:bg-white/70 focus-visible:ring-sky-300/30"
   );
 }
@@ -243,7 +243,7 @@ export default function CreateFlipbook({ user, error }) {
           className={cn(
             "space-y-5 rounded-[1.6rem] border p-5 sm:p-6",
             isDark
-              ? "border-white/25 bg-white/[0.04]"
+              ? "border-white/12 bg-[#151b22]/92"
               : "border-stone-300/55 bg-white/20"
           )}
         >
@@ -342,36 +342,39 @@ export default function CreateFlipbook({ user, error }) {
             className={cn(
               "space-y-5 rounded-[1.6rem] border p-5 sm:p-6",
               isDark
-                ? "border-white/25 bg-white/[0.04]"
+                ? "border-white/12 bg-[#151b22]/92"
                 : "border-stone-300/55 bg-white/20"
             )}
           >
-            <div>
-              <p
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <h3
+                  className={cn(
+                    "text-base font-semibold tracking-tight",
+                    isDark ? "text-white" : "text-slate-900"
+                  )}
+                >
+                  Studio advertise
+                </h3>
+                <p
+                  className={cn(
+                    "mt-1 text-xs",
+                    isDark ? "text-slate-400" : "text-slate-500"
+                  )}
+                >
+                  Prefills from profile — edit if needed.
+                </p>
+              </div>
+              <span
                 className={cn(
-                  "text-xs font-medium",
-                  isDark ? "text-sky-300" : "text-sky-800/80"
+                  "shrink-0 rounded-full border px-2.5 py-1 text-[11px] font-medium tracking-wide",
+                  isDark
+                    ? "border-sky-400/30 bg-sky-400/15 text-sky-200"
+                    : "border-sky-300/70 bg-sky-100/80 text-sky-800"
                 )}
               >
                 Lab plan
-              </p>
-              <h3
-                className={cn(
-                  "mt-1 text-base font-semibold tracking-tight",
-                  isDark ? "text-white" : "text-slate-900"
-                )}
-              >
-                Studio advertise
-              </h3>
-              <p
-                className={cn(
-                  "mt-1 max-w-xl text-sm",
-                  isDark ? "text-slate-300" : "text-slate-600"
-                )}
-              >
-                These details can appear on this flipbook. Prefills come from
-                your profile — edit them if this album should look different.
-              </p>
+              </span>
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">
