@@ -24,6 +24,8 @@ import { QrDesignCard } from "./QrDesignCards";
 
 const EXPORT_WIDTH = 320;
 const EXPORT_HEIGHT = Math.round((EXPORT_WIDTH * 4.35) / 3);
+/** Higher = sharper PNG (print-friendly). */
+const EXPORT_SCALE = 3;
 
 function formatDate(value) {
   if (!value) return null;
@@ -98,14 +100,17 @@ export default function FlipbookQrDialog({ flipbook, open, onOpenChange }) {
     setDownloading(true);
 
     const bg = designId === "frosted" ? color.frostedBg : color.cardBg;
+    const outW = EXPORT_WIDTH * EXPORT_SCALE;
+    const outH = EXPORT_HEIGHT * EXPORT_SCALE;
     const host = document.createElement("div");
     host.setAttribute("aria-hidden", "true");
     host.style.cssText = [
       "position:fixed",
       "left:-10000px",
       "top:0",
-      "width:320px",
-      "height:auto",
+      `width:${outW}px`,
+      `height:${outH}px`,
+      "overflow:hidden",
       "pointer-events:none",
       "z-index:-1",
       "opacity:1",
@@ -117,7 +122,8 @@ export default function FlipbookQrDialog({ flipbook, open, onOpenChange }) {
       clone.style.maxWidth = `${EXPORT_WIDTH}px`;
       clone.style.height = `${EXPORT_HEIGHT}px`;
       clone.style.aspectRatio = "auto";
-      clone.style.transform = "none";
+      clone.style.transform = `scale(${EXPORT_SCALE})`;
+      clone.style.transformOrigin = "top left";
       clone.style.margin = "0";
       clone.style.boxShadow = "none";
       host.appendChild(clone);
@@ -126,19 +132,21 @@ export default function FlipbookQrDialog({ flipbook, open, onOpenChange }) {
       if (document.fonts?.ready) {
         await document.fonts.ready;
       }
-      // Let layout settle after clone/fonts
       await new Promise((resolve) => requestAnimationFrame(() => resolve()));
 
       const dataUrl = await toPng(clone, {
         cacheBust: true,
-        pixelRatio: 2,
+        pixelRatio: 1,
         backgroundColor: bg,
-        width: EXPORT_WIDTH,
-        height: EXPORT_HEIGHT,
+        width: outW,
+        height: outH,
+        canvasWidth: outW,
+        canvasHeight: outH,
         style: {
           width: `${EXPORT_WIDTH}px`,
           height: `${EXPORT_HEIGHT}px`,
-          transform: "none",
+          transform: `scale(${EXPORT_SCALE})`,
+          transformOrigin: "top left",
           margin: "0",
         },
       });

@@ -241,21 +241,21 @@ export function CardCaptureMoment({
         >
           Please share your precious pictures with us by scanning this QR code
         </p>
-        <div className="mt-5">
+        <div className="mt-5 flex flex-col items-stretch">
           <QrBlock url={url} size={150} />
-        </div>
-        <div className="mt-auto w-full pt-6 text-right">
-          <p
-            className="truncate font-heading text-sm font-bold tracking-wide uppercase"
-            style={{ color: color.ink }}
-          >
-            {title}
-          </p>
-          {(dateLabel || studioName) && (
-            <p className="mt-1 text-[11px]" style={{ color: color.muted }}>
-              {[dateLabel, studioName].filter(Boolean).join(" · ")}
+          <div className="mt-4 text-left">
+            <p
+              className="truncate font-heading text-sm font-bold tracking-wide uppercase"
+              style={{ color: color.ink }}
+            >
+              {title}
             </p>
-          )}
+            {(dateLabel || studioName) && (
+              <p className="mt-1 text-[11px]" style={{ color: color.muted }}>
+                {[dateLabel, studioName].filter(Boolean).join(" · ")}
+              </p>
+            )}
+          </div>
         </div>
       </div>
     </div>
