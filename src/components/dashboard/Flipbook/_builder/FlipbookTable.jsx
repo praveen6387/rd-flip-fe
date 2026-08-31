@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { BookOpen, CalendarDays, Copy, Eye, Search } from "lucide-react";
+import { BookOpen, CalendarDays, Copy, Eye, QrCode, Search } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
@@ -9,6 +9,7 @@ import SignedImg from "@/components/dashboard/_builder/SignedImg";
 import { useDashboardTheme } from "@/lib/dashboard/ThemeProvider";
 import { ROUTES } from "@/lib/routes";
 import { cn } from "@/lib/cn";
+import FlipbookQrDialog from "./FlipbookQrDialog";
 
 function formatDate(value) {
   if (!value) return "—";
@@ -36,6 +37,7 @@ function matchesQuery(flipbook, query) {
 export default function FlipbookTable({ flipbooks }) {
   const { isDark } = useDashboardTheme();
   const [query, setQuery] = useState("");
+  const [qrFlipbook, setQrFlipbook] = useState(null);
   const filtered = useMemo(() => {
     const needle = query.trim().toLowerCase();
     return flipbooks.filter((item) => matchesQuery(item, needle));
@@ -59,6 +61,12 @@ export default function FlipbookTable({ flipbooks }) {
       : "bg-white/55 text-slate-500"
   );
   const cellClass = cn("border-b px-4 py-3", cellBorder);
+  const actionBtn = cn(
+    "inline-flex h-8 items-center gap-1.5 rounded-lg border px-2.5 text-xs font-medium",
+    isDark
+      ? "border-white/15 text-white hover:bg-white/10"
+      : "border-stone-300 text-slate-800 hover:bg-white/80"
+  );
 
   return (
     <div className="space-y-4">
@@ -90,14 +98,14 @@ export default function FlipbookTable({ flipbooks }) {
             : "border-stone-300/60 bg-white/40"
         )}
       >
-        <table className="min-w-[640px] w-full border-collapse text-sm">
+        <table className="min-w-[720px] w-full border-collapse text-sm">
           <thead>
             <tr>
               <th className={cn(headClass, "border-r")}>Album</th>
               <th className={cn(headClass, "border-r")}>Date</th>
               <th className={cn(headClass, "border-r")}>Studio</th>
               <th className={cn(headClass, "border-r")}>ID</th>
-              <th className={headClass}>View</th>
+              <th className={headClass}>Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -216,18 +224,23 @@ export default function FlipbookTable({ flipbooks }) {
                     </td>
                     <td className={cellClass}>
                       {item.flip_id ? (
-                        <Link
-                          href={ROUTES.flipbookView(item.flip_id)}
-                          className={cn(
-                            "inline-flex h-8 items-center gap-1.5 rounded-lg border px-2.5 text-xs font-medium",
-                            isDark
-                              ? "border-white/15 text-white hover:bg-white/10"
-                              : "border-stone-300 text-slate-800 hover:bg-white/80"
-                          )}
-                        >
-                          <Eye className="size-3.5" />
-                          View
-                        </Link>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <Link
+                            href={ROUTES.flipbookView(item.flip_id)}
+                            className={actionBtn}
+                          >
+                            <Eye className="size-3.5" />
+                            View
+                          </Link>
+                          <button
+                            type="button"
+                            onClick={() => setQrFlipbook(item)}
+                            className={actionBtn}
+                          >
+                            <QrCode className="size-3.5" />
+                            QR
+                          </button>
+                        </div>
                       ) : (
                         "—"
                       )}
@@ -239,6 +252,14 @@ export default function FlipbookTable({ flipbooks }) {
           </tbody>
         </table>
       </div>
+
+      <FlipbookQrDialog
+        flipbook={qrFlipbook}
+        open={Boolean(qrFlipbook)}
+        onOpenChange={(next) => {
+          if (!next) setQrFlipbook(null);
+        }}
+      />
     </div>
   );
 }
