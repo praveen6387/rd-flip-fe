@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/cn";
 import { ROUTES } from "@/lib/routes";
+import ThemeToggle from "@/lib/dashboard/_builder/ThemeToggle";
 
 function getInitials(user) {
   const first = user?.first_name?.[0] ?? "";
@@ -20,7 +21,12 @@ function getInitials(user) {
   return initials || "U";
 }
 
-export default function UserMenu({ user, onLogout, appearance = "light" }) {
+export default function UserMenu({
+  user,
+  onLogout,
+  appearance = "light",
+  showMobileThemeToggle = false,
+}) {
   const router = useRouter();
   const pathname = usePathname();
   const onDashboard = pathname.startsWith(ROUTES.dashboard);
@@ -97,6 +103,12 @@ export default function UserMenu({ user, onLogout, appearance = "light" }) {
             ) : null}
           </div>
         </div>
+
+        {showMobileThemeToggle ? (
+          <div className="px-1 md:hidden">
+            <ThemeToggle variant="menu" />
+          </div>
+        ) : null}
 
         <DropdownMenuSeparator
           className={cn("my-1.5", isDark && "bg-white/10")}

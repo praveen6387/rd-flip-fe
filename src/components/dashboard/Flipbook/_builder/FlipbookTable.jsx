@@ -10,6 +10,7 @@ import { useDashboardTheme } from "@/lib/dashboard/ThemeProvider";
 import { ROUTES } from "@/lib/routes";
 import { cn } from "@/lib/cn";
 import FlipbookQrDialog from "./FlipbookQrDialog";
+import FlipbookSocialLinks from "./FlipbookSocialLinks";
 
 function formatDate(value) {
   if (!value) return "—";
@@ -98,12 +99,13 @@ export default function FlipbookTable({ flipbooks }) {
             : "border-stone-300/60 bg-white/40"
         )}
       >
-        <table className="min-w-[720px] w-full border-collapse text-sm">
+        <table className="min-w-[800px] w-full border-collapse text-sm">
           <thead>
             <tr>
               <th className={cn(headClass, "border-r")}>Album</th>
               <th className={cn(headClass, "border-r")}>Date</th>
               <th className={cn(headClass, "border-r")}>Studio</th>
+              <th className={cn(headClass, "border-r")}>Social</th>
               <th className={cn(headClass, "border-r")}>ID</th>
               <th className={headClass}>Actions</th>
             </tr>
@@ -112,7 +114,7 @@ export default function FlipbookTable({ flipbooks }) {
             {filtered.length === 0 ? (
               <tr>
                 <td
-                  colSpan={5}
+                  colSpan={6}
                   className={cn(
                     "px-4 py-10 text-center",
                     isDark ? "text-slate-400" : "text-slate-500"
@@ -202,6 +204,9 @@ export default function FlipbookTable({ flipbooks }) {
                       )}
                     >
                       {item.studio_name || "—"}
+                    </td>
+                    <td className={cn(cellClass, "border-r")}>
+                      <FlipbookSocialLinks flipbook={item} isDark={isDark} />
                     </td>
                     <td className={cn(cellClass, "border-r")}>
                       {item.flip_id ? (
