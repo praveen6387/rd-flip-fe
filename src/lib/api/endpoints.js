@@ -11,6 +11,9 @@ export const ENDPOINTS = {
   updateProfile: "/api/auth/me/",
   flipbooks: "/api/flipbooks/",
   flipbooksCreate: "/api/flipbooks/create/",
+  plans: "/api/plans/",
+  ordersCreate: "/api/orders/create/",
+  paymentsVerify: "/api/payments/verify/",
 };
 
 export function backendUrl(path) {

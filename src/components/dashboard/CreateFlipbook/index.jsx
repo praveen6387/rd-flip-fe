@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { CalendarDays, Phone, Type } from "lucide-react";
+import Link from "next/link";
+import { CalendarDays, Phone, Sparkles, Type } from "lucide-react";
 import { toast } from "sonner";
 import PagePanel from "@/components/dashboard/_builder/PagePanel";
 import { Button } from "@/components/ui/button";
@@ -15,6 +16,12 @@ import { uploadCoverImages } from "@/lib/api/client/s3";
 import { ROUTES } from "@/lib/routes";
 import ImageCovers from "./_builder/ImageCovers";
 import { cn } from "@/lib/cn";
+import {
+  formatCreditExpireDate,
+  getLeftCredit,
+  hasUsableCredit,
+  isCreditExpired,
+} from "@/lib/credits";
 
 function FacebookIcon({ className }) {
   return (
@@ -47,6 +54,73 @@ function isLabPlan(plan) {
 
 function todayISO() {
   return new Date().toISOString().slice(0, 10);
+}
+
+function NoCreditsState({ isDark, expireLabel, reason }) {
+  const expired = reason === "expired";
+
+  return (
+    <PagePanel
+      simple
+      eyebrow="Create"
+      title="New flipbook"
+      description="Credits are required before you can start a new album."
+    >
+      <div
+        className={cn(
+          "mx-auto max-w-md rounded-[1.6rem] border border-dashed px-6 py-8 text-center sm:px-8",
+          isDark
+            ? "border-white/20 bg-[#151b22]/92"
+            : "border-stone-300/70 bg-white/50"
+        )}
+      >
+        <span
+          className={cn(
+            "mx-auto grid size-12 place-items-center rounded-2xl",
+            isDark
+              ? "bg-rose-400/15 text-rose-300"
+              : "bg-rose-100 text-rose-700"
+          )}
+        >
+          <Sparkles className="size-5" />
+        </span>
+        <h3
+          className={cn(
+            "mt-4 text-lg font-semibold tracking-tight",
+            isDark ? "text-white" : "text-slate-900"
+          )}
+        >
+          {expired ? "Credits expired" : "No credits available"}
+        </h3>
+        <p
+          className={cn(
+            "mt-2 text-sm leading-6",
+            isDark ? "text-slate-300" : "text-slate-600"
+          )}
+        >
+          {expired
+            ? "Your credits have expired. You need an active credit to create a new flipbook."
+            : "You need 1 credit to create a new flipbook."}
+        </p>
+        {expireLabel ? (
+          <p
+            className={cn(
+              "mt-1 text-xs",
+              isDark ? "text-slate-400" : "text-slate-500"
+            )}
+          >
+            {expired ? `Expired on ${expireLabel}` : `Expires: ${expireLabel}`}
+          </p>
+        ) : null}
+        <Link
+          href={ROUTES.dashboardPlans}
+          className="mt-6 inline-flex h-10 cursor-pointer items-center justify-center gap-1.5 rounded-full bg-linear-to-r from-sky-500 to-rose-500 px-5 text-sm font-semibold text-white transition hover:brightness-110 active:scale-[0.98]"
+        >
+          View Plans
+        </Link>
+      </div>
+    </PagePanel>
+  );
 }
 
 function FieldShell({ label, hint, htmlFor, required, isDark, children }) {
@@ -214,6 +288,20 @@ export default function CreateFlipbook({ user, error }) {
     );
   }
 
+  const leftCredit = getLeftCredit(user);
+  const expired = isCreditExpired(user.credit_expire_date);
+  const expireLabel = formatCreditExpireDate(user.credit_expire_date);
+
+  if (!hasUsableCredit(user)) {
+    return (
+      <NoCreditsState
+        isDark={isDark}
+        expireLabel={expireLabel}
+        reason={expired ? "expired" : "empty"}
+      />
+    );
+  }
+
   return (
     <PagePanel
       simple
@@ -223,6 +311,19 @@ export default function CreateFlipbook({ user, error }) {
         lab
           ? "Add the story details, then the studio ads that appear on this lab flipbook."
           : "Give this flipbook a title and date. Description can wait."
+      }
+      actions={
+        <div
+          className={cn(
+            "inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium",
+            isDark
+              ? "border-sky-400/25 bg-sky-400/10 text-sky-200"
+              : "border-sky-300/70 bg-sky-50/80 text-sky-900"
+          )}
+        >
+          <Sparkles className="size-3.5 opacity-80" />
+          {leftCredit} {leftCredit === 1 ? "credit" : "credits"} available
+        </div>
       }
     >
       <form onSubmit={handleSubmit} className="dash-stagger relative space-y-8">

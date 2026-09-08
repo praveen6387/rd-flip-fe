@@ -1,4 +1,4 @@
-import { BookOpen, PlusCircle, UserRound } from "lucide-react";
+import { BookOpen, PlusCircle, UserRound, WalletCards } from "lucide-react";
 import { ROUTES } from "@/lib/routes";
 
 /** Add future dashboard tabs here — used by desktop + mobile sidenav. */
@@ -17,6 +17,11 @@ export const DASHBOARD_NAV_ITEMS = [
     label: "Create Flipbook",
     href: ROUTES.dashboardCreateFlipbook,
     icon: PlusCircle,
+  },
+  {
+    label: "Plans & Credits",
+    href: ROUTES.dashboardPlans,
+    icon: WalletCards,
   },
 ];
 

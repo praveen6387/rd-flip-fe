@@ -2,11 +2,12 @@
 
 import { useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { Menu, Sparkles } from "lucide-react";
+import { Menu } from "lucide-react";
 import { useAuth } from "@/components/auth";
 import UserMenu from "@/components/auth/_builder/UserMenu";
 import MobileSidebar from "@/lib/dashboard/Sidebar/MobileSidebar";
 import ThemeToggle from "@/lib/dashboard/_builder/ThemeToggle";
+import CreditsDropdown from "@/lib/dashboard/_builder/CreditsDropdown";
 import { useDashboardTheme } from "@/lib/dashboard/ThemeProvider";
 import { Button } from "@/components/ui/button";
 import { ROUTES } from "@/lib/routes";
@@ -81,21 +82,7 @@ export default function DashboardHeader() {
 
         <div className="flex shrink-0 items-center gap-2 sm:gap-3">
           {user?.left_credit != null ? (
-            <div
-              className={cn(
-                "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1.5 text-xs font-medium backdrop-blur-md sm:px-3",
-                isDark
-                  ? "border-sky-400/25 bg-sky-400/10 text-sky-200"
-                  : "border-sky-300/70 bg-sky-50/80 text-sky-900"
-              )}
-              title="Credits left for new flipbooks"
-            >
-              <Sparkles className="size-3.5 shrink-0 opacity-80" />
-              <span className="whitespace-nowrap">
-                {user.left_credit}{" "}
-                {user.left_credit === 1 ? "credit" : "credits"} left
-              </span>
-            </div>
+            <CreditsDropdown user={user} isDark={isDark} />
           ) : null}
           <ThemeToggle className="hidden md:flex" />
           {user ? (

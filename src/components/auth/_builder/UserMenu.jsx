@@ -56,7 +56,7 @@ export default function UserMenu({
           <ChevronDown
             className={cn(
               "size-4",
-              isDark ? "text-slate-400" : "text-indigo-400"
+              isDark ? "text-slate-400" : "text-sky-500/80"
             )}
           />
         </Button>
@@ -64,22 +64,23 @@ export default function UserMenu({
 
       <DropdownMenuContent
         align="end"
+        sideOffset={6}
         className={cn(
-          "min-w-52 rounded-2xl p-1.5 shadow-xl",
-            isDark
-              ? "border-white/15 bg-[#1a222d]/95 text-slate-100 backdrop-blur-xl"
-              : "border-indigo-100/80 bg-popover"
+          "min-w-52 overflow-hidden rounded-2xl border p-1.5 shadow-xl",
+          isDark
+            ? "border-white/12 bg-[#151b22]/98 text-slate-100 backdrop-blur-xl"
+            : "border-[#d9cfc0]/70 bg-[#fbf8f3]/98 text-slate-900 backdrop-blur-xl"
         )}
       >
         <div
           className={cn(
-            "flex items-center gap-3 rounded-xl px-3 py-2.5",
+            "flex items-center gap-2.5 rounded-xl px-2.5 py-2",
             isDark
-              ? "bg-white/5"
-              : "bg-linear-to-br from-indigo-50 to-sky-50"
+              ? "bg-white/[0.05]"
+              : "bg-linear-to-br from-sky-50 to-rose-50"
           )}
         >
-          <span className="flex size-9 items-center justify-center rounded-full bg-linear-to-br from-sky-500 to-rose-500 text-xs font-semibold text-white">
+          <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-linear-to-br from-sky-500 to-rose-500 text-xs font-semibold text-white">
             {initials}
           </span>
           <div className="min-w-0">
@@ -105,38 +106,47 @@ export default function UserMenu({
         </div>
 
         {showMobileThemeToggle ? (
-          <div className="px-1 md:hidden">
+          <div className="mt-1 px-0.5 md:hidden">
             <ThemeToggle variant="menu" />
           </div>
         ) : null}
 
         <DropdownMenuSeparator
-          className={cn("my-1.5", isDark && "bg-white/10")}
+          className={cn("my-1.5", isDark ? "bg-white/10" : "bg-stone-200/80")}
         />
 
         {onDashboard ? (
           <DropdownMenuItem
             className={cn(
-              "rounded-lg px-2.5 py-2",
-              isDark && "focus:bg-white/10 focus:text-white"
+              "cursor-pointer gap-2 rounded-lg px-2.5 py-2",
+              isDark
+                ? "focus:bg-white/10 focus:text-white"
+                : "focus:bg-white/80"
             )}
             onClick={() => router.push(ROUTES.home)}
           >
-            <Globe className="size-4" />
+            <Globe className="size-4 opacity-80" />
             Go to website
           </DropdownMenuItem>
         ) : (
           <DropdownMenuItem
-            className="rounded-lg px-2.5 py-2"
+            className={cn(
+              "cursor-pointer gap-2 rounded-lg px-2.5 py-2",
+              isDark
+                ? "focus:bg-white/10 focus:text-white"
+                : "focus:bg-white/80"
+            )}
             onClick={() => router.push(ROUTES.dashboard)}
           >
-            <LayoutDashboard className="size-4" />
+            <LayoutDashboard className="size-4 opacity-80" />
             Dashboard
           </DropdownMenuItem>
         )}
         <DropdownMenuItem
-          variant="destructive"
-          className="rounded-lg px-2.5 py-2"
+          className={cn(
+            "cursor-pointer gap-2 rounded-lg px-2.5 py-2 text-rose-600 focus:bg-rose-500/10 focus:text-rose-600",
+            isDark && "text-rose-300 focus:bg-rose-500/15 focus:text-rose-200"
+          )}
           onClick={onLogout}
         >
           <LogOut className="size-4" />
