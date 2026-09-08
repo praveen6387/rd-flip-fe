@@ -28,7 +28,7 @@ function planTypeLabel(type) {
 
 export default function Plans({ plans = [], error }) {
   const { isDark } = useDashboardTheme();
-  const { user } = useAuth();
+  const { user, refreshUser } = useAuth();
   const [buyingPlanId, setBuyingPlanId] = useState(null);
   const activePlans = plans.filter((plan) => plan.is_active !== false);
 
@@ -50,6 +50,7 @@ export default function Plans({ plans = [], error }) {
         onSuccess: async (response) => {
           try {
             await verifyPayment(response);
+            await refreshUser();
             toast.success("Payment verified successfully.");
           } catch (err) {
             toast.error(err?.message || "Payment verification failed");

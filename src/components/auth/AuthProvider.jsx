@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import {
   SESSION_EXPIRED_EVENT,
   clearAuth,
+  fetchMe,
   getStoredUser,
   hasAccessToken,
   login as loginRequest,
@@ -91,6 +92,15 @@ export function AuthProvider({ children }) {
     setAuthMode(null);
   }
 
+  async function refreshUser() {
+    const nextUser = await fetchMe();
+    if (nextUser) {
+      setStoredUser(nextUser);
+      setUser(nextUser);
+    }
+    return nextUser;
+  }
+
   return (
     <AuthContext.Provider
       value={{
@@ -98,6 +108,7 @@ export function AuthProvider({ children }) {
         login,
         signup,
         logout,
+        refreshUser,
         ready,
         authMode,
         setAuthMode,

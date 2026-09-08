@@ -173,3 +173,16 @@ export async function updateSocialLinks(payload) {
 
   return result;
 }
+
+export async function fetchMe() {
+  const response = await authenticatedFetch(ENDPOINTS.me, {
+    method: "GET",
+  });
+  const result = await response.json().catch(() => null);
+
+  if (!response.ok || result?.status === "fail") {
+    throw new Error(result?.message || "Failed to fetch profile");
+  }
+
+  return result.data?.user ?? null;
+}
