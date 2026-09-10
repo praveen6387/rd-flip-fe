@@ -4,6 +4,13 @@ import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 
 const MIN_VISIBLE_MS = 700;
+export const NAV_PROGRESS_EVENT = "nav-progress:start";
+
+/** Start the shared dashboard nav progress bar (works with router.push). */
+export function startNavProgress() {
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(new Event(NAV_PROGRESS_EVENT));
+}
 
 export default function NavProgress() {
   const pathname = usePathname();
@@ -76,8 +83,10 @@ export default function NavProgress() {
     }
 
     document.addEventListener("click", onClick, true);
+    window.addEventListener(NAV_PROGRESS_EVENT, start);
     return () => {
       document.removeEventListener("click", onClick, true);
+      window.removeEventListener(NAV_PROGRESS_EVENT, start);
       if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
     };
   }, []);

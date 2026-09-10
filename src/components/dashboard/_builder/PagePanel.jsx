@@ -21,8 +21,8 @@ export default function PagePanel({
           {eyebrow ? (
             <p
               className={cn(
-                "text-[11px] font-medium tracking-[0.28em] uppercase",
-                isDark ? "text-sky-300" : "text-sky-800/80"
+                "text-xs font-semibold tracking-[0.22em] uppercase",
+                isDark ? "text-sky-300" : "text-sky-700"
               )}
             >
               {eyebrow}
@@ -30,10 +30,10 @@ export default function PagePanel({
           ) : null}
           <h2
             className={cn(
-              "mt-2 leading-[1.15] tracking-tight",
+              "mt-2.5 leading-[1.12] tracking-tight",
               simple
-                ? "text-2xl font-semibold sm:text-3xl"
-                : "font-heading text-3xl sm:text-4xl lg:text-[2.75rem]",
+                ? "text-3xl font-semibold sm:text-[2.1rem]"
+                : "font-heading text-[2rem] sm:text-4xl lg:text-[2.85rem]",
               isDark ? "text-white" : "text-slate-900"
             )}
           >
@@ -42,7 +42,7 @@ export default function PagePanel({
           {description ? (
             <p
               className={cn(
-                "mt-3 max-w-xl text-sm leading-7",
+                "mt-3.5 max-w-xl text-[15px] leading-7",
                 isDark ? "text-slate-300" : "text-slate-600"
               )}
             >

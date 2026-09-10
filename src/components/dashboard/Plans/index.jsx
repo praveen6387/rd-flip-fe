@@ -129,8 +129,8 @@ export default function Plans({ plans = [], error }) {
                 className={cn(
                   "flex flex-col rounded-[1.6rem] border p-5 sm:p-6",
                   isDark
-                    ? "border-white/12 bg-[#151b22]/92"
-                    : "border-stone-300/55 bg-white/40"
+                    ? "border-white/12 bg-[#141b24]/96 shadow-[0_18px_50px_-28px_rgba(0,0,0,0.7)]"
+                    : "border-[#e4d9c8]/80 bg-[#fffcf8]/88 shadow-[0_18px_40px_-28px_rgba(120,90,50,0.22)]"
                 )}
               >
                 <p

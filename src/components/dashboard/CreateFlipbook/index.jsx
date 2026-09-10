@@ -70,8 +70,8 @@ function NoCreditsState({ isDark, expireLabel, reason }) {
         className={cn(
           "mx-auto max-w-md rounded-[1.6rem] border border-dashed px-6 py-8 text-center sm:px-8",
           isDark
-            ? "border-white/20 bg-[#151b22]/92"
-            : "border-stone-300/70 bg-white/50"
+            ? "border-white/10 bg-[#141b24]/96"
+            : "border-[#e4d9c8]/80 bg-[#fffcf8]/88"
         )}
       >
         <span
@@ -125,12 +125,12 @@ function NoCreditsState({ isDark, expireLabel, reason }) {
 
 function FieldShell({ label, hint, htmlFor, required, isDark, children }) {
   return (
-    <div className="space-y-2">
+    <div className="space-y-2.5">
       <div className="flex items-baseline justify-between gap-3">
         <Label
           htmlFor={htmlFor}
           className={cn(
-            "text-sm font-semibold",
+            "text-[15px] font-semibold",
             isDark ? "text-white" : "text-slate-900"
           )}
         >
@@ -142,8 +142,8 @@ function FieldShell({ label, hint, htmlFor, required, isDark, children }) {
           ) : (
             <span
               className={cn(
-                "ml-2 text-xs font-medium",
-                isDark ? "text-slate-300" : "text-slate-600"
+                "ml-2 text-[13px] font-medium",
+                isDark ? "text-slate-400" : "text-slate-500"
               )}
             >
               optional
@@ -153,7 +153,7 @@ function FieldShell({ label, hint, htmlFor, required, isDark, children }) {
         {hint ? (
           <span
             className={cn(
-              "text-xs font-medium",
+              "text-[13px] font-medium",
               isDark ? "text-slate-300" : "text-slate-600"
             )}
           >
@@ -168,10 +168,10 @@ function FieldShell({ label, hint, htmlFor, required, isDark, children }) {
 
 function glassInput(isDark) {
   return cn(
-    "h-10 rounded-xl border px-3 text-sm shadow-none",
+    "h-11 rounded-xl border px-3.5 text-[15px] shadow-none",
     isDark
-      ? "border-white/15 bg-[#1a222d] text-white placeholder:text-slate-500 focus-visible:border-sky-400/50 focus-visible:bg-[#1f2936] focus-visible:ring-sky-400/20"
-      : "border-stone-300/60 bg-white/45 text-slate-900 placeholder:text-slate-400 focus-visible:border-sky-400/60 focus-visible:bg-white/70 focus-visible:ring-sky-300/30"
+      ? "border-white/12 bg-[#1a222d] text-white placeholder:text-slate-500 focus-visible:border-sky-400/50 focus-visible:bg-[#1f2936] focus-visible:ring-sky-400/20"
+      : "border-[#e0d5c4]/90 bg-[#fffcf8]/95 text-slate-900 placeholder:text-slate-400 focus-visible:border-sky-400/60 focus-visible:bg-white focus-visible:ring-sky-300/30"
   );
 }
 
@@ -315,10 +315,10 @@ export default function CreateFlipbook({ user, error }) {
       actions={
         <div
           className={cn(
-            "inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium",
+            "inline-flex items-center gap-1.5 rounded-full border px-3.5 py-2 text-sm font-medium",
             isDark
               ? "border-sky-400/25 bg-sky-400/10 text-sky-200"
-              : "border-sky-300/70 bg-sky-50/80 text-sky-900"
+              : "border-sky-300/70 bg-sky-50/90 text-sky-900"
           )}
         >
           <Sparkles className="size-3.5 opacity-80" />
@@ -326,12 +326,12 @@ export default function CreateFlipbook({ user, error }) {
         </div>
       }
     >
-      <form onSubmit={handleSubmit} className="dash-stagger relative space-y-8">
+      <form onSubmit={handleSubmit} className="dash-stagger relative space-y-7">
         {formError ? (
           <div
             role="alert"
             className={cn(
-              "rounded-2xl border px-4 py-3 text-sm",
+              "rounded-2xl border px-4 py-3.5 text-[15px]",
               isDark
                 ? "border-rose-400/35 bg-rose-500/15 text-rose-100"
                 : "border-rose-200 bg-rose-50 text-rose-800"
@@ -342,16 +342,16 @@ export default function CreateFlipbook({ user, error }) {
         ) : null}
         <section
           className={cn(
-            "space-y-5 rounded-[1.6rem] border p-5 sm:p-6",
+            "space-y-5 rounded-[1.6rem] border p-5 sm:p-7",
             isDark
-              ? "border-white/12 bg-[#151b22]/92"
-              : "border-stone-300/55 bg-white/20"
+              ? "border-white/10 bg-[#141b24]/96 shadow-[0_18px_50px_-28px_rgba(0,0,0,0.7)]"
+              : "border-[#e4d9c8]/80 bg-[#fffcf8]/92 shadow-[0_18px_40px_-28px_rgba(120,90,50,0.22)]"
           )}
         >
           <div>
             <h3
               className={cn(
-                "text-base font-semibold tracking-tight",
+                "text-lg font-semibold tracking-tight",
                 isDark ? "text-white" : "text-slate-900"
               )}
             >
@@ -359,7 +359,7 @@ export default function CreateFlipbook({ user, error }) {
             </h3>
             <p
               className={cn(
-                "mt-1 text-sm",
+                "mt-1.5 text-[15px] leading-6",
                 isDark ? "text-slate-300" : "text-slate-600"
               )}
             >
@@ -441,17 +441,17 @@ export default function CreateFlipbook({ user, error }) {
         {lab ? (
           <section
             className={cn(
-              "space-y-5 rounded-[1.6rem] border p-5 sm:p-6",
+              "space-y-5 rounded-[1.6rem] border p-5 sm:p-7",
               isDark
-                ? "border-white/12 bg-[#151b22]/92"
-                : "border-stone-300/55 bg-white/20"
+                ? "border-white/10 bg-[#141b24]/96 shadow-[0_18px_50px_-28px_rgba(0,0,0,0.7)]"
+                : "border-[#e4d9c8]/80 bg-[#fffcf8]/92 shadow-[0_18px_40px_-28px_rgba(120,90,50,0.22)]"
             )}
           >
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
                 <h3
                   className={cn(
-                    "text-base font-semibold tracking-tight",
+                    "text-lg font-semibold tracking-tight",
                     isDark ? "text-white" : "text-slate-900"
                   )}
                 >
@@ -459,8 +459,8 @@ export default function CreateFlipbook({ user, error }) {
                 </h3>
                 <p
                   className={cn(
-                    "mt-1 text-xs",
-                    isDark ? "text-slate-400" : "text-slate-500"
+                    "mt-1.5 text-[15px]",
+                    isDark ? "text-slate-400" : "text-slate-600"
                   )}
                 >
                   Prefills from profile — edit if needed.
@@ -468,7 +468,7 @@ export default function CreateFlipbook({ user, error }) {
               </div>
               <span
                 className={cn(
-                  "shrink-0 rounded-full border px-2.5 py-1 text-[11px] font-medium tracking-wide",
+                  "shrink-0 rounded-full border px-2.5 py-1 text-xs font-semibold tracking-wide",
                   isDark
                     ? "border-sky-400/30 bg-sky-400/15 text-sky-200"
                     : "border-sky-300/70 bg-sky-100/80 text-sky-800"

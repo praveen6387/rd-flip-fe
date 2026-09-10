@@ -55,15 +55,15 @@ export default function FlipbookTable({ flipbooks }) {
 
   const cellBorder = isDark ? "border-white/10" : "border-stone-200/80";
   const headClass = cn(
-    "border-b px-4 py-2.5 text-left text-[11px] font-medium tracking-[0.16em] uppercase",
+    "border-b px-4 py-3 text-left text-xs font-semibold tracking-[0.14em] uppercase",
     cellBorder,
     isDark
-      ? "bg-white/[0.06] text-slate-400"
-      : "bg-white/55 text-slate-500"
+      ? "bg-white/[0.05] text-slate-400"
+      : "bg-[#fffcf8]/90 text-slate-500"
   );
-  const cellClass = cn("border-b px-4 py-3", cellBorder);
+  const cellClass = cn("border-b px-4 py-3.5", cellBorder);
   const actionBtn = cn(
-    "inline-flex h-8 items-center gap-1.5 rounded-lg border px-2.5 text-xs font-medium",
+    "inline-flex h-9 items-center gap-1.5 rounded-lg border px-3 text-[13px] font-medium",
     isDark
       ? "border-white/15 text-white hover:bg-white/10"
       : "border-stone-300 text-slate-800 hover:bg-white/80"
@@ -83,10 +83,10 @@ export default function FlipbookTable({ flipbooks }) {
           onChange={(event) => setQuery(event.target.value)}
           placeholder="Search title, studio, or ID"
           className={cn(
-            "h-10 rounded-xl border pl-9",
+            "h-11 rounded-xl border pl-9 text-[15px]",
             isDark
-              ? "border-white/15 bg-white/[0.06] text-white placeholder:text-slate-500"
-              : "border-stone-300/70 bg-white/70 text-slate-900 placeholder:text-slate-400"
+              ? "border-white/12 bg-[#1a222d]/90 text-white placeholder:text-slate-500"
+              : "border-[#e0d5c4]/90 bg-[#fffcf8]/95 text-slate-900 placeholder:text-slate-400"
           )}
         />
       </div>
@@ -95,8 +95,8 @@ export default function FlipbookTable({ flipbooks }) {
         className={cn(
           "overflow-x-auto rounded-xl border",
           isDark
-            ? "border-white/12 bg-[#151b22]/92"
-            : "border-stone-300/60 bg-white/40"
+            ? "border-white/10 bg-[#141b24]/96 shadow-[0_18px_50px_-28px_rgba(0,0,0,0.7)]"
+            : "border-[#e4d9c8]/80 bg-[#fffcf8]/90 shadow-[0_18px_40px_-28px_rgba(120,90,50,0.22)]"
         )}
       >
         <table className="min-w-[800px] w-full border-collapse text-sm">

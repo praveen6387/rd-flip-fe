@@ -177,17 +177,17 @@ export default function ImageCovers({ covers, onChange, isDark }) {
   return (
     <section
       className={cn(
-        "relative space-y-5 rounded-[1.6rem] border p-5 sm:p-6",
+        "relative space-y-5 rounded-[1.6rem] border p-5 sm:p-7",
         isDark
-          ? "border-white/12 bg-[#151b22]/92"
-          : "border-stone-300/55 bg-white/20"
+          ? "border-white/10 bg-[#141b24]/96 shadow-[0_18px_50px_-28px_rgba(0,0,0,0.7)]"
+          : "border-[#e4d9c8]/80 bg-[#fffcf8]/92 shadow-[0_18px_40px_-28px_rgba(120,90,50,0.22)]"
       )}
     >
       <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
         <div>
             <h3
             className={cn(
-              "text-base font-semibold tracking-tight",
+              "text-lg font-semibold tracking-tight",
               isDark ? "text-white" : "text-slate-900"
             )}
           >
@@ -195,7 +195,7 @@ export default function ImageCovers({ covers, onChange, isDark }) {
           </h3>
           <p
             className={cn(
-              "mt-1 text-sm",
+              "mt-1.5 max-w-xl text-[15px] leading-6",
               isDark ? "text-slate-300" : "text-slate-600"
             )}
           >
@@ -205,7 +205,7 @@ export default function ImageCovers({ covers, onChange, isDark }) {
         </div>
         <p
           className={cn(
-            "text-sm font-medium",
+            "text-[15px] font-semibold",
             isDark ? "text-slate-200" : "text-slate-700"
           )}
         >
@@ -299,8 +299,8 @@ function CoverZone({
       className={cn(
         "rounded-[1.35rem] border p-4",
         isDark
-          ? "border-white/20 bg-white/[0.03]"
-          : "border-stone-300/50 bg-white/25"
+          ? "border-white/15 bg-white/[0.04]"
+          : "border-[#e0d5c4]/80 bg-[#f3eee6]/70"
       )}
       onDragOver={(event) => {
         event.preventDefault();
@@ -319,7 +319,7 @@ function CoverZone({
         <div>
           <h4
             className={cn(
-              "text-sm font-semibold",
+              "text-[15px] font-semibold",
               isDark ? "text-white" : "text-slate-900"
             )}
           >
@@ -327,7 +327,7 @@ function CoverZone({
           </h4>
           <p
             className={cn(
-              "mt-0.5 text-xs",
+              "mt-0.5 text-[13px]",
               isDark ? "text-slate-300" : "text-slate-600"
             )}
           >
@@ -340,7 +340,7 @@ function CoverZone({
           disabled={disabled || !canAdd}
           onClick={() => inputRef.current?.click()}
           className={cn(
-            "inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-full px-3 text-xs font-medium transition disabled:cursor-not-allowed",
+            "inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-full px-3.5 text-[13px] font-semibold transition disabled:cursor-not-allowed",
             isDark
               ? "bg-white/10 text-white hover:bg-white/16 disabled:opacity-40"
               : "bg-slate-900 text-white hover:bg-slate-800 disabled:opacity-40"
@@ -368,7 +368,7 @@ function CoverZone({
           disabled={disabled || !canAdd}
           onClick={() => inputRef.current?.click()}
           className={cn(
-            "flex min-h-28 w-full cursor-pointer flex-col items-center justify-center rounded-2xl border border-dashed px-4 text-center text-sm transition disabled:cursor-not-allowed",
+            "flex min-h-32 w-full cursor-pointer flex-col items-center justify-center rounded-2xl border border-dashed px-4 text-center text-[15px] transition disabled:cursor-not-allowed",
             isDark
               ? "border-white/20 text-slate-400 hover:border-white/35 hover:bg-white/5"
               : "border-stone-300 text-slate-500 hover:border-stone-400 hover:bg-white/50"

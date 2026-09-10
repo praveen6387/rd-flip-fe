@@ -119,7 +119,7 @@ function SocialCard({ platform, value, isDark }) {
         <div className="min-w-0 flex-1">
           <p
             className={cn(
-              "text-[11px] font-medium tracking-[0.16em] uppercase",
+              "text-xs font-semibold tracking-[0.14em] uppercase",
               isDark ? "text-slate-400" : "text-slate-500"
             )}
           >
@@ -132,7 +132,7 @@ function SocialCard({ platform, value, isDark }) {
               target="_blank"
               rel="noreferrer"
               className={cn(
-                "mt-1.5 block truncate text-sm font-semibold underline-offset-4 transition hover:underline",
+                "mt-1.5 block truncate text-[15px] font-semibold underline-offset-4 transition hover:underline",
                 isDark ? "text-white" : "text-slate-900"
               )}
             >
@@ -141,7 +141,7 @@ function SocialCard({ platform, value, isDark }) {
           ) : (
             <p
               className={cn(
-                "mt-1.5 text-sm",
+                "mt-1.5 text-[15px]",
                 isDark ? "text-slate-500" : "text-slate-400"
               )}
             >
@@ -152,7 +152,7 @@ function SocialCard({ platform, value, isDark }) {
 
         <span
           className={cn(
-            "mt-0.5 shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
+            "mt-0.5 shrink-0 rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide",
             hasValue
               ? isDark
                 ? "bg-emerald-400/15 text-emerald-200 ring-1 ring-emerald-400/25"
@@ -273,7 +273,7 @@ export default function SocialLinks({ user, isDark }) {
         <div>
           <h3
             className={cn(
-              "font-heading text-lg tracking-tight",
+              "font-heading text-xl tracking-tight sm:text-[1.35rem]",
               isDark ? "text-slate-100" : "text-slate-900"
             )}
           >
@@ -281,8 +281,8 @@ export default function SocialLinks({ user, isDark }) {
           </h3>
           <p
             className={cn(
-              "mt-1 text-sm",
-              isDark ? "text-slate-400" : "text-slate-500"
+              "mt-1.5 text-[15px]",
+              isDark ? "text-slate-400" : "text-slate-600"
             )}
           >
             {connectedCount} of {PLATFORMS.length} connected — shown on your
@@ -294,7 +294,7 @@ export default function SocialLinks({ user, isDark }) {
           size="sm"
           onClick={openEditor}
           className={cn(
-            "h-9 shrink-0 gap-1.5 rounded-full px-4",
+            "h-10 shrink-0 gap-1.5 rounded-full px-4 text-sm",
             isDark
               ? "bg-white/10 text-white hover:bg-white/16"
               : "bg-slate-900 text-white hover:bg-slate-800"

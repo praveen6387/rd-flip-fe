@@ -13,6 +13,7 @@ import {
 import { cn } from "@/lib/cn";
 import { ROUTES } from "@/lib/routes";
 import ThemeToggle from "@/lib/dashboard/_builder/ThemeToggle";
+import { startNavProgress } from "@/lib/dashboard/_builder/NavProgress";
 
 function getInitials(user) {
   const first = user?.first_name?.[0] ?? "";
@@ -136,7 +137,10 @@ export default function UserMenu({
                 ? "focus:bg-white/10 focus:text-white"
                 : "focus:bg-white/80"
             )}
-            onClick={() => router.push(ROUTES.dashboard)}
+            onClick={() => {
+              startNavProgress();
+              router.push(ROUTES.dashboard);
+            }}
           >
             <LayoutDashboard className="size-4 opacity-80" />
             Dashboard

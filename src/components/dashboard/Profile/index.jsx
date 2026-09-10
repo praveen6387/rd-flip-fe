@@ -11,6 +11,11 @@ import {
 import { useDashboardTheme } from "@/lib/dashboard/ThemeProvider";
 import { cn } from "@/lib/cn";
 
+const cardSurface = (isDark) =>
+  isDark
+    ? "border-white/10 bg-[#141b24]/96 shadow-[0_18px_50px_-28px_rgba(0,0,0,0.7)]"
+    : "border-[#e4d9c8]/80 bg-[#fffcf8]/92 shadow-[0_18px_40px_-28px_rgba(120,90,50,0.2)]";
+
 function formatDate(value) {
   if (!value) return "—";
   return new Date(value).toLocaleDateString("en-IN", {
@@ -32,7 +37,7 @@ function InfoHint({ label, hint, isDark }) {
       <TooltipTrigger
         type="button"
         className={cn(
-          "inline-flex size-4 items-center justify-center rounded-full",
+          "inline-flex size-5 items-center justify-center rounded-full",
           isDark
             ? "text-slate-400 hover:text-sky-300"
             : "text-slate-400 hover:text-sky-700"
@@ -50,19 +55,19 @@ function InfoHint({ label, hint, isDark }) {
 
 function Field({ label, value, icon: Icon, isDark }) {
   return (
-    <div className="group relative min-w-0 px-5 py-5 sm:px-6">
+    <div className="group relative min-w-0 px-5 py-5 sm:px-6 sm:py-6">
       {Icon ? (
         <Icon
           aria-hidden
           className={cn(
-            "pointer-events-none absolute right-5 top-5 size-10 opacity-[0.08] transition duration-500 group-hover:opacity-[0.16]",
+            "pointer-events-none absolute right-5 top-5 size-11 opacity-[0.1] transition duration-500 group-hover:opacity-[0.18]",
             isDark ? "text-white" : "text-sky-800"
           )}
         />
       ) : null}
       <p
         className={cn(
-          "text-[10px] font-medium tracking-[0.22em] uppercase",
+          "text-xs font-semibold tracking-[0.16em] uppercase",
           isDark ? "text-slate-400" : "text-slate-500"
         )}
       >
@@ -70,7 +75,7 @@ function Field({ label, value, icon: Icon, isDark }) {
       </p>
       <p
         className={cn(
-          "mt-2 text-[15px] font-medium tracking-tight wrap-break-word",
+          "mt-2.5 text-base font-semibold tracking-tight wrap-break-word sm:text-[1.05rem]",
           isDark ? "text-white" : "text-slate-900"
         )}
       >
@@ -86,7 +91,7 @@ function CreditStat({ label, value, hint, isDark }) {
       <div className="flex items-center gap-1.5">
         <p
           className={cn(
-            "text-[10px] font-medium tracking-[0.18em] uppercase",
+            "text-xs font-semibold tracking-[0.14em] uppercase",
             isDark ? "text-slate-400" : "text-slate-500"
           )}
         >
@@ -96,7 +101,7 @@ function CreditStat({ label, value, hint, isDark }) {
       </div>
       <p
         className={cn(
-          "font-heading mt-2 text-2xl tracking-tight sm:text-[1.65rem]",
+          "font-heading mt-2.5 text-[1.75rem] tracking-tight sm:text-[1.85rem]",
           isDark ? "text-white" : "text-slate-900"
         )}
       >
@@ -106,15 +111,28 @@ function CreditStat({ label, value, hint, isDark }) {
   );
 }
 
-function SectionRule({ isDark }) {
+function SectionHeader({ title, description, isDark }) {
   return (
-    <div
-      aria-hidden
-      className={cn(
-        "h-px bg-linear-to-r from-transparent to-transparent",
-        isDark ? "via-white/15" : "via-stone-300/70"
-      )}
-    />
+    <div className="mb-4">
+      <h3
+        className={cn(
+          "font-heading text-xl tracking-tight sm:text-[1.35rem]",
+          isDark ? "text-slate-100" : "text-slate-900"
+        )}
+      >
+        {title}
+      </h3>
+      {description ? (
+        <p
+          className={cn(
+            "mt-1.5 text-[15px] leading-6",
+            isDark ? "text-slate-400" : "text-slate-600"
+          )}
+        >
+          {description}
+        </p>
+      ) : null}
+    </div>
   );
 }
 
@@ -130,7 +148,7 @@ export default function Profile({ user, error }) {
       >
         <div
           className={cn(
-            "rounded-2xl border px-5 py-8 text-center text-sm",
+            "rounded-2xl border px-5 py-8 text-center text-[15px]",
             isDark
               ? "border-rose-400/30 bg-rose-500/10 text-rose-100"
               : "border-rose-200/80 bg-rose-50/80 text-rose-700"
@@ -154,25 +172,27 @@ export default function Profile({ user, error }) {
       lead={
         <div
           className={cn(
-            "relative overflow-hidden rounded-[1.6rem] border px-5 py-5 sm:px-6",
-            isDark
-              ? "border-white/12 bg-[#151b22]/92"
-              : "border-white/50 bg-white/25"
+            "relative overflow-hidden rounded-[1.6rem] border px-5 py-6 sm:px-7 sm:py-7",
+            cardSurface(isDark)
           )}
         >
           <div
             aria-hidden
-            className="pointer-events-none absolute -right-10 top-1/2 size-40 -translate-y-1/2 rounded-full bg-sky-400/20 blur-3xl"
+            className="pointer-events-none absolute -right-10 top-1/2 size-44 -translate-y-1/2 rounded-full bg-sky-400/20 blur-3xl"
+          />
+          <div
+            aria-hidden
+            className="pointer-events-none absolute -left-8 -bottom-10 size-36 rounded-full bg-rose-300/20 blur-3xl"
           />
           <div className="relative flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-4">
-              <span className="relative flex size-[4.25rem] shrink-0 items-center justify-center rounded-[1.35rem] bg-linear-to-br from-sky-500 via-sky-600 to-rose-500 font-heading text-2xl text-white shadow-[0_16px_40px_-18px_rgba(14,165,233,0.7)]">
+              <span className="relative flex size-[4.5rem] shrink-0 items-center justify-center rounded-[1.4rem] bg-linear-to-br from-sky-500 via-sky-600 to-rose-500 font-heading text-[1.7rem] text-white shadow-[0_16px_40px_-18px_rgba(14,165,233,0.7)]">
                 {initials}
               </span>
               <div>
                 <p
                   className={cn(
-                    "font-heading text-xl tracking-tight",
+                    "font-heading text-[1.35rem] tracking-tight sm:text-2xl",
                     isDark ? "text-white" : "text-slate-900"
                   )}
                 >
@@ -180,8 +200,8 @@ export default function Profile({ user, error }) {
                 </p>
                 <p
                   className={cn(
-                    "mt-1 text-[11px] tracking-[0.22em] uppercase",
-                    isDark ? "text-sky-200/80" : "text-sky-800/70"
+                    "mt-1.5 text-xs font-semibold tracking-[0.18em] uppercase",
+                    isDark ? "text-sky-200/90" : "text-sky-700"
                   )}
                 >
                   {user.plan || "studio"} plan
@@ -190,8 +210,8 @@ export default function Profile({ user, error }) {
             </div>
             <p
               className={cn(
-                "max-w-xs text-sm leading-6 sm:text-right",
-                isDark ? "text-slate-400" : "text-slate-500"
+                "max-w-xs text-[15px] leading-7 sm:text-right",
+                isDark ? "text-slate-300" : "text-slate-600"
               )}
             >
               This identity appears on the flipbooks you share with clients.
@@ -200,32 +220,19 @@ export default function Profile({ user, error }) {
         </div>
       }
     >
-      <div className="dash-stagger space-y-8">
+      <div className="dash-stagger space-y-9">
         <section>
-          <div className="mb-4">
-            <h3
-              className={cn(
-                "font-heading text-lg tracking-tight",
-                isDark ? "text-slate-100" : "text-slate-900"
-              )}
-            >
-              Personal details
-            </h3>
-            <p
-              className={cn(
-                "mt-1 text-sm",
-                isDark ? "text-slate-400" : "text-slate-500"
-              )}
-            >
-              How clients and your studio can reach you.
-            </p>
-          </div>
+          <SectionHeader
+            title="Personal details"
+            description="How clients and your studio can reach you."
+            isDark={isDark}
+          />
           <div
             className={cn(
               "grid overflow-hidden rounded-[1.6rem] border sm:grid-cols-2",
               isDark
-                ? "divide-y divide-white/10 border-white/12 bg-[#151b22]/92 sm:divide-x sm:divide-y-0"
-                : "divide-y divide-white/50 border-white/45 bg-white/20 sm:divide-x sm:divide-y-0"
+                ? "divide-y divide-white/10 border-white/10 bg-[#141b24]/96 sm:divide-x sm:divide-y-0"
+                : "divide-y divide-[#ebe3d6] border-[#e4d9c8]/80 bg-[#fffcf8]/92 sm:divide-x sm:divide-y-0"
             )}
           >
             <Field
@@ -251,33 +258,18 @@ export default function Profile({ user, error }) {
           </div>
         </section>
 
-        <SectionRule isDark={isDark} />
-
         <section>
-          <div className="mb-4">
-            <h3
-              className={cn(
-                "font-heading text-lg tracking-tight",
-                isDark ? "text-slate-100" : "text-slate-900"
-              )}
-            >
-              Studio
-            </h3>
-            <p
-              className={cn(
-                "mt-1 text-sm",
-                isDark ? "text-slate-400" : "text-slate-500"
-              )}
-            >
-              Your brand identity on flipbooks.
-            </p>
-          </div>
+          <SectionHeader
+            title="Studio"
+            description="Your brand identity on flipbooks."
+            isDark={isDark}
+          />
           <div
             className={cn(
               "grid overflow-hidden rounded-[1.6rem] border sm:grid-cols-2",
               isDark
-                ? "divide-y divide-white/10 border-white/12 bg-[#151b22]/92 sm:divide-x sm:divide-y-0"
-                : "divide-y divide-white/50 border-white/45 bg-white/20 sm:divide-x sm:divide-y-0"
+                ? "divide-y divide-white/10 border-white/10 bg-[#141b24]/96 sm:divide-x sm:divide-y-0"
+                : "divide-y divide-[#ebe3d6] border-[#e4d9c8]/80 bg-[#fffcf8]/92 sm:divide-x sm:divide-y-0"
             )}
           >
             <Field label="Studio name" value={user.studio_name} isDark={isDark} />
@@ -285,37 +277,18 @@ export default function Profile({ user, error }) {
           </div>
         </section>
 
-        <SectionRule isDark={isDark} />
-
         <SocialLinks user={user} isDark={isDark} />
 
-        <SectionRule isDark={isDark} />
-
         <section>
-          <div className="mb-4">
-            <h3
-              className={cn(
-                "font-heading text-lg tracking-tight",
-                isDark ? "text-slate-100" : "text-slate-900"
-              )}
-            >
-              Credits
-            </h3>
-            <p
-              className={cn(
-                "mt-1 text-sm",
-                isDark ? "text-slate-400" : "text-slate-500"
-              )}
-            >
-              Track what you can still use for flipbooks.
-            </p>
-          </div>
+          <SectionHeader
+            title="Credits"
+            description="Track what you can still use for flipbooks."
+            isDark={isDark}
+          />
           <div
             className={cn(
-              "grid grid-cols-2 gap-y-6 rounded-[1.6rem] border px-4 py-5 sm:grid-cols-3 lg:grid-cols-5 sm:px-3 sm:py-6",
-              isDark
-                ? "border-white/12 bg-[#151b22]/92"
-                : "border-white/45 bg-white/20"
+              "grid grid-cols-2 gap-y-6 rounded-[1.6rem] border px-4 py-6 sm:grid-cols-3 lg:grid-cols-5 sm:px-3 sm:py-7",
+              cardSurface(isDark)
             )}
           >
             <CreditStat

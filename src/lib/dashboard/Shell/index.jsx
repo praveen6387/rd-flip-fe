@@ -3,7 +3,6 @@
 import Atmosphere from "@/lib/dashboard/_builder/Atmosphere";
 import Sidebar from "@/lib/dashboard/Sidebar";
 import DashboardHeader from "@/lib/dashboard/Header";
-import NavProgress from "@/lib/dashboard/_builder/NavProgress";
 import {
   DashboardThemeProvider,
   useDashboardTheme,
@@ -33,7 +32,6 @@ function ShellInner({ children }) {
           </div>
         </div>
       </div>
-      <NavProgress />
     </div>
   );
 }
