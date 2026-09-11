@@ -73,6 +73,7 @@ function Page({
   page,
   opened,
   bookClosed,
+  lite = false,
 }) {
   const frontUrl = faceToTextureUrl(frontFace);
   const backUrl = faceToTextureUrl(backFace);
@@ -80,10 +81,10 @@ function Page({
   const { gl } = useThree();
 
   useLayoutEffect(() => {
-    const anisotropy = gl.capabilities.getMaxAnisotropy();
+    const anisotropy = lite ? 1 : gl.capabilities.getMaxAnisotropy();
     configureTexture(frontTexture, frontFace?.crop, anisotropy);
     configureTexture(backTexture, backFace?.crop, anisotropy);
-  }, [frontTexture, backTexture, frontFace?.crop, backFace?.crop, gl]);
+  }, [frontTexture, backTexture, frontFace?.crop, backFace?.crop, gl, lite]);
 
   const group = useRef(null);
   const turnedAt = useRef(0);
@@ -124,13 +125,13 @@ function Page({
     ];
 
     const mesh = new SkinnedMesh(pageGeometry, materials);
-    mesh.castShadow = true;
-    mesh.receiveShadow = true;
+    mesh.castShadow = !lite;
+    mesh.receiveShadow = !lite;
     mesh.frustumCulled = false;
     mesh.add(skeleton.bones[0]);
     mesh.bind(skeleton);
     return mesh;
-  }, [frontTexture, backTexture, frontFace?.kind, backFace?.kind]);
+  }, [frontTexture, backTexture, frontFace?.kind, backFace?.kind, lite]);
 
   useFrame((_, delta) => {
     if (!skinnedMeshRef.current) return;
@@ -249,7 +250,7 @@ function Page({
   );
 }
 
-export default function Book({ bookPages }) {
+export default function Book({ bookPages, lite = false }) {
   const [page] = useAtom(pageAtom);
   const [delayedPage, setDelayedPage] = useState(page);
   const totalPages = bookPages.length;
@@ -286,6 +287,7 @@ export default function Book({ bookPages }) {
           bookClosed={delayedPage === 0 || delayedPage === totalPages}
           frontFace={pageData.front}
           backFace={pageData.back}
+          lite={lite}
         />
       ))}
     </group>

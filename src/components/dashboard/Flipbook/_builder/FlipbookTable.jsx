@@ -45,6 +45,8 @@ export default function FlipbookTable({ flipbooks }) {
     return flipbooks.filter((item) => matchesQuery(item, needle));
   }, [flipbooks, query]);
 
+  console.log(flipbooks)
+
   async function copyId(flipId) {
     try {
       await navigator.clipboard.writeText(flipId);

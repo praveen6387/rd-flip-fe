@@ -4,11 +4,7 @@ import { Loader, useTexture } from "@react-three/drei";
 import { Canvas } from "@react-three/fiber";
 import { Provider, useAtom } from "jotai";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { Suspense, useEffect, useMemo, useRef, useState } from "react";
-import {
-  buildBookPages,
-  collectTextureUrls,
-} from "./book/buildBookPages";
+import { Suspense, useEffect, useRef, useState } from "react";
 import BookExperience from "./book/BookExperience";
 import { PAGE_HEIGHT, PAGE_WIDTH } from "./book/pageGeometry";
 import { pageAtom } from "./book/state";
@@ -21,8 +17,7 @@ const OPEN_BOOK_H = PAGE_HEIGHT;
 const FIT_PADDING = 0.84;
 const CAMERA_FOV = 36;
 
-function fitBookToStage(stageW, stageH) {
-  const isMobile = stageW > 0 && stageW <= 768;
+function fitBookToStage(stageW, stageH, isMobile) {
   const cameraZ = isMobile ? 7.6 : 4.35;
   const cameraY = isMobile ? 0.22 : 0.32;
   const cameraFov = CAMERA_FOV;
@@ -33,7 +28,6 @@ function fitBookToStage(stageW, stageH) {
       cameraZ,
       cameraY,
       cameraFov,
-      isMobile,
     };
   }
 
@@ -51,7 +45,6 @@ function fitBookToStage(stageW, stageH) {
     cameraZ,
     cameraY,
     cameraFov,
-    isMobile,
   };
 }
 
@@ -121,14 +114,15 @@ function BookControls({ totalSpreads, active = true }) {
   );
 }
 
-function FlipStage({ bookPages, active = true }) {
+function FlipStage({ bookPages, textureUrls, active = true, isMobile = false }) {
   const stageRef = useRef(null);
   const [, setPage] = useAtom(pageAtom);
   const bookRotationRef = useRef(INITIAL_BOOK_Y);
   const dragRef = useRef({ moved: false });
   const pointerDragRef = useRef(null);
-  const textureUrls = useMemo(() => collectTextureUrls(bookPages), [bookPages]);
-  const [viewFit, setViewFit] = useState(() => fitBookToStage(1280, 720));
+  const [viewFit, setViewFit] = useState(() =>
+    fitBookToStage(isMobile ? 414 : 1280, isMobile ? 720 : 720, isMobile)
+  );
 
   useEffect(() => {
     const stage = stageRef.current;
@@ -136,16 +130,16 @@ function FlipStage({ bookPages, active = true }) {
 
     function measure() {
       const { width, height } = stage.getBoundingClientRect();
-      setViewFit(fitBookToStage(width, height));
+      setViewFit(fitBookToStage(width, height, isMobile));
     }
 
     measure();
     const observer = new ResizeObserver(measure);
     observer.observe(stage);
     return () => observer.disconnect();
-  }, []);
+  }, [isMobile]);
 
-  const { bookScale, cameraZ, cameraY, cameraFov, isMobile } = viewFit;
+  const { bookScale, cameraZ, cameraY, cameraFov } = viewFit;
 
   useEffect(() => {
     textureUrls.forEach((url) => useTexture.preload(url));
@@ -261,15 +255,18 @@ function FlipStage({ bookPages, active = true }) {
   return (
     <div ref={stageRef} className="flip-stage min-h-0 flex-1 touch-manipulation">
       <Canvas
-        key={isMobile ? "mobile" : "desktop"}
-        shadows
-        dpr={[1, 2]}
+        shadows={!isMobile}
+        dpr={isMobile ? 1 : [1, 1.5]}
         className="h-full w-full"
         camera={{
           position: [0, cameraY, cameraZ],
           fov: cameraFov,
         }}
-        gl={{ antialias: true, alpha: true }}
+        gl={{
+          antialias: !isMobile,
+          alpha: true,
+          powerPreference: "high-performance",
+        }}
         onCreated={({ gl }) => {
           gl.setClearColor(0x000000, 0);
           bindCanvasPointerHandlers(gl.domElement);
@@ -281,6 +278,7 @@ function FlipStage({ bookPages, active = true }) {
             dragRef={dragRef}
             bookRotationRef={bookRotationRef}
             scale={bookScale}
+            lite={isMobile}
           />
         </Suspense>
       </Canvas>
@@ -288,9 +286,12 @@ function FlipStage({ bookPages, active = true }) {
   );
 }
 
-function FlipEngineInner({ pages, active = true }) {
-  const bookPages = useMemo(() => buildBookPages(pages), [pages]);
-
+function FlipEngineInner({
+  bookPages,
+  textureUrls,
+  active = true,
+  isMobile = false,
+}) {
   if (!bookPages.length) {
     return (
       <p className="text-sm text-white/60">This album has no pages yet.</p>
@@ -320,7 +321,12 @@ function FlipEngineInner({ pages, active = true }) {
           }}
         />
       ) : null}
-      <FlipStage bookPages={bookPages} active={active} />
+      <FlipStage
+        bookPages={bookPages}
+        textureUrls={textureUrls}
+        active={active}
+        isMobile={isMobile}
+      />
       <BookControls totalSpreads={totalSpreads} active={active} />
     </div>
   );

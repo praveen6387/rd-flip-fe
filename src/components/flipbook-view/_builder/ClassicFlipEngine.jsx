@@ -2,36 +2,10 @@
 
 import { useEffect, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { s3DisplaySrc } from "@/lib/s3/media";
-import { buildFlipSheets } from "../buildSheets";
 import { useFlipSound } from "./useFlipSound";
 
 const PAGE_RATIO = 7 / 5;
-const MAX_HEIGHT_RATIO = 0.80;
-const WHITE_W = 1600;
-const WHITE_H = Math.round(WHITE_W / PAGE_RATIO);
-
-let whiteImageUrl = "";
-
-function getWhiteImageUrl() {
-  if (whiteImageUrl) return whiteImageUrl;
-  const canvas = document.createElement("canvas");
-  canvas.width = WHITE_W;
-  canvas.height = WHITE_H;
-  const ctx = canvas.getContext("2d");
-  if (!ctx) {
-    whiteImageUrl =
-      "data:image/svg+xml," +
-      encodeURIComponent(
-        `<svg xmlns="http://www.w3.org/2000/svg" width="${WHITE_W}" height="${WHITE_H}"><rect width="100%" height="100%" fill="#ffffff"/></svg>`
-      );
-    return whiteImageUrl;
-  }
-  ctx.fillStyle = "#ffffff";
-  ctx.fillRect(0, 0, WHITE_W, WHITE_H);
-  whiteImageUrl = canvas.toDataURL("image/png");
-  return whiteImageUrl;
-}
+const MAX_HEIGHT_RATIO = 0.8;
 
 function measurePage(stage) {
   const maxW = Math.max((stage?.clientWidth || 0) - 20, 140);
@@ -55,69 +29,16 @@ function measurePage(stage) {
   };
 }
 
-function loadImage(src) {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.decoding = "async";
-    img.onload = () => resolve(img);
-    img.onerror = () => reject(new Error(`Could not load ${src}`));
-    img.src = src;
-  });
-}
-
-async function splitSpread(src, crop) {
-  const img = await loadImage(src);
-  const halfW = Math.max(1, Math.floor(img.naturalWidth / 2));
-  const height = img.naturalHeight || 1;
-  const canvas = document.createElement("canvas");
-  canvas.width = halfW;
-  canvas.height = height;
-  const ctx = canvas.getContext("2d");
-  if (!ctx) throw new Error("Canvas unavailable");
-
-  ctx.fillStyle = "#ffffff";
-  ctx.fillRect(0, 0, halfW, height);
-  ctx.drawImage(
-    img,
-    crop === "left" ? 0 : halfW,
-    0,
-    halfW,
-    height,
-    0,
-    0,
-    halfW,
-    height
-  );
-
-  return canvas.toDataURL("image/png");
-}
-
-async function sheetToImageUrl(sheet, cache) {
-  if (cache.has(sheet.id)) return cache.get(sheet.id);
-  if (sheet.kind === "blank") {
-    const url = getWhiteImageUrl();
-    cache.set(sheet.id, url);
-    return url;
-  }
-
-  const src = s3DisplaySrc(sheet.src);
-  const url =
-    sheet.kind === "split" ? await splitSpread(src, sheet.crop) : src;
-
-  cache.set(sheet.id, url);
-  return url;
-}
-
-async function resolveSheetImages(sheets, cache) {
-  return Promise.all(sheets.map((sheet) => sheetToImageUrl(sheet, cache)));
-}
-
-export default function ClassicFlipEngine({ pages, active = true }) {
+export default function ClassicFlipEngine({
+  imageUrls,
+  sheetCount,
+  active = true,
+  isMobile = false,
+}) {
   const stageRef = useRef(null);
   const flipRef = useRef(null);
   const pageRef = useRef(0);
   const sizeRef = useRef({ w: 0, h: 0 });
-  const imageCacheRef = useRef(new Map());
   const coverModeRef = useRef("front");
   const activeRef = useRef(active);
   const { playFlipSound } = useFlipSound();
@@ -126,8 +47,6 @@ export default function ClassicFlipEngine({ pages, active = true }) {
   const [coverMode, setCoverMode] = useState("front");
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
-  const sheets = buildFlipSheets(pages);
-  const pagesKey = sheets.map((sheet) => sheet.id).join("|");
 
   useEffect(() => {
     coverModeRef.current = coverMode;
@@ -144,10 +63,7 @@ export default function ClassicFlipEngine({ pages, active = true }) {
   useEffect(() => {
     if (!active || loading) return undefined;
     const stage = stageRef.current;
-    if (!stage) return undefined;
-
-    const isMobile = window.matchMedia("(max-width: 768px)").matches;
-    if (!isMobile) return undefined;
+    if (!stage || !isMobile) return undefined;
 
     let touchStart = null;
     let touchHandled = false;
@@ -229,12 +145,13 @@ export default function ClassicFlipEngine({ pages, active = true }) {
       stage.removeEventListener("touchend", onTouchEnd);
       stage.removeEventListener("click", onClick);
     };
-  }, [active, loading, pagesKey]);
+  }, [active, loading, isMobile]);
 
   useEffect(() => {
+    if (!active) return undefined;
+
     const stage = stageRef.current;
-    const built = buildFlipSheets(pages);
-    if (!stage || !built.length) {
+    if (!stage || !imageUrls?.length) {
       setLoading(false);
       return undefined;
     }
@@ -247,17 +164,6 @@ export default function ClassicFlipEngine({ pages, active = true }) {
     async function mount(startPage, { showLoader = true } = {}) {
       if (showLoader) setLoading(true);
       setLoadError("");
-
-      let imageUrls;
-      try {
-        imageUrls = await resolveSheetImages(built, imageCacheRef.current);
-      } catch {
-        if (!cancelled) {
-          setLoadError("Could not load album photos.");
-          setLoading(false);
-        }
-        return;
-      }
 
       const { PageFlip } = await import("page-flip/dist/js/page-flip.module.js");
       if (cancelled || !stageRef.current) return;
@@ -281,8 +187,6 @@ export default function ClassicFlipEngine({ pages, active = true }) {
       book.className = "classic-flip-book";
       stage.appendChild(book);
 
-      const isMobile = window.matchMedia("(max-width: 768px)").matches;
-
       pageFlip = new PageFlip(book, {
         width: pageWidth,
         height: pageHeight,
@@ -290,15 +194,15 @@ export default function ClassicFlipEngine({ pages, active = true }) {
         showCover: true,
         usePortrait: false,
         autoSize: false,
-        drawShadow: true,
+        drawShadow: !isMobile,
         maxShadowOpacity: 0.4,
-        flippingTime: 700,
+        flippingTime: isMobile ? 500 : 700,
         startZIndex: 4,
         mobileScrollSupport: false,
         swipeDistance: 28,
         disableFlipByClick: isMobile,
         useMouseEvents: !isMobile,
-        startPage: Math.min(startPage, Math.max(built.length - 1, 0)),
+        startPage: Math.min(startPage, Math.max(imageUrls.length - 1, 0)),
       });
 
       pageFlip.loadFromImages(imageUrls);
@@ -363,7 +267,7 @@ export default function ClassicFlipEngine({ pages, active = true }) {
       flipRef.current = null;
       if (stageRef.current) stageRef.current.innerHTML = "";
     };
-  }, [pages, pagesKey]);
+  }, [active, imageUrls, isMobile]);
 
   useEffect(() => {
     if (!active) return undefined;
@@ -376,7 +280,7 @@ export default function ClassicFlipEngine({ pages, active = true }) {
     return () => window.removeEventListener("keydown", onKey);
   }, [active]);
 
-  if (!sheets.length) {
+  if (!sheetCount) {
     return (
       <p className="text-sm text-white/60">This album has no pages yet.</p>
     );

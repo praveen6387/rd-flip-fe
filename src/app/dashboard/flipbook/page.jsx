@@ -12,6 +12,7 @@ export default async function FlipbookPage() {
     ROUTES.dashboardFlipbook
   );
   const { flipbooks, error, unauthorized } = await listFlipbooks();
+  console.log(flipbooks)
 
   return (
     <Flipbook

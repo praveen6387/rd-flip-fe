@@ -1,20 +1,16 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Particles from "@/components/landing/_builder/Background/_builder/Particles";
+import { useInitialViewport } from "@/hooks/use-initial-viewport";
 import { isFlipbookExpired } from "@/lib/flipbook-active";
 import ClassicFlipEngine from "./_builder/ClassicFlipEngine";
 import FlipEngine from "./_builder/FlipEngine";
 import MuteToggle from "./_builder/MuteToggle";
 import ThemeSwitcher from "./_builder/ThemeSwitcher";
+import ViewerLandingLoader from "./_builder/ViewerLandingLoader";
 import { FlipSoundProvider, useFlipSound } from "./_builder/useFlipSound";
 import ViewerSocialLinks from "./_builder/ViewerSocialLinks";
-
-const STAR_COLORS = [
-  "rgba(253, 230, 138,",
-  "rgba(250, 250, 249,",
-  "rgba(252, 211, 77,",
-];
+import { prepareViewerMedia } from "./prepareViewerMedia";
 
 const THEME_KEY = "rd-flip-viewer-theme";
 
@@ -49,14 +45,35 @@ function formatDate(value) {
 
 function FlipbookViewInner({ flipbook }) {
   const [theme, setTheme] = useViewerTheme();
-  const [mounted, setMounted] = useState({ studio: true, classic: false });
+  const viewport = useInitialViewport();
   const { startBackgroundSong, stopBackgroundSong } = useFlipSound();
+  const [media, setMedia] = useState(null);
+  const [mediaError, setMediaError] = useState("");
+  const [loadProgress, setLoadProgress] = useState(0);
 
   useEffect(() => {
-    setMounted((current) =>
-      current[theme] ? current : { ...current, [theme]: true }
-    );
-  }, [theme]);
+    let cancelled = false;
+
+    setLoadProgress(0);
+    prepareViewerMedia(flipbook.pages, {
+      onProgress: (ratio) => {
+        if (!cancelled) setLoadProgress(ratio);
+      },
+    })
+      .then((prepared) => {
+        if (!cancelled) {
+          setLoadProgress(1);
+          setMedia(prepared);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setMediaError("Could not load album photos.");
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [flipbook.pages]);
 
   useEffect(() => {
     startBackgroundSong();
@@ -88,10 +105,6 @@ function FlipbookViewInner({ flipbook }) {
         theme === "classic" ? " flip-viewer--classic" : " flip-viewer--studio"
       }`}
     >
-      <div className="pointer-events-none absolute inset-0">
-        <Particles colors={STAR_COLORS} density={16000} />
-      </div>
-
       <header className="relative z-10 grid shrink-0 grid-cols-[1fr_auto_1fr] items-center gap-2 px-3 py-2 sm:gap-3 sm:px-6 sm:py-3">
         <div className="min-w-0">
           <p className="truncate text-[10px] font-medium tracking-[0.18em] text-amber-200/85 uppercase sm:text-[11px] sm:tracking-[0.22em]">
@@ -116,34 +129,31 @@ function FlipbookViewInner({ flipbook }) {
       </header>
 
       <div className="relative z-10 flex min-h-0 flex-1 flex-col px-1 pb-1 sm:px-4 sm:pb-2">
-        {mounted.studio ? (
-          <div
-            className={
-              theme === "studio"
-                ? "flex min-h-0 flex-1 flex-col"
-                : "pointer-events-none invisible absolute inset-0"
-            }
-            aria-hidden={theme !== "studio"}
-          >
-            <FlipEngine pages={flipbook.pages} active={theme === "studio"} />
-          </div>
-        ) : null}
-
-        {mounted.classic ? (
-          <div
-            className={
-              theme === "classic"
-                ? "flex min-h-0 flex-1 flex-col"
-                : "pointer-events-none invisible absolute inset-0"
-            }
-            aria-hidden={theme !== "classic"}
-          >
-            <ClassicFlipEngine
-              pages={flipbook.pages}
-              active={theme === "classic"}
-            />
-          </div>
-        ) : null}
+        {mediaError ? (
+          <p className="grid flex-1 place-items-center text-sm text-rose-300">
+            {mediaError}
+          </p>
+        ) : !media ? (
+          <ViewerLandingLoader
+            progress={loadProgress}
+            studioName={flipbook.studio_name || "RD Flip"}
+            title={flipbook.title}
+          />
+        ) : theme === "studio" ? (
+          <FlipEngine
+            bookPages={media.bookPages}
+            textureUrls={media.textureUrls}
+            active
+            isMobile={viewport.isMobile}
+          />
+        ) : (
+          <ClassicFlipEngine
+            imageUrls={media.classicUrls}
+            sheetCount={media.sheets.length}
+            active
+            isMobile={viewport.isMobile}
+          />
+        )}
       </div>
     </main>
   );
@@ -154,10 +164,6 @@ function ExpiredView({ flipbook, error, details }) {
 
   return (
     <main className="relative flex min-h-dvh flex-col overflow-hidden bg-[#07070a] text-white">
-      <div className="pointer-events-none absolute inset-0">
-        <Particles colors={STAR_COLORS} density={16000} />
-      </div>
-
       <header className="relative z-10 grid shrink-0 grid-cols-[1fr_auto_1fr] items-center gap-2 px-3 py-2 sm:gap-3 sm:px-6 sm:py-3">
         <div className="min-w-0">
           <p className="truncate text-[10px] font-medium tracking-[0.18em] text-amber-200/85 uppercase sm:text-[11px] sm:tracking-[0.22em]">
@@ -179,7 +185,7 @@ function ExpiredView({ flipbook, error, details }) {
       </header>
 
       <div className="relative z-10 grid flex-1 place-items-center px-6 pb-16 text-center">
-        <div className="max-w-md rounded-3xl border border-white/10 bg-white/[0.04] px-6 py-8 backdrop-blur-md sm:px-8">
+        <div className="max-w-md rounded-3xl border border-white/10 bg-white/4 px-6 py-8 backdrop-blur-md sm:px-8">
           <p className="text-[11px] font-medium tracking-[0.22em] text-rose-300/90 uppercase">
             Expired
           </p>
