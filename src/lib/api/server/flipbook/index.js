@@ -53,16 +53,31 @@ export async function getPublicFlipbook(flip_id) {
     }
   );
   const result = await response.json().catch(() => null);
+  const flipbook = result?.data?.flipbook ?? null;
 
-  if (!response.ok || result?.status === "fail") {
+  // Expired flipbooks return HTTP 200 with status "fail" and meta (no pages).
+  if (result?.status === "fail" && flipbook) {
+    return {
+      flipbook,
+      error: result?.message || "This flipbook has expired.",
+      details: result?.details || "",
+      expired: true,
+    };
+  }
+
+  if (!response.ok || result?.status === "fail" || !flipbook) {
     return {
       flipbook: null,
       error: result?.message || "Flipbook not found.",
+      details: result?.details || "",
+      expired: false,
     };
   }
 
   return {
-    flipbook: result.data?.flipbook ?? null,
+    flipbook,
     error: null,
+    details: "",
+    expired: false,
   };
 }

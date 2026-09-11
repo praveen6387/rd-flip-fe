@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import SignedImg from "@/components/dashboard/_builder/SignedImg";
 import { useDashboardTheme } from "@/lib/dashboard/ThemeProvider";
+import { getFlipbookActiveInfo } from "@/lib/flipbook-active";
 import { ROUTES } from "@/lib/routes";
 import { cn } from "@/lib/cn";
 import FlipbookQrDialog from "./FlipbookQrDialog";
@@ -68,6 +69,10 @@ export default function FlipbookTable({ flipbooks }) {
       ? "border-white/15 text-white hover:bg-white/10"
       : "border-stone-300 text-slate-800 hover:bg-white/80"
   );
+  const actionBtnDisabled = cn(
+    "inline-flex h-9 cursor-not-allowed items-center gap-1.5 rounded-lg border px-3 text-[13px] font-medium opacity-45",
+    isDark ? "border-white/10 text-slate-400" : "border-stone-300 text-slate-500"
+  );
 
   return (
     <div className="space-y-4">
@@ -126,6 +131,7 @@ export default function FlipbookTable({ flipbooks }) {
             ) : (
               filtered.map((item) => {
                 const pages = item.total_pages ?? 0;
+                const active = getFlipbookActiveInfo(item.active_until);
                 return (
                   <tr
                     key={item.id ?? item.flip_id}
@@ -141,7 +147,9 @@ export default function FlipbookTable({ flipbooks }) {
                         <div
                           className={cn(
                             "size-14 shrink-0 overflow-hidden rounded-lg bg-black/15",
-                            isDark ? "ring-1 ring-white/10" : "ring-1 ring-stone-200"
+                            isDark
+                              ? "ring-1 ring-white/10"
+                              : "ring-1 ring-stone-200"
                           )}
                         >
                           {item.thumbnail ? (
@@ -182,6 +190,41 @@ export default function FlipbookTable({ flipbooks }) {
                             {pages} {pages === 1 ? "page" : "pages"}
                             {item.description ? ` · ${item.description}` : ""}
                           </p>
+                          {active.hasExpiry ? (
+                            <div className="mt-1.5 space-y-0.5">
+                              <p
+                                className={cn(
+                                  "text-xs font-medium",
+                                  active.expired
+                                    ? isDark
+                                      ? "text-rose-300"
+                                      : "text-rose-700"
+                                    : isDark
+                                      ? "text-amber-200/90"
+                                      : "text-amber-800"
+                                )}
+                              >
+                                {active.statusLabel}
+                              </p>
+                              <p
+                                className={cn(
+                                  "text-[11px] leading-4",
+                                  isDark ? "text-slate-400" : "text-slate-500"
+                                )}
+                              >
+                                {active.hint}{" "}
+                                <Link
+                                  href={ROUTES.dashboardPlans}
+                                  className={cn(
+                                    "font-semibold underline-offset-2 hover:underline",
+                                    isDark ? "text-sky-300" : "text-sky-700"
+                                  )}
+                                >
+                                  Recharge
+                                </Link>
+                              </p>
+                            </div>
+                          ) : null}
                         </div>
                       </div>
                     </td>
@@ -230,21 +273,44 @@ export default function FlipbookTable({ flipbooks }) {
                     <td className={cellClass}>
                       {item.flip_id ? (
                         <div className="flex flex-wrap items-center gap-2">
-                          <Link
-                            href={ROUTES.flipbookView(item.flip_id)}
-                            className={actionBtn}
-                          >
-                            <Eye className="size-3.5" />
-                            View
-                          </Link>
-                          <button
-                            type="button"
-                            onClick={() => setQrFlipbook(item)}
-                            className={actionBtn}
-                          >
-                            <QrCode className="size-3.5" />
-                            QR
-                          </button>
+                          {active.expired ? (
+                            <>
+                              <span
+                                className={actionBtnDisabled}
+                                title="Recharge to restore View"
+                                aria-disabled
+                              >
+                                <Eye className="size-3.5" />
+                                View
+                              </span>
+                              <span
+                                className={actionBtnDisabled}
+                                title="Recharge to restore QR"
+                                aria-disabled
+                              >
+                                <QrCode className="size-3.5" />
+                                QR
+                              </span>
+                            </>
+                          ) : (
+                            <>
+                              <Link
+                                href={ROUTES.flipbookView(item.flip_id)}
+                                className={actionBtn}
+                              >
+                                <Eye className="size-3.5" />
+                                View
+                              </Link>
+                              <button
+                                type="button"
+                                onClick={() => setQrFlipbook(item)}
+                                className={actionBtn}
+                              >
+                                <QrCode className="size-3.5" />
+                                QR
+                              </button>
+                            </>
+                          )}
                         </div>
                       ) : (
                         "—"

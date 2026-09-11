@@ -5,7 +5,15 @@ export const revalidate = 1800;
 
 export default async function FlipbookViewPage({ params }) {
   const { flip_id } = await params;
-  const { flipbook, error } = await getPublicFlipbook(flip_id);
+  const { flipbook, error, details, expired } =
+    await getPublicFlipbook(flip_id);
 
-  return <FlipbookView flipbook={flipbook} error={error} />;
+  return (
+    <FlipbookView
+      flipbook={flipbook}
+      error={error}
+      details={details}
+      expired={expired}
+    />
+  );
 }
