@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useInitialViewport } from "@/hooks/use-initial-viewport";
+import { useEffect, useRef, useState } from "react";
+import { useMobileFlipChrome } from "@/hooks/use-mobile-flip-chrome";
 import { isFlipbookExpired } from "@/lib/flipbook-active";
 import ClassicFlipEngine from "./_builder/ClassicFlipEngine";
 import FlipEngine from "./_builder/FlipEngine";
+import FullscreenToggle from "./_builder/FullscreenToggle";
 import MuteToggle from "./_builder/MuteToggle";
 import ThemeSwitcher from "./_builder/ThemeSwitcher";
 import ViewerLandingLoader from "./_builder/ViewerLandingLoader";
@@ -45,7 +46,14 @@ function formatDate(value) {
 
 function FlipbookViewInner({ flipbook }) {
   const [theme, setTheme] = useViewerTheme();
-  const viewport = useInitialViewport();
+  const viewerRef = useRef(null);
+  const {
+    isMobile,
+    forceLandscape,
+    isFullscreen,
+    enterImmersive,
+    toggleFullscreen,
+  } = useMobileFlipChrome(viewerRef);
   const { startBackgroundSong, stopBackgroundSong } = useFlipSound();
   const [media, setMedia] = useState(null);
   const [mediaError, setMediaError] = useState("");
@@ -80,6 +88,7 @@ function FlipbookViewInner({ flipbook }) {
 
     function unlock() {
       startBackgroundSong();
+      enterImmersive();
       window.removeEventListener("pointerdown", unlock);
       window.removeEventListener("keydown", unlock);
       window.removeEventListener("touchstart", unlock);
@@ -95,65 +104,80 @@ function FlipbookViewInner({ flipbook }) {
       window.removeEventListener("touchstart", unlock);
       stopBackgroundSong();
     };
-  }, [startBackgroundSong, stopBackgroundSong]);
+  }, [startBackgroundSong, stopBackgroundSong, enterImmersive]);
 
   const dateLabel = formatDate(flipbook.date);
 
   return (
     <main
-      className={`flip-viewer relative flex h-dvh flex-col overflow-hidden bg-[#07070a] text-white${
+      ref={viewerRef}
+      className={`flip-viewer relative h-dvh text-white${
         theme === "classic" ? " flip-viewer--classic" : " flip-viewer--studio"
       }`}
     >
-      <header className="relative z-10 grid shrink-0 grid-cols-[1fr_auto_1fr] items-center gap-2 px-3 py-2 sm:gap-3 sm:px-6 sm:py-3">
-        <div className="min-w-0">
-          <p className="truncate text-[10px] font-medium tracking-[0.18em] text-amber-200/85 uppercase sm:text-[11px] sm:tracking-[0.22em]">
-            {flipbook.studio_name || "RD Flip"}
-          </p>
-          <ViewerSocialLinks flipbook={flipbook} />
-        </div>
-        <div className="text-center">
-          <h1 className="font-heading text-base tracking-tight sm:text-lg md:text-xl">
-            {flipbook.title}
-          </h1>
-          {dateLabel ? (
-            <p className="mt-0.5 text-[10px] tracking-[0.12em] text-white/50 uppercase sm:text-[11px] sm:tracking-[0.14em]">
-              {dateLabel}
+      <div
+        className={`flip-viewer__frame${
+          forceLandscape ? " flip-viewer__frame--landscape" : ""
+        }`}
+      >
+        <header className="relative z-10 grid shrink-0 grid-cols-[1fr_auto_1fr] items-center gap-2 px-3 py-2 sm:gap-3 sm:px-6 sm:py-3">
+          <div className="min-w-0">
+            <p className="truncate text-[10px] font-medium tracking-[0.18em] text-amber-200/85 uppercase sm:text-[11px] sm:tracking-[0.22em]">
+              {flipbook.studio_name || "RD Flip"}
             </p>
-          ) : null}
-        </div>
-        <div className="flex items-center justify-end gap-1.5 sm:gap-2">
-          <MuteToggle />
-          <ThemeSwitcher theme={theme} onChange={setTheme} />
-        </div>
-      </header>
+            <ViewerSocialLinks flipbook={flipbook} />
+          </div>
+          <div className="text-center">
+            <h1 className="font-heading text-base tracking-tight sm:text-lg md:text-xl">
+              {flipbook.title}
+            </h1>
+            {dateLabel ? (
+              <p className="mt-0.5 text-[10px] tracking-[0.12em] text-white/50 uppercase sm:text-[11px] sm:tracking-[0.14em]">
+                {dateLabel}
+              </p>
+            ) : null}
+          </div>
+          <div className="flex items-center justify-end gap-1.5 sm:gap-2">
+            <MuteToggle />
+            {isMobile ? (
+              <FullscreenToggle
+                active={isFullscreen}
+                onToggle={toggleFullscreen}
+              />
+            ) : null}
+            <ThemeSwitcher theme={theme} onChange={setTheme} />
+          </div>
+        </header>
 
-      <div className="relative z-10 flex min-h-0 flex-1 flex-col px-1 pb-1 sm:px-4 sm:pb-2">
-        {mediaError ? (
-          <p className="grid flex-1 place-items-center text-sm text-rose-300">
-            {mediaError}
-          </p>
-        ) : !media ? (
-          <ViewerLandingLoader
-            progress={loadProgress}
-            studioName={flipbook.studio_name || "RD Flip"}
-            title={flipbook.title}
-          />
-        ) : theme === "studio" ? (
-          <FlipEngine
-            bookPages={media.bookPages}
-            textureUrls={media.textureUrls}
-            active
-            isMobile={viewport.isMobile}
-          />
-        ) : (
-          <ClassicFlipEngine
-            imageUrls={media.classicUrls}
-            sheetCount={media.sheets.length}
-            active
-            isMobile={viewport.isMobile}
-          />
-        )}
+        <div className="relative z-10 flex min-h-0 flex-1 flex-col px-1 pb-1 sm:px-4 sm:pb-2">
+          {mediaError ? (
+            <p className="grid flex-1 place-items-center text-sm text-rose-300">
+              {mediaError}
+            </p>
+          ) : !media ? (
+            <ViewerLandingLoader
+              progress={loadProgress}
+              studioName={flipbook.studio_name || "RD Flip"}
+              title={flipbook.title}
+            />
+          ) : theme === "studio" ? (
+            <FlipEngine
+              bookPages={media.bookPages}
+              textureUrls={media.textureUrls}
+              active
+              isMobile={isMobile}
+              forceLandscape={forceLandscape}
+            />
+          ) : (
+            <ClassicFlipEngine
+              imageUrls={media.classicUrls}
+              sheetCount={media.sheets.length}
+              active
+              isMobile={isMobile}
+              forceLandscape={forceLandscape}
+            />
+          )}
+        </div>
       </div>
     </main>
   );

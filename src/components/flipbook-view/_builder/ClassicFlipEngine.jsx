@@ -34,6 +34,7 @@ export default function ClassicFlipEngine({
   sheetCount,
   active = true,
   isMobile = false,
+  forceLandscape = false,
 }) {
   const stageRef = useRef(null);
   const flipRef = useRef(null);
@@ -41,6 +42,7 @@ export default function ClassicFlipEngine({
   const sizeRef = useRef({ w: 0, h: 0 });
   const coverModeRef = useRef("front");
   const activeRef = useRef(active);
+  const forceLandscapeRef = useRef(forceLandscape);
   const { playFlipSound } = useFlipSound();
   const playFlipSoundRef = useRef(playFlipSound);
   const [spread, setSpread] = useState({ current: 1, total: 1 });
@@ -55,6 +57,10 @@ export default function ClassicFlipEngine({
   useEffect(() => {
     activeRef.current = active;
   }, [active]);
+
+  useEffect(() => {
+    forceLandscapeRef.current = forceLandscape;
+  }, [forceLandscape]);
 
   useEffect(() => {
     playFlipSoundRef.current = playFlipSound;
@@ -82,11 +88,15 @@ export default function ClassicFlipEngine({
       else flipRef.current?.flipPrev("top");
     }
 
-    function tapSide(clientX) {
+    function tapSide(clientX, clientY) {
       const book = stage.querySelector(".stf__parent");
       if (!book) return;
       const rect = book.getBoundingClientRect();
       if (rect.width < 8 || rect.height < 8) return;
+      if (forceLandscapeRef.current) {
+        applyFlip(clientY < rect.top + rect.height / 2);
+        return;
+      }
       applyFlip(clientX - rect.left >= rect.width / 2);
     }
 
@@ -116,24 +126,27 @@ export default function ClassicFlipEngine({
         window.setTimeout(() => {
           touchHandled = false;
         }, 400);
-        tapSide(touch.clientX);
+        tapSide(touch.clientX, touch.clientY);
         return;
       }
 
-      if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 40) {
+      const localDx = forceLandscapeRef.current ? dy : dx;
+      const localDy = forceLandscapeRef.current ? -dx : dy;
+
+      if (Math.abs(localDx) > Math.abs(localDy) && Math.abs(localDx) > 40) {
         event.preventDefault();
         touchHandled = true;
         window.setTimeout(() => {
           touchHandled = false;
         }, 400);
-        applyFlip(dx < 0);
+        applyFlip(localDx < 0);
       }
     }
 
     function onClick(event) {
       if (touchHandled) return;
       event.preventDefault();
-      tapSide(event.clientX);
+      tapSide(event.clientX, event.clientY);
     }
 
     stage.addEventListener("touchstart", onTouchStart, { passive: true });
@@ -267,7 +280,7 @@ export default function ClassicFlipEngine({
       flipRef.current = null;
       if (stageRef.current) stageRef.current.innerHTML = "";
     };
-  }, [active, imageUrls, isMobile]);
+  }, [active, imageUrls, isMobile, forceLandscape]);
 
   useEffect(() => {
     if (!active) return undefined;

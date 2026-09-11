@@ -1,7 +1,7 @@
 "use client";
 
 import { Loader, useTexture } from "@react-three/drei";
-import { Canvas } from "@react-three/fiber";
+import { Canvas, useThree } from "@react-three/fiber";
 import { Provider, useAtom } from "jotai";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Suspense, useEffect, useRef, useState } from "react";
@@ -17,14 +17,15 @@ const OPEN_BOOK_H = PAGE_HEIGHT;
 const FIT_PADDING = 0.84;
 const CAMERA_FOV = 36;
 
-function fitBookToStage(stageW, stageH, isMobile) {
-  const cameraZ = isMobile ? 7.6 : 4.35;
-  const cameraY = isMobile ? 0.22 : 0.32;
+function fitBookToStage(stageW, stageH, isMobile, forceLandscape = false) {
+  const cameraZ = isMobile ? (forceLandscape ? 8.4 : 7.6) : 4.35;
+  const cameraY = isMobile ? 0.18 : 0.32;
   const cameraFov = CAMERA_FOV;
+  const padding = forceLandscape ? 0.72 : FIT_PADDING;
 
   if (stageW < 40 || stageH < 40) {
     return {
-      bookScale: isMobile ? 0.78 : 1,
+      bookScale: isMobile ? 0.7 : 1,
       cameraZ,
       cameraY,
       cameraFov,
@@ -36,16 +37,28 @@ function fitBookToStage(stageW, stageH, isMobile) {
   const visibleH = 2 * cameraZ * Math.tan(fovRad / 2);
   const visibleW = visibleH * aspect;
   const bookScale = Math.min(
-    (visibleW * FIT_PADDING) / OPEN_BOOK_W,
-    (visibleH * FIT_PADDING) / OPEN_BOOK_H
+    (visibleW * padding) / OPEN_BOOK_W,
+    (visibleH * padding) / OPEN_BOOK_H
   );
 
   return {
-    bookScale: Math.max(0.45, bookScale),
+    bookScale: Math.max(0.4, bookScale),
     cameraZ,
     cameraY,
     cameraFov,
   };
+}
+
+function CameraRig({ cameraY, cameraZ, cameraFov }) {
+  const { camera } = useThree();
+
+  useEffect(() => {
+    camera.position.set(0, cameraY, cameraZ);
+    camera.fov = cameraFov;
+    camera.updateProjectionMatrix();
+  }, [camera, cameraY, cameraZ, cameraFov]);
+
+  return null;
 }
 
 function BookControls({ totalSpreads, active = true }) {
@@ -114,30 +127,48 @@ function BookControls({ totalSpreads, active = true }) {
   );
 }
 
-function FlipStage({ bookPages, textureUrls, active = true, isMobile = false }) {
+function FlipStage({
+  bookPages,
+  textureUrls,
+  active = true,
+  isMobile = false,
+  forceLandscape = false,
+}) {
   const stageRef = useRef(null);
   const [, setPage] = useAtom(pageAtom);
   const bookRotationRef = useRef(INITIAL_BOOK_Y);
   const dragRef = useRef({ moved: false });
   const pointerDragRef = useRef(null);
+  const forceLandscapeRef = useRef(forceLandscape);
   const [viewFit, setViewFit] = useState(() =>
-    fitBookToStage(isMobile ? 414 : 1280, isMobile ? 720 : 720, isMobile)
+    fitBookToStage(
+      isMobile ? 896 : 1280,
+      isMobile ? 414 : 720,
+      isMobile,
+      forceLandscape
+    )
   );
+
+  useEffect(() => {
+    forceLandscapeRef.current = forceLandscape;
+  }, [forceLandscape]);
 
   useEffect(() => {
     const stage = stageRef.current;
     if (!stage) return undefined;
 
     function measure() {
-      const { width, height } = stage.getBoundingClientRect();
-      setViewFit(fitBookToStage(width, height, isMobile));
+      // Layout size ignores CSS rotate — required under force-landscape.
+      const width = stage.clientWidth;
+      const height = stage.clientHeight;
+      setViewFit(fitBookToStage(width, height, isMobile, forceLandscape));
     }
 
     measure();
     const observer = new ResizeObserver(measure);
     observer.observe(stage);
     return () => observer.disconnect();
-  }, [isMobile]);
+  }, [isMobile, forceLandscape]);
 
   const { bookScale, cameraZ, cameraY, cameraFov } = viewFit;
 
@@ -180,6 +211,9 @@ function FlipStage({ bookPages, textureUrls, active = true, isMobile = false }) 
 
       const dx = event.clientX - drag.startX;
       const dy = event.clientY - drag.startY;
+      // Inverse of CSS rotate(90deg): local X follows screen Y.
+      const localDx = forceLandscapeRef.current ? dy : dx;
+      const localDy = forceLandscapeRef.current ? -dx : dy;
 
       if (
         !dragRef.current.moved &&
@@ -191,7 +225,8 @@ function FlipStage({ bookPages, textureUrls, active = true, isMobile = false }) 
 
       if (!dragRef.current.moved) return;
 
-      bookRotationRef.current = drag.startRot + dx * 0.012;
+      bookRotationRef.current = drag.startRot + localDx * 0.012;
+      void localDy;
     }
 
     function finishPointer(event) {
@@ -207,7 +242,7 @@ function FlipStage({ bookPages, textureUrls, active = true, isMobile = false }) 
         Date.now() - drag.time < 450 &&
         event.target === canvas
       ) {
-        tapSide(event.clientX);
+        tapSide(event.clientX, event.clientY);
       }
 
       window.setTimeout(() => {
@@ -244,11 +279,18 @@ function FlipStage({ bookPages, textureUrls, active = true, isMobile = false }) 
     });
   }
 
-  function tapSide(clientX) {
+  function tapSide(clientX, clientY) {
     const stage = stageRef.current;
     if (!stage) return;
     const rect = stage.getBoundingClientRect();
     if (rect.width < 8 || rect.height < 8) return;
+
+    if (forceLandscapeRef.current) {
+      // After rotate(90deg), content right sits toward the top of the phone.
+      applyFlip(clientY < rect.top + rect.height / 2);
+      return;
+    }
+
     applyFlip(clientX - rect.left >= rect.width / 2);
   }
 
@@ -258,6 +300,7 @@ function FlipStage({ bookPages, textureUrls, active = true, isMobile = false }) 
         shadows={!isMobile}
         dpr={isMobile ? 1 : [1, 1.5]}
         className="h-full w-full"
+        resize={{ scroll: false, offsetSize: true }}
         camera={{
           position: [0, cameraY, cameraZ],
           fov: cameraFov,
@@ -273,6 +316,11 @@ function FlipStage({ bookPages, textureUrls, active = true, isMobile = false }) 
         }}
       >
         <Suspense fallback={null}>
+          <CameraRig
+            cameraY={cameraY}
+            cameraZ={cameraZ}
+            cameraFov={cameraFov}
+          />
           <BookExperience
             bookPages={bookPages}
             dragRef={dragRef}
@@ -291,6 +339,7 @@ function FlipEngineInner({
   textureUrls,
   active = true,
   isMobile = false,
+  forceLandscape = false,
 }) {
   if (!bookPages.length) {
     return (
@@ -326,6 +375,7 @@ function FlipEngineInner({
         textureUrls={textureUrls}
         active={active}
         isMobile={isMobile}
+        forceLandscape={forceLandscape}
       />
       <BookControls totalSpreads={totalSpreads} active={active} />
     </div>
