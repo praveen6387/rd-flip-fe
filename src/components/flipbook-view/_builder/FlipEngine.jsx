@@ -10,11 +10,50 @@ import {
   collectTextureUrls,
 } from "./book/buildBookPages";
 import BookExperience from "./book/BookExperience";
+import { PAGE_HEIGHT, PAGE_WIDTH } from "./book/pageGeometry";
 import { pageAtom } from "./book/state";
 import { useFlipSound } from "./useFlipSound";
 
 const INITIAL_BOOK_Y = -Math.PI / 2;
 const DRAG_THRESHOLD = 8;
+const OPEN_BOOK_W = PAGE_WIDTH * 2;
+const OPEN_BOOK_H = PAGE_HEIGHT;
+const FIT_PADDING = 0.84;
+const CAMERA_FOV = 36;
+
+function fitBookToStage(stageW, stageH) {
+  const isMobile = stageW > 0 && stageW <= 768;
+  const cameraZ = isMobile ? 7.6 : 4.35;
+  const cameraY = isMobile ? 0.22 : 0.32;
+  const cameraFov = CAMERA_FOV;
+
+  if (stageW < 40 || stageH < 40) {
+    return {
+      bookScale: isMobile ? 0.78 : 1,
+      cameraZ,
+      cameraY,
+      cameraFov,
+      isMobile,
+    };
+  }
+
+  const aspect = stageW / Math.max(stageH, 1);
+  const fovRad = (cameraFov * Math.PI) / 180;
+  const visibleH = 2 * cameraZ * Math.tan(fovRad / 2);
+  const visibleW = visibleH * aspect;
+  const bookScale = Math.min(
+    (visibleW * FIT_PADDING) / OPEN_BOOK_W,
+    (visibleH * FIT_PADDING) / OPEN_BOOK_H
+  );
+
+  return {
+    bookScale: Math.max(0.45, bookScale),
+    cameraZ,
+    cameraY,
+    cameraFov,
+    isMobile,
+  };
+}
 
 function BookControls({ totalSpreads, active = true }) {
   const [page, setPage] = useAtom(pageAtom);
@@ -89,26 +128,24 @@ function FlipStage({ bookPages, active = true }) {
   const dragRef = useRef({ moved: false });
   const pointerDragRef = useRef(null);
   const textureUrls = useMemo(() => collectTextureUrls(bookPages), [bookPages]);
-  const [isMobile, setIsMobile] = useState(false);
+  const [viewFit, setViewFit] = useState(() => fitBookToStage(1280, 720));
 
   useEffect(() => {
-    function update() {
-      setIsMobile(window.matchMedia("(max-width: 768px)").matches);
+    const stage = stageRef.current;
+    if (!stage) return undefined;
+
+    function measure() {
+      const { width, height } = stage.getBoundingClientRect();
+      setViewFit(fitBookToStage(width, height));
     }
-    update();
-    const mq = window.matchMedia("(max-width: 768px)");
-    mq.addEventListener("change", update);
-    window.addEventListener("resize", update);
-    return () => {
-      mq.removeEventListener("change", update);
-      window.removeEventListener("resize", update);
-    };
+
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(stage);
+    return () => observer.disconnect();
   }, []);
 
-  const cameraZ = isMobile ? 8.8 : 4.6;
-  const bookScale = isMobile ? 0.72 : 1;
-  const cameraY = isMobile ? 0.22 : 0.35;
-  const cameraFov = isMobile ? 36 : 38;
+  const { bookScale, cameraZ, cameraY, cameraFov, isMobile } = viewFit;
 
   useEffect(() => {
     textureUrls.forEach((url) => useTexture.preload(url));

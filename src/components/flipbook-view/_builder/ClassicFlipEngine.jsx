@@ -7,8 +7,8 @@ import { buildFlipSheets } from "../buildSheets";
 import { useFlipSound } from "./useFlipSound";
 
 const PAGE_RATIO = 7 / 5;
-const MAX_HEIGHT_RATIO = 0.62;
-const WHITE_W = 1400;
+const MAX_HEIGHT_RATIO = 0.80;
+const WHITE_W = 1600;
 const WHITE_H = Math.round(WHITE_W / PAGE_RATIO);
 
 let whiteImageUrl = "";
