@@ -11,27 +11,10 @@ import ThemeSwitcher from "./_builder/ThemeSwitcher";
 import ViewerLandingLoader from "./_builder/ViewerLandingLoader";
 import { FlipSoundProvider, useFlipSound } from "./_builder/useFlipSound";
 import ViewerSocialLinks from "./_builder/ViewerSocialLinks";
-import { prepareViewerMedia } from "./prepareViewerMedia";
-
-const THEME_KEY = "rd-flip-viewer-theme";
-
-function useViewerTheme() {
-  const [theme, setTheme] = useState("studio");
-
-  useEffect(() => {
-    const stored = window.localStorage.getItem(THEME_KEY);
-    if (stored === "studio" || stored === "classic") {
-      setTheme(stored);
-    }
-  }, []);
-
-  function changeTheme(next) {
-    setTheme(next);
-    window.localStorage.setItem(THEME_KEY, next);
-  }
-
-  return [theme, changeTheme];
-}
+import {
+  prepareClassicMedia,
+  prepareStudioMedia,
+} from "./prepareViewerMedia";
 
 function formatDate(value) {
   if (!value) return "";
@@ -45,7 +28,8 @@ function formatDate(value) {
 }
 
 function FlipbookViewInner({ flipbook }) {
-  const [theme, setTheme] = useViewerTheme();
+  // Default Classic on every visit — never persist theme.
+  const [theme, setTheme] = useState("classic");
   const viewerRef = useRef(null);
   const {
     isMobile,
@@ -55,15 +39,22 @@ function FlipbookViewInner({ flipbook }) {
     toggleFullscreen,
   } = useMobileFlipChrome(viewerRef);
   const { startBackgroundSong, stopBackgroundSong } = useFlipSound();
-  const [media, setMedia] = useState(null);
+
+  const [classicMedia, setClassicMedia] = useState(null);
+  const [studioMedia, setStudioMedia] = useState(null);
   const [mediaError, setMediaError] = useState("");
   const [loadProgress, setLoadProgress] = useState(0);
+  const [studioLoading, setStudioLoading] = useState(false);
 
+  // Classic first — one pass, no Studio network work.
   useEffect(() => {
     let cancelled = false;
-
+    setClassicMedia(null);
+    setStudioMedia(null);
+    setMediaError("");
     setLoadProgress(0);
-    prepareViewerMedia(flipbook.pages, {
+
+    prepareClassicMedia(flipbook.pages, {
       onProgress: (ratio) => {
         if (!cancelled) setLoadProgress(ratio);
       },
@@ -71,7 +62,7 @@ function FlipbookViewInner({ flipbook }) {
       .then((prepared) => {
         if (!cancelled) {
           setLoadProgress(1);
-          setMedia(prepared);
+          setClassicMedia(prepared);
         }
       })
       .catch(() => {
@@ -82,6 +73,38 @@ function FlipbookViewInner({ flipbook }) {
       cancelled = true;
     };
   }, [flipbook.pages]);
+
+  // Studio only when user asks — avoids heavy 3D texture preload on landing.
+  useEffect(() => {
+    if (theme !== "studio" || studioMedia || !classicMedia) return undefined;
+
+    let cancelled = false;
+    setStudioLoading(true);
+    setLoadProgress(0);
+
+    prepareStudioMedia(flipbook.pages, {
+      onProgress: (ratio) => {
+        if (!cancelled) setLoadProgress(ratio);
+      },
+    })
+      .then((prepared) => {
+        if (!cancelled) {
+          setStudioMedia(prepared);
+          setStudioLoading(false);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setMediaError("Could not load Studio view.");
+          setStudioLoading(false);
+          setTheme("classic");
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [theme, studioMedia, classicMedia, flipbook.pages]);
 
   useEffect(() => {
     startBackgroundSong();
@@ -107,6 +130,9 @@ function FlipbookViewInner({ flipbook }) {
   }, [startBackgroundSong, stopBackgroundSong, enterImmersive]);
 
   const dateLabel = formatDate(flipbook.date);
+  const showLoader =
+    !mediaError &&
+    (!classicMedia || (theme === "studio" && (studioLoading || !studioMedia)));
 
   return (
     <main
@@ -154,24 +180,24 @@ function FlipbookViewInner({ flipbook }) {
             <p className="grid flex-1 place-items-center text-sm text-rose-300">
               {mediaError}
             </p>
-          ) : !media ? (
+          ) : showLoader ? (
             <ViewerLandingLoader
               progress={loadProgress}
               studioName={flipbook.studio_name || "RD Flip"}
               title={flipbook.title}
             />
-          ) : theme === "studio" ? (
+          ) : theme === "studio" && studioMedia ? (
             <FlipEngine
-              bookPages={media.bookPages}
-              textureUrls={media.textureUrls}
+              bookPages={studioMedia.bookPages}
+              textureUrls={studioMedia.textureUrls}
               active
               isMobile={isMobile}
               forceLandscape={forceLandscape}
             />
           ) : (
             <ClassicFlipEngine
-              imageUrls={media.classicUrls}
-              sheetCount={media.sheets.length}
+              imageUrls={classicMedia.classicUrls}
+              sheetCount={classicMedia.sheets.length}
               active
               isMobile={isMobile}
               forceLandscape={forceLandscape}

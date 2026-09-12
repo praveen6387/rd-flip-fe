@@ -9,10 +9,10 @@ import { cn } from "@/lib/cn";
  * transforms / overflow (e.g. dash-fade-up) cannot trap position:fixed.
  */
 export default function ViewportCenterOverlay({ children, isDark = true }) {
-  const [mounted, setMounted] = useState(false);
+  const [portalEl, setPortalEl] = useState(null);
 
   useEffect(() => {
-    setMounted(true);
+    setPortalEl(document.body);
 
     const html = document.documentElement;
     const body = document.body;
@@ -32,9 +32,7 @@ export default function ViewportCenterOverlay({ children, isDark = true }) {
     };
   }, []);
 
-  if (!mounted) return null;
-
-  return createPortal(
+  const overlay = (
     <div
       className={cn(
         "fixed inset-0 z-200 flex items-center justify-center p-6 backdrop-blur-sm",
@@ -44,7 +42,10 @@ export default function ViewportCenterOverlay({ children, isDark = true }) {
       aria-modal="true"
     >
       {children}
-    </div>,
-    document.body
+    </div>
   );
+
+  // Avoid one blank frame: render inline until portal target is ready.
+  if (!portalEl) return overlay;
+  return createPortal(overlay, portalEl);
 }

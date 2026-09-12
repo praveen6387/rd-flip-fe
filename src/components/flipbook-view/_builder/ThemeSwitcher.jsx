@@ -1,8 +1,8 @@
 "use client";
 
 const THEMES = [
-  { id: "studio", label: "Studio" },
   { id: "classic", label: "Classic" },
+  { id: "studio", label: "Studio" },
 ];
 
 export default function ThemeSwitcher({ theme, onChange }) {

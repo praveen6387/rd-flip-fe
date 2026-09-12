@@ -4,7 +4,14 @@ import { useTexture } from "@react-three/drei";
 import { useFrame, useThree } from "@react-three/fiber";
 import { useAtom } from "jotai";
 import { easing } from "maath";
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import {
+  Suspense,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
   Bone,
   ClampToEdgeWrapping,
@@ -37,6 +44,8 @@ const restOutsideCurve = 0.008;
 const turnOutsideCurve = 0.03;
 const turningCurveStrength = 0.08;
 const openExtra = degToRad(7);
+/** Leaves that must resolve before the book appears. */
+const PRIORITY_LEAVES = 3;
 
 const whiteColor = new Color("white");
 const emissiveColor = new Color("#f59e0b");
@@ -250,10 +259,16 @@ function Page({
   );
 }
 
+function PageLeaf(props) {
+  return <Page {...props} />;
+}
+
 export default function Book({ bookPages, lite = false }) {
   const [page] = useAtom(pageAtom);
   const [delayedPage, setDelayedPage] = useState(page);
   const totalPages = bookPages.length;
+  const priority = bookPages.slice(0, Math.min(PRIORITY_LEAVES, totalPages));
+  const deferred = bookPages.slice(priority.length);
 
   useEffect(() => {
     let timeout;
@@ -278,8 +293,8 @@ export default function Book({ bookPages, lite = false }) {
 
   return (
     <group>
-      {bookPages.map((pageData, index) => (
-        <Page
+      {priority.map((pageData, index) => (
+        <PageLeaf
           key={pageData.id}
           number={index}
           page={delayedPage}
@@ -290,6 +305,22 @@ export default function Book({ bookPages, lite = false }) {
           lite={lite}
         />
       ))}
+      {deferred.map((pageData, index) => {
+        const number = index + priority.length;
+        return (
+          <Suspense key={pageData.id} fallback={null}>
+            <PageLeaf
+              number={number}
+              page={delayedPage}
+              opened={delayedPage > number}
+              bookClosed={delayedPage === 0 || delayedPage === totalPages}
+              frontFace={pageData.front}
+              backFace={pageData.back}
+              lite={lite}
+            />
+          </Suspense>
+        );
+      })}
     </group>
   );
 }

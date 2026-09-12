@@ -1,6 +1,6 @@
 "use client";
 
-import { Loader, useTexture } from "@react-three/drei";
+import { useProgress, useTexture } from "@react-three/drei";
 import { Canvas, useThree } from "@react-three/fiber";
 import { Provider, useAtom } from "jotai";
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -14,18 +14,21 @@ const INITIAL_BOOK_Y = -Math.PI / 2;
 const DRAG_THRESHOLD = 8;
 const OPEN_BOOK_W = PAGE_WIDTH * 2;
 const OPEN_BOOK_H = PAGE_HEIGHT;
-const FIT_PADDING = 0.84;
+const FIT_PADDING = 0.96;
 const CAMERA_FOV = 36;
+const PRELOAD_FIRST = 8;
 
 function fitBookToStage(stageW, stageH, isMobile, forceLandscape = false) {
-  const cameraZ = isMobile ? (forceLandscape ? 8.4 : 7.6) : 4.35;
-  const cameraY = isMobile ? 0.18 : 0.32;
+  const cameraZ = isMobile ? (forceLandscape ? 7.2 : 6.8) : 4.1;
+  const cameraY = isMobile ? 0.08 : 0.18;
   const cameraFov = CAMERA_FOV;
-  const padding = forceLandscape ? 0.72 : FIT_PADDING;
+  // Slightly tighter horizontal fit → more left/right breathing room.
+  const padX = forceLandscape ? 0.86 : 0.88;
+  const padY = forceLandscape ? 0.94 : FIT_PADDING;
 
   if (stageW < 40 || stageH < 40) {
     return {
-      bookScale: isMobile ? 0.7 : 1,
+      bookScale: isMobile ? 0.85 : 1.05,
       cameraZ,
       cameraY,
       cameraFov,
@@ -37,12 +40,12 @@ function fitBookToStage(stageW, stageH, isMobile, forceLandscape = false) {
   const visibleH = 2 * cameraZ * Math.tan(fovRad / 2);
   const visibleW = visibleH * aspect;
   const bookScale = Math.min(
-    (visibleW * padding) / OPEN_BOOK_W,
-    (visibleH * padding) / OPEN_BOOK_H
+    (visibleW * padX) / OPEN_BOOK_W,
+    (visibleH * padY) / OPEN_BOOK_H
   );
 
   return {
-    bookScale: Math.max(0.4, bookScale),
+    bookScale: Math.max(0.45, bookScale),
     cameraZ,
     cameraY,
     cameraFov,
@@ -61,7 +64,7 @@ function CameraRig({ cameraY, cameraZ, cameraFov }) {
   return null;
 }
 
-function BookControls({ totalSpreads, active = true }) {
+function PageNavEffects({ totalSpreads, active = true }) {
   const [page, setPage] = useAtom(pageAtom);
   const { playFlipSound } = useFlipSound();
   const maxPage = Math.max(totalSpreads - 1, 0);
@@ -95,6 +98,13 @@ function BookControls({ totalSpreads, active = true }) {
     return () => window.removeEventListener("keydown", onKey);
   }, [active, maxPage, setPage]);
 
+  return null;
+}
+
+function DesktopControls({ totalSpreads, active = true }) {
+  const [page, setPage] = useAtom(pageAtom);
+  const maxPage = Math.max(totalSpreads - 1, 0);
+
   return (
     <div className="flex shrink-0 flex-col items-center gap-2 py-3">
       <p className="text-[10px] tracking-[0.16em] text-amber-100/45 uppercase">
@@ -104,7 +114,7 @@ function BookControls({ totalSpreads, active = true }) {
         <button
           type="button"
           aria-label="Previous page"
-          disabled={page <= 0}
+          disabled={!active || page <= 0}
           className="grid size-9 place-items-center rounded-full border border-amber-200/40 text-amber-100 transition hover:bg-white/10 disabled:opacity-40"
           onClick={() => setPage((current) => Math.max(0, current - 1))}
         >
@@ -116,7 +126,7 @@ function BookControls({ totalSpreads, active = true }) {
         <button
           type="button"
           aria-label="Next page"
-          disabled={page >= maxPage}
+          disabled={!active || page >= maxPage}
           className="grid size-9 place-items-center rounded-full border border-amber-200/40 text-amber-100 transition hover:bg-white/10 disabled:opacity-40"
           onClick={() => setPage((current) => Math.min(maxPage, current + 1))}
         >
@@ -124,6 +134,43 @@ function BookControls({ totalSpreads, active = true }) {
         </button>
       </div>
     </div>
+  );
+}
+
+function MobileSideButtons({ totalSpreads, active = true }) {
+  const [page, setPage] = useAtom(pageAtom);
+  const maxPage = Math.max(totalSpreads - 1, 0);
+
+  return (
+    <>
+      <button
+        type="button"
+        aria-label="Previous page"
+        disabled={!active || page <= 0}
+        className="absolute top-1/2 left-1 z-30 grid size-11 -translate-y-1/2 place-items-center rounded-full border border-amber-200/35 bg-black/45 text-amber-100 backdrop-blur-sm transition active:scale-95 disabled:opacity-30"
+        onClick={() => setPage((current) => Math.max(0, current - 1))}
+      >
+        <ChevronLeft className="size-6" />
+      </button>
+      <button
+        type="button"
+        aria-label="Next page"
+        disabled={!active || page >= maxPage}
+        className="absolute top-1/2 right-1 z-30 grid size-11 -translate-y-1/2 place-items-center rounded-full border border-amber-200/35 bg-black/45 text-amber-100 backdrop-blur-sm transition active:scale-95 disabled:opacity-30"
+        onClick={() => setPage((current) => Math.min(maxPage, current + 1))}
+      >
+        <ChevronRight className="size-6" />
+      </button>
+    </>
+  );
+}
+
+function MobilePageLabel({ totalSpreads }) {
+  const [page] = useAtom(pageAtom);
+  return (
+    <p className="shrink-0 py-2 text-center text-[11px] tracking-[0.18em] text-amber-100/75 uppercase">
+      {page + 1} / {totalSpreads}
+    </p>
   );
 }
 
@@ -158,7 +205,6 @@ function FlipStage({
     if (!stage) return undefined;
 
     function measure() {
-      // Layout size ignores CSS rotate — required under force-landscape.
       const width = stage.clientWidth;
       const height = stage.clientHeight;
       setViewFit(fitBookToStage(width, height, isMobile, forceLandscape));
@@ -173,7 +219,15 @@ function FlipStage({
   const { bookScale, cameraZ, cameraY, cameraFov } = viewFit;
 
   useEffect(() => {
-    textureUrls.forEach((url) => useTexture.preload(url));
+    const first = textureUrls.slice(0, PRELOAD_FIRST);
+    first.forEach((url) => useTexture.preload(url));
+    if (textureUrls.length <= PRELOAD_FIRST) return undefined;
+
+    const rest = textureUrls.slice(PRELOAD_FIRST);
+    const timer = window.setTimeout(() => {
+      rest.forEach((url) => useTexture.preload(url));
+    }, 400);
+    return () => window.clearTimeout(timer);
   }, [textureUrls]);
 
   useEffect(() => {
@@ -211,7 +265,6 @@ function FlipStage({
 
       const dx = event.clientX - drag.startX;
       const dy = event.clientY - drag.startY;
-      // Inverse of CSS rotate(90deg): local X follows screen Y.
       const localDx = forceLandscapeRef.current ? dy : dx;
       const localDy = forceLandscapeRef.current ? -dx : dy;
 
@@ -286,7 +339,6 @@ function FlipStage({
     if (rect.width < 8 || rect.height < 8) return;
 
     if (forceLandscapeRef.current) {
-      // After rotate(90deg), content right sits toward the top of the phone.
       applyFlip(clientY < rect.top + rect.height / 2);
       return;
     }
@@ -295,7 +347,10 @@ function FlipStage({
   }
 
   return (
-    <div ref={stageRef} className="flip-stage min-h-0 flex-1 touch-manipulation">
+    <div
+      ref={stageRef}
+      className="flip-stage min-h-0 flex-1 touch-manipulation"
+    >
       <Canvas
         shadows={!isMobile}
         dpr={isMobile ? 1 : [1, 1.5]}
@@ -334,6 +389,60 @@ function FlipStage({
   );
 }
 
+function StudioBootOverlay() {
+  const { active, progress, loaded } = useProgress();
+  const [visible, setVisible] = useState(true);
+  const [minElapsed, setMinElapsed] = useState(false);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => setMinElapsed(true), 400);
+    return () => window.clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    if (!visible) return undefined;
+    // Hide once the first GPU textures are ready (ignore later page loads).
+    if (minElapsed && !active && loaded > 0) {
+      const timer = window.setTimeout(() => setVisible(false), 220);
+      return () => window.clearTimeout(timer);
+    }
+    return undefined;
+  }, [active, loaded, minElapsed, visible]);
+
+  if (!visible) return null;
+
+  const percent = Math.round(Math.min(100, Math.max(progress || 0, 4)));
+
+  return (
+    <div
+      className="absolute inset-0 z-40 grid place-items-center bg-[#07070a]/92 px-6"
+      role="status"
+      aria-live="polite"
+      aria-busy="true"
+      aria-label={`Preparing Studio ${percent}%`}
+    >
+      <div className="flex w-full max-w-xs flex-col items-center text-center">
+        <span className="size-10 animate-spin rounded-full border-2 border-amber-200/25 border-t-amber-300" />
+        <p className="mt-4 text-[11px] tracking-[0.2em] text-amber-100/80 uppercase">
+          Preparing Studio
+        </p>
+        <p className="mt-2 text-sm text-white/55">
+          Please wait — opening your 3D album…
+        </p>
+        <div className="mt-5 h-1.5 w-full overflow-hidden rounded-full bg-white/10">
+          <div
+            className="h-full rounded-full bg-amber-400 transition-[width] duration-200 ease-out"
+            style={{ width: `${percent}%` }}
+          />
+        </div>
+        <p className="mt-2 tabular-nums text-[11px] tracking-[0.16em] text-white/40">
+          {percent}%
+        </p>
+      </div>
+    </div>
+  );
+}
+
 function FlipEngineInner({
   bookPages,
   textureUrls,
@@ -351,33 +460,27 @@ function FlipEngineInner({
 
   return (
     <div className="relative flex min-h-0 flex-1 flex-col">
-      {active ? (
-        <Loader
-          containerStyles={{
-            background: "transparent",
-          }}
-          innerStyles={{
-            background: "rgb(255 255 255 / 8%)",
-          }}
-          barStyles={{
-            background: "#fbbf24",
-          }}
-          dataStyles={{
-            color: "rgb(254 243 199 / 85%)",
-            fontSize: "11px",
-            letterSpacing: "0.18em",
-            textTransform: "uppercase",
-          }}
+      <PageNavEffects totalSpreads={totalSpreads} active={active} />
+
+      <div className="relative flex min-h-0 flex-1">
+        <StudioBootOverlay />
+        {isMobile ? (
+          <MobileSideButtons totalSpreads={totalSpreads} active={active} />
+        ) : null}
+        <FlipStage
+          bookPages={bookPages}
+          textureUrls={textureUrls}
+          active={active}
+          isMobile={isMobile}
+          forceLandscape={forceLandscape}
         />
-      ) : null}
-      <FlipStage
-        bookPages={bookPages}
-        textureUrls={textureUrls}
-        active={active}
-        isMobile={isMobile}
-        forceLandscape={forceLandscape}
-      />
-      <BookControls totalSpreads={totalSpreads} active={active} />
+      </div>
+
+      {isMobile ? (
+        <MobilePageLabel totalSpreads={totalSpreads} />
+      ) : (
+        <DesktopControls totalSpreads={totalSpreads} active={active} />
+      )}
     </div>
   );
 }
