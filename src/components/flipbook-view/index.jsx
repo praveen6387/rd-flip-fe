@@ -96,7 +96,7 @@ function FlipbookViewInner({ flipbook }) {
           forceLandscape ? " flip-viewer__frame--landscape" : ""
         }`}
       >
-        <header className="pointer-events-none absolute inset-x-0 top-[40px] z-20 grid grid-cols-[1fr_auto_1fr] items-center gap-3 px-3 sm:gap-4 sm:px-4">
+        <header className="pointer-events-none absolute inset-x-0 top-[max(0.35rem,env(safe-area-inset-top))] z-20 grid grid-cols-[1fr_auto_1fr] items-center gap-2 px-3 sm:top-[40px] sm:gap-4 sm:px-4">
           <div className="pointer-events-auto min-w-0">
             <p className="truncate text-[11px] font-medium tracking-[0.18em] text-amber-200/85 uppercase sm:text-xs sm:tracking-[0.22em]">
               {flipbook.studio_name || "RD Flip"}
@@ -104,11 +104,11 @@ function FlipbookViewInner({ flipbook }) {
             <ViewerSocialLinks flipbook={flipbook} />
           </div>
           <div className="pointer-events-none text-center">
-            <h1 className="font-heading text-lg leading-none tracking-tight sm:text-xl md:text-2xl">
+            <h1 className="font-heading text-base leading-none tracking-tight sm:text-xl md:text-2xl">
               {flipbook.title}
             </h1>
             {dateLabel ? (
-              <p className="mt-1 text-[11px] tracking-[0.12em] text-white/50 uppercase sm:text-xs sm:tracking-[0.14em]">
+              <p className="mt-1 text-[10px] tracking-[0.12em] text-white/50 uppercase sm:text-xs sm:tracking-[0.14em]">
                 {dateLabel}
               </p>
             ) : null}
@@ -121,7 +121,7 @@ function FlipbookViewInner({ flipbook }) {
           </div>
         </header>
 
-        <div className="relative z-10 flex min-h-0 flex-1 flex-col p-2">
+        <div className="relative z-10 flex min-h-0 w-full flex-1 flex-col p-2">
           {mediaError ? (
             <p className="grid flex-1 place-items-center text-sm text-rose-300">
               {mediaError}

@@ -435,7 +435,7 @@ export default function ClassicFlipEngine({
   const busy = loading;
 
   return (
-    <div className="relative flex min-h-0 flex-1 flex-col">
+    <div className="relative flex h-full min-h-0 w-full flex-1 flex-col">
       {loading ? (
         <div className="pointer-events-none absolute inset-0 z-20 grid place-items-center">
           <div className="flex flex-col items-center gap-3">
@@ -445,7 +445,7 @@ export default function ClassicFlipEngine({
         </div>
       ) : null}
 
-      <div className="relative flex min-h-0 flex-1 overflow-hidden">
+      <div className="relative grid min-h-0 flex-1 place-items-center overflow-hidden">
         <div
           className="flip-zoom-layer absolute inset-0 flex items-center justify-center"
           style={{
