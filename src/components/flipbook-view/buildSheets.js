@@ -11,12 +11,10 @@ function sortPages(pages) {
 }
 
 /**
- * Turns API pages into book sheets:
- * Front 1 → closed cover on the right
- * Other fronts → white | photo
- * Middle → left half | right half of one wide image
- * Other backs → photo | white
- * Last back → closed cover on the left
+ * Book sheets from API pages only:
+ * Front → full image each
+ * Middle → left half | right half
+ * Back → full image each
  */
 export function buildFlipSheets(pages) {
   const groups = { front: [], middle: [], back: [] };
@@ -28,9 +26,6 @@ export function buildFlipSheets(pages) {
   const sheets = [];
 
   groups.front.forEach((page, index) => {
-    if (index > 0) {
-      sheets.push({ id: `front-blank-${index}`, kind: "blank" });
-    }
     sheets.push({
       id: `front-${page.page_number}-${index}`,
       kind: "image",
@@ -64,14 +59,7 @@ export function buildFlipSheets(pages) {
       src: page.image_url,
       alt: isLast ? "Back cover" : `Back page ${index + 1}`,
     });
-    if (!isLast) {
-      sheets.push({ id: `back-blank-${index}`, kind: "blank" });
-    }
   });
-
-  if (sheets.length && !groups.back.length) {
-    sheets.push({ id: "end-leaf", kind: "blank" });
-  }
 
   return sheets;
 }

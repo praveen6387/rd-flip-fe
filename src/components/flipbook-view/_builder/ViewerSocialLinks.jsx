@@ -70,7 +70,7 @@ const LINKS = [
   },
 ];
 
-export default function ViewerSocialLinks({ flipbook }) {
+export default function ViewerSocialLinks({ flipbook, inline = false }) {
   const items = LINKS.map((item) => {
     const href = normalizeHref(item.platform, flipbook?.[item.key]);
     return href ? { ...item, href } : null;
@@ -79,7 +79,13 @@ export default function ViewerSocialLinks({ flipbook }) {
   if (!items.length) return null;
 
   return (
-    <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+    <div
+      className={
+        inline
+          ? "flex shrink-0 items-center gap-1.5"
+          : "mt-1.5 flex flex-wrap items-center gap-1.5"
+      }
+    >
       {items.map(({ key, href, label, Icon, className }) => (
         <a
           key={key}

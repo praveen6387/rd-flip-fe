@@ -1,12 +1,6 @@
 import { s3DisplaySrc } from "@/lib/s3/media";
 import { buildFlipSheets } from "./buildSheets";
 
-const WHITE_SVG =
-  "data:image/svg+xml," +
-  encodeURIComponent(
-    '<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="1000"><rect width="100%" height="100%" fill="#ffffff"/></svg>'
-  );
-
 function loadImage(src) {
   return new Promise((resolve, reject) => {
     const img = new Image();
@@ -18,7 +12,7 @@ function loadImage(src) {
   });
 }
 
-function canvasToBlobUrl(canvas, type = "image/jpeg", quality = 0.92) {
+function canvasToBlobUrl(canvas, type = "image/png", quality) {
   return new Promise((resolve, reject) => {
     canvas.toBlob(
       (blob) => {
@@ -34,6 +28,7 @@ function canvasToBlobUrl(canvas, type = "image/jpeg", quality = 0.92) {
   });
 }
 
+/** Crop a wide middle spread into a left or right leaf URL. */
 async function splitSpread(src, crop, cache) {
   const key = `${src}::${crop}`;
   if (cache.has(key)) return cache.get(key);
@@ -47,6 +42,8 @@ async function splitSpread(src, crop, cache) {
   const ctx = canvas.getContext("2d", { alpha: false });
   if (!ctx) throw new Error("Canvas unavailable");
 
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = "high";
   ctx.fillStyle = "#ffffff";
   ctx.fillRect(0, 0, halfW, height);
   ctx.drawImage(
@@ -68,11 +65,7 @@ async function splitSpread(src, crop, cache) {
 
 async function sheetToImageUrl(sheet, cache) {
   if (cache.has(sheet.id)) return cache.get(sheet.id);
-
-  if (sheet.kind === "blank") {
-    cache.set(sheet.id, WHITE_SVG);
-    return WHITE_SVG;
-  }
+  if (!sheet.src) throw new Error(`Missing src for ${sheet.id}`);
 
   const src = s3DisplaySrc(sheet.src);
   const url =
@@ -82,9 +75,7 @@ async function sheetToImageUrl(sheet, cache) {
   return url;
 }
 
-/**
- * Prepare classic flip pages: one fetch per photo, parallel decode.
- */
+/** Prepare classic flip pages: split middles, preload images. */
 export async function prepareClassicMedia(pages, { onProgress } = {}) {
   const sheets = buildFlipSheets(pages);
   const cache = new Map();
@@ -99,7 +90,7 @@ export async function prepareClassicMedia(pages, { onProgress } = {}) {
       try {
         return await sheetToImageUrl(sheet, cache);
       } catch {
-        return WHITE_SVG;
+        return "";
       } finally {
         done += 1;
         report();
@@ -108,10 +99,9 @@ export async function prepareClassicMedia(pages, { onProgress } = {}) {
   );
 
   await Promise.all(
-    classicUrls.map((url) => loadImage(url).catch(() => null))
+    classicUrls.filter(Boolean).map((url) => loadImage(url).catch(() => null))
   );
-
   onProgress?.(1);
 
-  return { sheets, classicUrls };
+  return { classicUrls };
 }

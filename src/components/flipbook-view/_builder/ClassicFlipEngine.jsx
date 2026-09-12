@@ -1,14 +1,29 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import {
+  ChevronFirst,
+  ChevronLast,
+  ChevronLeft,
+  ChevronRight,
+  Maximize2,
+  Minimize2,
+  Volume2,
+  VolumeX,
+  ZoomIn,
+  ZoomOut,
+} from "lucide-react";
 import { useFlipSound } from "./useFlipSound";
 
 const PAGE_RATIO = 7 / 5;
+const ZOOM_MIN = 0.88; // one step smaller than default fill view
+const ZOOM_MAX = 1.55;
+const ZOOM_STEP = 0.12;
+const PAGE_FILL = 0.99;
 
-function measurePage(stage, fill = 0.96) {
-  const maxW = Math.max((stage?.clientWidth || 0) - 8, 120);
-  const maxH = Math.max((stage?.clientHeight || 0) - 8, 160);
+function measurePage(stage, fill = 0.96, inset = 8) {
+  const maxW = Math.max((stage?.clientWidth || 0) - inset, 120);
+  const maxH = Math.max((stage?.clientHeight || 0) - inset, 160);
 
   let pageWidth = maxW / 2;
   let pageHeight = pageWidth / PAGE_RATIO;
@@ -27,42 +42,62 @@ function measurePage(stage, fill = 0.96) {
   };
 }
 
+function applyCoverClip(bookEl, mode, renderPageWidth, dpr = 1) {
+  if (!bookEl) return;
+  const shift = Math.max(1, Math.round(renderPageWidth / 2));
+  const scale = dpr > 1 ? `scale(${1 / dpr})` : "";
+
+  if (mode === "front") {
+    bookEl.style.clipPath = "inset(0 0 0 50%)";
+    bookEl.style.transform = [scale, `translateX(-${shift}px)`]
+      .filter(Boolean)
+      .join(" ");
+  } else if (mode === "back") {
+    bookEl.style.clipPath = "inset(0 50% 0 0)";
+    bookEl.style.transform = [scale, `translateX(${shift}px)`]
+      .filter(Boolean)
+      .join(" ");
+  } else {
+    bookEl.style.clipPath = "";
+    bookEl.style.transform = scale;
+  }
+}
+
+function renderScale(dpr) {
+  return dpr > 1 ? `scale(${1 / dpr})` : "";
+}
+
+function isPageFlipWhite(style) {
+  const s = String(style || "")
+    .toLowerCase()
+    .replace(/\s+/g, "");
+  return (
+    s === "white" ||
+    s === "#fff" ||
+    s === "#ffffff" ||
+    s === "rgb(255,255,255)" ||
+    s === "rgba(255,255,255,1)"
+  );
+}
+
+/** Skip page-flip's solid white canvas clear so empty halves stay transparent. */
 function patchTransparentClear(bookEl) {
   const canvas = bookEl?.querySelector("canvas");
   const ctx = canvas?.getContext?.("2d");
   if (!ctx || ctx.__rdFlipClearPatched) return;
 
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = "high";
+
   const fillRect = ctx.fillRect.bind(ctx);
   ctx.fillRect = (x, y, w, h) => {
-    const style = String(ctx.fillStyle || "").toLowerCase();
-    if (
-      style === "white" ||
-      style === "#fff" ||
-      style === "#ffffff" ||
-      style === "rgb(255, 255, 255)"
-    ) {
+    if (isPageFlipWhite(ctx.fillStyle)) {
       ctx.clearRect(x, y, w, h);
       return;
     }
     fillRect(x, y, w, h);
   };
   ctx.__rdFlipClearPatched = true;
-}
-
-function applyCoverClip(bookEl, mode, pageWidth) {
-  if (!bookEl) return;
-  const shift = Math.max(1, Math.round(pageWidth / 2));
-
-  if (mode === "front") {
-    bookEl.style.clipPath = "inset(0 0 0 50%)";
-    bookEl.style.transform = `translateX(-${shift}px)`;
-  } else if (mode === "back") {
-    bookEl.style.clipPath = "inset(0 50% 0 0)";
-    bookEl.style.transform = `translateX(${shift}px)`;
-  } else {
-    bookEl.style.clipPath = "";
-    bookEl.style.transform = "";
-  }
 }
 
 function flipNext(api, mode) {
@@ -75,12 +110,47 @@ function flipPrev(api, mode) {
   api?.flipPrev("top");
 }
 
+function goToStart(api) {
+  if (!api) return;
+  try {
+    api.turnToPage(0);
+  } catch {
+    /* ignore */
+  }
+}
+
+function goToEnd(api) {
+  if (!api) return;
+  try {
+    const count = api.getPageCount?.() ?? 0;
+    if (count > 0) api.turnToPage(count - 1);
+  } catch {
+    /* ignore */
+  }
+}
+
+function ControlButton({ label, disabled, onClick, children }) {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      disabled={disabled}
+      className="flip-control-btn"
+      onClick={onClick}
+    >
+      {children}
+    </button>
+  );
+}
+
 export default function ClassicFlipEngine({
   imageUrls,
   sheetCount,
   active = true,
   isMobile = false,
   forceLandscape = false,
+  isFullscreen = false,
+  onToggleFullscreen,
 }) {
   const stageRef = useRef(null);
   const bookRef = useRef(null);
@@ -90,11 +160,12 @@ export default function ClassicFlipEngine({
   const coverModeRef = useRef("front");
   const activeRef = useRef(active);
   const forceLandscapeRef = useRef(forceLandscape);
-  const { playFlipSound } = useFlipSound();
+  const { muted, toggleMute, playFlipSound } = useFlipSound();
   const playFlipSoundRef = useRef(playFlipSound);
   const [spread, setSpread] = useState({ current: 1, total: 1 });
   const [coverMode, setCoverMode] = useState("front");
   const [loading, setLoading] = useState(true);
+  const [zoom, setZoom] = useState(1);
 
   useEffect(() => {
     coverModeRef.current = coverMode;
@@ -132,8 +203,6 @@ export default function ClassicFlipEngine({
       const rect = book.getBoundingClientRect();
       if (rect.width < 8 || rect.height < 8) return;
 
-      // Left side → previous (page turns left→right)
-      // Right side → next (page turns right→left)
       if (forceLandscapeRef.current) {
         applyFlip(clientY < rect.top + rect.height / 2);
         return;
@@ -157,6 +226,7 @@ export default function ClassicFlipEngine({
       touchStart = null;
       if (elapsed > 450) return;
 
+      // Tap only — no drag / swipe flip
       if (Math.abs(dx) < 36 && Math.abs(dy) < 36) {
         event.preventDefault();
         touchHandled = true;
@@ -164,25 +234,11 @@ export default function ClassicFlipEngine({
           touchHandled = false;
         }, 400);
         tapSide(touch.clientX, touch.clientY);
-        return;
-      }
-
-      const localDx = forceLandscapeRef.current ? dy : dx;
-      const localDy = forceLandscapeRef.current ? -dx : dy;
-
-      if (Math.abs(localDx) > Math.abs(localDy) && Math.abs(localDx) > 40) {
-        event.preventDefault();
-        touchHandled = true;
-        window.setTimeout(() => {
-          touchHandled = false;
-        }, 400);
-        applyFlip(localDx < 0);
       }
     }
 
     function onClick(event) {
       if (touchHandled) return;
-      // Ignore clicks on the side nav buttons
       if (event.target?.closest?.("button")) return;
       tapSide(event.clientX, event.clientY);
     }
@@ -225,33 +281,49 @@ export default function ClassicFlipEngine({
       pageFlip = null;
       stage.innerHTML = "";
 
-      const { pageWidth, pageHeight } = measurePage(stage, isMobile ? 0.98 : 0.94);
+      const { pageWidth, pageHeight } = measurePage(stage, PAGE_FILL, 8);
       if (pageWidth < 80 || pageHeight < 80) {
         if (!cancelled) setLoading(false);
         return;
       }
       pageSizeRef.current = { w: pageWidth, h: pageHeight };
 
+      const dpr = Math.min(window.devicePixelRatio || 1, isMobile ? 2 : 2.5);
+      const renderW = Math.max(1, Math.round(pageWidth * dpr));
+      const renderH = Math.max(1, Math.round(pageHeight * dpr));
+
+      const shell = document.createElement("div");
+      shell.className = "classic-flip-shell";
+      shell.style.width = `${pageWidth * 2}px`;
+      shell.style.height = `${pageHeight}px`;
+      shell.style.display = "flex";
+      shell.style.alignItems = "center";
+      shell.style.justifyContent = "center";
+
       const book = document.createElement("div");
       book.className = "classic-flip-book";
-      stage.appendChild(book);
+      book.style.transformOrigin = "center center";
+      book.style.transform = renderScale(dpr);
+      shell.appendChild(book);
+      stage.appendChild(shell);
       bookRef.current = book;
 
       pageFlip = new PageFlip(book, {
-        width: pageWidth,
-        height: pageHeight,
+        width: renderW,
+        height: renderH,
         size: "fixed",
         showCover: true,
         usePortrait: false,
         autoSize: false,
         drawShadow: !isMobile,
         maxShadowOpacity: 0.35,
-        flippingTime: isMobile ? 420 : 600,
+        flippingTime: 750,
         startZIndex: 10000,
         mobileScrollSupport: false,
-        swipeDistance: 24,
+        swipeDistance: 99999,
         disableFlipByClick: true,
-        useMouseEvents: !isMobile,
+        useMouseEvents: false,
+        showPageCorners: false,
         startPage: Math.min(pageRef.current, Math.max(imageUrls.length - 1, 0)),
       });
 
@@ -259,7 +331,7 @@ export default function ClassicFlipEngine({
       patchTransparentClear(book);
 
       if (pageRef.current === 0) {
-        applyCoverClip(book, "front", pageWidth);
+        applyCoverClip(book, "front", renderW, dpr);
       }
 
       const syncSpread = (index) => {
@@ -275,7 +347,7 @@ export default function ClassicFlipEngine({
         else if (spreadIndex === totalSpreads - 1) mode = "back";
 
         coverModeRef.current = mode;
-        applyCoverClip(book, mode, pageWidth);
+        applyCoverClip(book, mode, renderW, dpr);
         setSpread({ current: spreadIndex + 1, total: totalSpreads });
         setCoverMode(mode);
       };
@@ -292,11 +364,11 @@ export default function ClassicFlipEngine({
         const state = event?.data;
         if (state === "flipping" || state === "user_fold") {
           book.style.clipPath = "";
-          book.style.transform = "";
+          book.style.transform = renderScale(dpr);
           return;
         }
         if (state === "read") {
-          applyCoverClip(book, coverModeRef.current, pageWidth);
+          applyCoverClip(book, coverModeRef.current, renderW, dpr);
         }
       });
 
@@ -307,11 +379,11 @@ export default function ClassicFlipEngine({
 
     const observer = new ResizeObserver(() => {
       if (!activeRef.current || !bookRef.current) return;
-      const next = measurePage(stage, isMobile ? 0.98 : 0.94);
+      const next = measurePage(stage, PAGE_FILL, 8);
       const prev = pageSizeRef.current;
       if (
-        Math.abs(next.pageWidth - prev.w) < 24 &&
-        Math.abs(next.pageHeight - prev.h) < 24
+        Math.abs(next.pageWidth - prev.w) < 16 &&
+        Math.abs(next.pageHeight - prev.h) < 16
       ) {
         return;
       }
@@ -360,6 +432,7 @@ export default function ClassicFlipEngine({
 
   const atStart = coverMode === "front";
   const atEnd = coverMode === "back";
+  const busy = loading;
 
   return (
     <div className="relative flex min-h-0 flex-1 flex-col">
@@ -372,72 +445,109 @@ export default function ClassicFlipEngine({
         </div>
       ) : null}
 
-      <div className="relative flex min-h-0 flex-1">
-        {isMobile ? (
-          <button
-            type="button"
-            aria-label="Previous page"
-            disabled={loading || atStart}
-            className="absolute top-1/2 left-1 z-30 grid size-11 -translate-y-1/2 place-items-center rounded-full border border-amber-200/35 bg-black/45 text-amber-100 backdrop-blur-sm transition active:scale-95 disabled:opacity-30"
-            onClick={() => flipPrev(flipRef.current, coverModeRef.current)}
-          >
-            <ChevronLeft className="size-6" />
-          </button>
-        ) : null}
-
+      <div className="relative flex min-h-0 flex-1 overflow-hidden">
         <div
-          ref={stageRef}
-          className={`flip-stage classic-flip-stage min-h-0 flex-1 ${
-            coverMode === "front"
-              ? "is-front-cover"
-              : coverMode === "back"
-                ? "is-back-cover"
-                : ""
-          }${loading ? " opacity-0" : " opacity-100"}`}
-        />
-
-        {isMobile ? (
-          <button
-            type="button"
-            aria-label="Next page"
-            disabled={loading || atEnd}
-            className="absolute top-1/2 right-1 z-30 grid size-11 -translate-y-1/2 place-items-center rounded-full border border-amber-200/35 bg-black/45 text-amber-100 backdrop-blur-sm transition active:scale-95 disabled:opacity-30"
-            onClick={() => flipNext(flipRef.current, coverModeRef.current)}
-          >
-            <ChevronRight className="size-6" />
-          </button>
-        ) : null}
+          className="flip-zoom-layer absolute inset-0 flex items-center justify-center"
+          style={{
+            transform: `scale(${zoom})`,
+            transformOrigin: "center center",
+            transition: "transform 180ms ease-out",
+            willChange: "transform",
+          }}
+        >
+          <div
+            ref={stageRef}
+            className={`flip-stage classic-flip-stage h-full w-full min-h-0 ${
+              coverMode === "front"
+                ? "is-front-cover"
+                : coverMode === "back"
+                  ? "is-back-cover"
+                  : ""
+            }${loading ? " opacity-0" : " opacity-100"}`}
+          />
+        </div>
       </div>
 
-      {isMobile ? (
-        <p className="shrink-0 py-2 text-center text-[11px] tracking-[0.18em] text-amber-100/75 uppercase">
-          {spread.current} / {spread.total}
-        </p>
-      ) : (
-        <div className="flex shrink-0 items-center justify-center gap-4 py-3">
-          <button
-            type="button"
-            aria-label="Previous page"
-            disabled={loading || atStart}
-            className="grid size-9 place-items-center rounded-full border border-amber-200/40 text-amber-100 transition hover:bg-white/10 disabled:opacity-40"
+      <div className="flipbook-controls" aria-label="Album controls">
+        <div className="flipbook-controls__primary">
+          <ControlButton
+            label="First page"
+            disabled={busy || atStart}
+            onClick={() => goToStart(flipRef.current)}
+          >
+            <ChevronFirst className="size-[1.15em]" />
+          </ControlButton>
+          <ControlButton
+            label="Previous page"
+            disabled={busy || atStart}
             onClick={() => flipPrev(flipRef.current, coverModeRef.current)}
           >
-            <ChevronLeft className="size-5" />
-          </button>
-          <p className="min-w-16 text-center text-xs tracking-[0.18em] text-amber-100/80 uppercase">
+            <ChevronLeft className="size-[1.15em]" />
+          </ControlButton>
+          <p className="flipbook-controls__page" aria-live="polite">
             {spread.current} / {spread.total}
           </p>
-          <button
-            type="button"
-            aria-label="Next page"
-            disabled={loading || atEnd}
-            className="grid size-9 place-items-center rounded-full border border-amber-200/40 text-amber-100 transition hover:bg-white/10 disabled:opacity-40"
+          <ControlButton
+            label="Next page"
+            disabled={busy || atEnd}
             onClick={() => flipNext(flipRef.current, coverModeRef.current)}
           >
-            <ChevronRight className="size-5" />
-          </button>
+            <ChevronRight className="size-[1.15em]" />
+          </ControlButton>
+          <ControlButton
+            label="Last page"
+            disabled={busy || atEnd}
+            onClick={() => goToEnd(flipRef.current)}
+          >
+            <ChevronLast className="size-[1.15em]" />
+          </ControlButton>
+          <ControlButton
+            label={muted ? "Unmute music" : "Mute music"}
+            disabled={busy}
+            onClick={toggleMute}
+          >
+            {muted ? (
+              <VolumeX className="size-[1.05em]" />
+            ) : (
+              <Volume2 className="size-[1.05em]" />
+            )}
+          </ControlButton>
         </div>
-      )}
+
+        <div className="flipbook-controls__zoom">
+          {typeof onToggleFullscreen === "function" ? (
+            <ControlButton
+              label={isFullscreen ? "Exit full view" : "Full view"}
+              disabled={busy}
+              onClick={onToggleFullscreen}
+            >
+              {isFullscreen ? (
+                <Minimize2 className="size-[1.05em]" />
+              ) : (
+                <Maximize2 className="size-[1.05em]" />
+              )}
+            </ControlButton>
+          ) : null}
+          <ControlButton
+            label="Zoom out"
+            disabled={busy || zoom <= ZOOM_MIN}
+            onClick={() =>
+              setZoom((z) => Math.max(ZOOM_MIN, Number((z - ZOOM_STEP).toFixed(2))))
+            }
+          >
+            <ZoomOut className="size-[1.05em]" />
+          </ControlButton>
+          <ControlButton
+            label="Zoom in"
+            disabled={busy || zoom >= ZOOM_MAX}
+            onClick={() =>
+              setZoom((z) => Math.min(ZOOM_MAX, Number((z + ZOOM_STEP).toFixed(2))))
+            }
+          >
+            <ZoomIn className="size-[1.05em]" />
+          </ControlButton>
+        </div>
+      </div>
     </div>
   );
 }

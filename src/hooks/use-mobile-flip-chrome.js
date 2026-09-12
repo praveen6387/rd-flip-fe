@@ -109,27 +109,36 @@ export function useMobileFlipChrome(containerRef) {
     };
   }, [forceLandscape]);
 
+  /** Mobile first-tap: fullscreen + landscape lock. No-op on desktop. */
   const enterImmersive = useCallback(async () => {
     if (!isMobileViewport()) return;
     const el = containerRef.current;
     await requestFullscreen(el);
     await lockLandscape();
-    // Re-sync after fullscreen / orientation settle; keep CSS rotate if still portrait.
     window.setTimeout(() => {
       sync();
       window.dispatchEvent(new Event("resize"));
     }, 160);
   }, [containerRef, sync]);
 
+  /** Explicit full view — desktop and mobile (hides browser + app chrome). */
   const toggleFullscreen = useCallback(async () => {
-    if (!isMobileViewport()) return;
     if (document.fullscreenElement || document.webkitFullscreenElement) {
       await exitFullscreen();
       sync();
+      window.dispatchEvent(new Event("resize"));
       return;
     }
-    await enterImmersive();
-  }, [enterImmersive, sync]);
+    const el = containerRef.current;
+    await requestFullscreen(el);
+    if (isMobileViewport()) {
+      await lockLandscape();
+    }
+    window.setTimeout(() => {
+      sync();
+      window.dispatchEvent(new Event("resize"));
+    }, 160);
+  }, [containerRef, sync]);
 
   return {
     isMobile,

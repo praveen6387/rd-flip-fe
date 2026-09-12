@@ -5,7 +5,7 @@ import { useMobileFlipChrome } from "@/hooks/use-mobile-flip-chrome";
 import { isFlipbookExpired } from "@/lib/flipbook-active";
 import ClassicFlipEngine from "./_builder/ClassicFlipEngine";
 import FullscreenToggle from "./_builder/FullscreenToggle";
-import MuteToggle from "./_builder/MuteToggle";
+import ViewerBackdrop from "./_builder/ViewerBackdrop";
 import ViewerLandingLoader from "./_builder/ViewerLandingLoader";
 import { FlipSoundProvider, useFlipSound } from "./_builder/useFlipSound";
 import ViewerSocialLinks from "./_builder/ViewerSocialLinks";
@@ -90,40 +90,38 @@ function FlipbookViewInner({ flipbook }) {
 
   return (
     <main ref={viewerRef} className="flip-viewer relative h-dvh text-white">
+      <ViewerBackdrop />
       <div
-        className={`flip-viewer__frame${
+        className={`flip-viewer__frame relative z-10${
           forceLandscape ? " flip-viewer__frame--landscape" : ""
         }`}
       >
-        <header className="relative z-10 grid shrink-0 grid-cols-[1fr_auto_1fr] items-center gap-2 px-3 py-2 sm:gap-3 sm:px-6 sm:py-3">
-          <div className="min-w-0">
-            <p className="truncate text-[10px] font-medium tracking-[0.18em] text-amber-200/85 uppercase sm:text-[11px] sm:tracking-[0.22em]">
+        <header className="pointer-events-none absolute inset-x-0 top-[40px] z-20 grid grid-cols-[1fr_auto_1fr] items-center gap-3 px-3 sm:gap-4 sm:px-4">
+          <div className="pointer-events-auto min-w-0">
+            <p className="truncate text-[11px] font-medium tracking-[0.18em] text-amber-200/85 uppercase sm:text-xs sm:tracking-[0.22em]">
               {flipbook.studio_name || "RD Flip"}
             </p>
             <ViewerSocialLinks flipbook={flipbook} />
           </div>
-          <div className="text-center">
-            <h1 className="font-heading text-base tracking-tight sm:text-lg md:text-xl">
+          <div className="pointer-events-none text-center">
+            <h1 className="font-heading text-lg leading-none tracking-tight sm:text-xl md:text-2xl">
               {flipbook.title}
             </h1>
             {dateLabel ? (
-              <p className="mt-0.5 text-[10px] tracking-[0.12em] text-white/50 uppercase sm:text-[11px] sm:tracking-[0.14em]">
+              <p className="mt-1 text-[11px] tracking-[0.12em] text-white/50 uppercase sm:text-xs sm:tracking-[0.14em]">
                 {dateLabel}
               </p>
             ) : null}
           </div>
-          <div className="flex items-center justify-end gap-1.5 sm:gap-2">
-            <MuteToggle />
-            {isMobile ? (
-              <FullscreenToggle
-                active={isFullscreen}
-                onToggle={toggleFullscreen}
-              />
-            ) : null}
+          <div className="pointer-events-auto flex items-center justify-end gap-1.5 sm:gap-2">
+            <FullscreenToggle
+              active={isFullscreen}
+              onToggle={toggleFullscreen}
+            />
           </div>
         </header>
 
-        <div className="relative z-10 flex min-h-0 flex-1 flex-col px-1 pb-1 sm:px-4 sm:pb-2">
+        <div className="relative z-10 flex min-h-0 flex-1 flex-col p-2">
           {mediaError ? (
             <p className="grid flex-1 place-items-center text-sm text-rose-300">
               {mediaError}
@@ -137,10 +135,12 @@ function FlipbookViewInner({ flipbook }) {
           ) : (
             <ClassicFlipEngine
               imageUrls={media.classicUrls}
-              sheetCount={media.sheets.length}
+              sheetCount={media.classicUrls.length}
               active
               isMobile={isMobile}
               forceLandscape={forceLandscape}
+              isFullscreen={isFullscreen}
+              onToggleFullscreen={toggleFullscreen}
             />
           )}
         </div>
