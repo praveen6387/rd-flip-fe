@@ -1,10 +1,5 @@
 import { s3DisplaySrc } from "@/lib/s3/media";
 import { buildFlipSheets } from "./buildSheets";
-import {
-  BLANK_TEXTURE,
-  buildBookPages,
-  collectTextureUrls,
-} from "./_builder/book/buildBookPages";
 
 const WHITE_SVG =
   "data:image/svg+xml," +
@@ -16,6 +11,7 @@ function loadImage(src) {
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.decoding = "async";
+    img.crossOrigin = "anonymous";
     img.onload = () => resolve(img);
     img.onerror = () => reject(new Error(`Could not load ${src}`));
     img.src = src;
@@ -87,7 +83,7 @@ async function sheetToImageUrl(sheet, cache) {
 }
 
 /**
- * Classic-only prep: one network fetch per photo, parallel, no Studio work.
+ * Prepare classic flip pages: one fetch per photo, parallel decode.
  */
 export async function prepareClassicMedia(pages, { onProgress } = {}) {
   const sheets = buildFlipSheets(pages);
@@ -96,7 +92,6 @@ export async function prepareClassicMedia(pages, { onProgress } = {}) {
   let done = 0;
 
   const report = () => onProgress?.(Math.min(1, done / total));
-
   report();
 
   const classicUrls = await Promise.all(
@@ -112,7 +107,6 @@ export async function prepareClassicMedia(pages, { onProgress } = {}) {
     })
   );
 
-  // Decode once so PageFlip hits cache and paints immediately.
   await Promise.all(
     classicUrls.map((url) => loadImage(url).catch(() => null))
   );
@@ -120,51 +114,4 @@ export async function prepareClassicMedia(pages, { onProgress } = {}) {
   onProgress?.(1);
 
   return { sheets, classicUrls };
-}
-
-/**
- * Studio textures — only when user switches to Studio.
- * Wait on the first batch so the 3D view can mount quickly; rest warm in background.
- */
-export async function prepareStudioMedia(pages, { onProgress } = {}) {
-  const bookPages = buildBookPages(pages);
-  const textureUrls = collectTextureUrls(bookPages);
-  const remoteUrls = textureUrls.filter(
-    (url) => url && url !== BLANK_TEXTURE
-  );
-  const priority = remoteUrls.slice(0, 8);
-  const rest = remoteUrls.slice(8);
-  const total = Math.max(priority.length, 1);
-  let done = 0;
-
-  await Promise.all(
-    priority.map((url) =>
-      loadImage(url)
-        .catch(() => null)
-        .finally(() => {
-          done += 1;
-          onProgress?.(Math.min(1, done / total));
-        })
-    )
-  );
-
-  onProgress?.(1);
-
-  // Warm remaining images without blocking first paint.
-  rest.forEach((url) => {
-    loadImage(url).catch(() => null);
-  });
-
-  return { bookPages, textureUrls };
-}
-
-/** @deprecated Prefer prepareClassicMedia / prepareStudioMedia */
-export async function prepareViewerMedia(pages, { onProgress } = {}) {
-  const classic = await prepareClassicMedia(pages, {
-    onProgress: (r) => onProgress?.(r * 0.7),
-  });
-  const studio = await prepareStudioMedia(pages, {
-    onProgress: (r) => onProgress?.(0.7 + r * 0.3),
-  });
-  return { ...classic, ...studio };
 }

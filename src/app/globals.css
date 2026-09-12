@@ -295,18 +295,18 @@
   cursor: grab;
 }
 
-.flip-viewer--classic .classic-flip-stage.is-front-cover .stf__parent,
-.flip-viewer--classic .classic-flip-stage.is-back-cover .stf__parent {
+.flip-viewer .classic-flip-stage.is-front-cover .stf__parent,
+.flip-viewer .classic-flip-stage.is-back-cover .stf__parent {
   overflow: hidden;
 }
 
-.flip-viewer--classic .stf__parent {
+.flip-viewer .stf__parent {
   margin: 0 auto;
   cursor: pointer;
   box-shadow: 0 14px 36px rgb(0 0 0 / 45%);
 }
 
-.flip-viewer--classic .stf__canvas {
+.flip-viewer .stf__canvas {
   display: block;
   background: transparent;
 }

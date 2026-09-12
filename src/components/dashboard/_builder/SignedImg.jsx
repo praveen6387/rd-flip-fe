@@ -5,10 +5,17 @@ import { BookOpen } from "lucide-react";
 import { s3DisplaySrc } from "@/lib/s3/media";
 import { cn } from "@/lib/cn";
 
-export default function SignedImg({ src, alt = "", className, fallbackClassName }) {
+/** Renders a public S3 image URL directly (no proxy / signed fetch). */
+export default function SignedImg({
+  src,
+  alt = "",
+  className,
+  fallbackClassName,
+}) {
   const [failed, setFailed] = useState(false);
+  const href = s3DisplaySrc(src);
 
-  if (!src || failed) {
+  if (!href || failed) {
     return (
       <div className={cn("grid size-full place-items-center", fallbackClassName)}>
         <BookOpen className="size-5 opacity-70" />
@@ -18,7 +25,7 @@ export default function SignedImg({ src, alt = "", className, fallbackClassName 
 
   return (
     <img
-      src={s3DisplaySrc(src)}
+      src={href}
       alt={alt}
       decoding="async"
       referrerPolicy="no-referrer"

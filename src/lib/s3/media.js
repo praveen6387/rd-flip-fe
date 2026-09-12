@@ -12,6 +12,15 @@ export function isAllowedS3MediaUrl(raw) {
 
   const bucket = process.env.AWS_S3_BUCKET || "";
   const host = url.hostname;
+  const publicBase = process.env.AWS_S3_PUBLIC_BASE_URL || "";
+
+  if (publicBase) {
+    try {
+      if (host === new URL(publicBase).hostname) return true;
+    } catch {
+      /* ignore bad base */
+    }
+  }
 
   if (bucket) {
     return (
@@ -36,7 +45,8 @@ export function s3ObjectKeyFromUrl(raw) {
   return key;
 }
 
+/** Direct public S3 URL — no /s3/media proxy. */
 export function s3DisplaySrc(url) {
   if (!url) return "";
-  return `/s3/media?src=${encodeURIComponent(url)}`;
+  return String(url).split("?")[0];
 }
