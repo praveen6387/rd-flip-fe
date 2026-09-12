@@ -5,7 +5,7 @@ import { BookOpen } from "lucide-react";
 import { s3DisplaySrc } from "@/lib/s3/media";
 import { cn } from "@/lib/cn";
 
-/** Renders a public S3 image URL directly (no proxy / signed fetch). */
+/** Renders an S3 image URL (signed query string preserved). */
 export default function SignedImg({
   src,
   alt = "",

@@ -18,15 +18,13 @@ export async function uploadJpegToS3({ buffer, coverType, batch, index }) {
   const key = `flipbooks/${batch}/${coverType}-${String(index).padStart(3, "0")}.jpg`;
   const s3 = getS3Client(config);
 
-  // Public read comes from the bucket policy (recommended). Do not set ACL —
-  // many buckets use "Bucket owner enforced" and reject object ACLs.
   await s3.send(
     new PutObjectCommand({
       Bucket: config.bucket,
       Key: key,
       Body: buffer,
       ContentType: "image/jpeg",
-      CacheControl: "public, max-age=31536000, immutable",
+      CacheControl: "private, max-age=31536000",
     })
   );
 

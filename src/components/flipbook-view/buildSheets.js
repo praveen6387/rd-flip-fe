@@ -10,6 +10,8 @@ function sortPages(pages) {
   );
 }
 
+const WHITE_PAGE = "/white.svg";
+
 /**
  * Book sheets from API pages only:
  * Front → full image each
@@ -26,7 +28,7 @@ export function buildFlipSheets(pages) {
   const sheets = [];
 
   groups.front.forEach((page, index) => {
-    if(index === 0) {
+    if (index === 0) {
       sheets.push({
         id: `front-${page.page_number}-${index}`,
         kind: "image",
@@ -37,7 +39,7 @@ export function buildFlipSheets(pages) {
       sheets.push({
         id: `front-blank-${page.page_number}-${index}`,
         kind: "image",
-        src: "/white.png",
+        src: WHITE_PAGE,
         alt: `Blank page ${index + 1}`,
       });
 
@@ -69,7 +71,7 @@ export function buildFlipSheets(pages) {
 
   groups.back.forEach((page, index) => {
     const isLast = index === groups.back.length - 1;
-    if(isLast) {
+    if (isLast) {
       sheets.push({
         id: `back-cover-${page.page_number}-${index}`,
         kind: "image",

@@ -1,11 +1,10 @@
 const ACCEPT = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
 
-// Wide middle spreads need headroom — each page is only half the image.
-export const TARGET_PHOTO_BYTES = 3 * 1024 * 1024; // 3 MB
-const MIN_QUALITY = 0.9;
-const MIN_EDGE = 2400;
-const START_EDGE = 4096;
-const START_QUALITY = 0.95;
+export const TARGET_PHOTO_BYTES = 1 * 1024 * 1024; // 1 MB
+const MIN_QUALITY = 0.8;
+const MIN_EDGE = 2000;
+const START_EDGE = 3600;
+const START_QUALITY = 0.92;
 
 export function isAcceptedImage(file) {
   return ACCEPT.includes(file.type);
@@ -50,7 +49,6 @@ export async function optimizeImage(
   const sourceW = bitmap.width;
   const sourceH = bitmap.height;
 
-  // Keep original JPEG when it already fits — re-encoding always softens detail.
   const isJpeg =
     file.type === "image/jpeg" ||
     file.type === "image/jpg" ||
@@ -59,17 +57,10 @@ export async function optimizeImage(
   if (isJpeg && file.size <= targetBytes) {
     bitmap.close();
     onProgress?.(100);
-    return {
-      blob: file,
-      width: sourceW,
-      height: sourceH,
-    };
+    return { blob: file, width: sourceW, height: sourceH };
   }
 
-  const startScale = Math.min(
-    1,
-    START_EDGE / Math.max(sourceW, sourceH)
-  );
+  const startScale = Math.min(1, START_EDGE / Math.max(sourceW, sourceH));
   let width = Math.max(1, Math.round(sourceW * startScale));
   let height = Math.max(1, Math.round(sourceH * startScale));
   let quality = START_QUALITY;

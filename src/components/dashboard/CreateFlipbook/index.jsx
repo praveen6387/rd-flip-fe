@@ -589,7 +589,7 @@ export default function CreateFlipbook({ user, error }) {
             type="submit"
             disabled={Boolean(submitState)}
             className={cn(
-              "h-10 rounded-full px-6 text-sm",
+              "h-10 !cursor-pointer rounded-full px-6 text-sm",
               isDark
                 ? "bg-white/12 text-white hover:bg-white/18"
                 : "bg-slate-900 text-white hover:bg-slate-800"

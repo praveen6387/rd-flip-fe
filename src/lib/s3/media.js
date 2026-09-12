@@ -45,8 +45,8 @@ export function s3ObjectKeyFromUrl(raw) {
   return key;
 }
 
-/** Direct public S3 URL — no /s3/media proxy. */
+/** Use API image URL as-is (keeps S3 signed query string). */
 export function s3DisplaySrc(url) {
   if (!url) return "";
-  return String(url).split("?")[0];
+  return String(url);
 }

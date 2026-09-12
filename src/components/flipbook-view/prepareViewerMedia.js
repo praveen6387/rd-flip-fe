@@ -5,7 +5,10 @@ function loadImage(src) {
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.decoding = "async";
-    img.crossOrigin = "anonymous";
+    // Relative/public assets are same-origin; CORS only needed for S3 + canvas.
+    if (/^https?:\/\//i.test(src)) {
+      img.crossOrigin = "anonymous";
+    }
     img.onload = () => resolve(img);
     img.onerror = () => reject(new Error(`Could not load ${src}`));
     img.src = src;
