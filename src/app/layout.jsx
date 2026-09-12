@@ -23,6 +23,10 @@ const playfair = Playfair_Display({
 export const metadata = {
   title: "RD Flip",
   description: "RD Flip frontend",
+  icons: {
+    icon: [{ url: "/favicon.svg", type: "image/svg+xml" }],
+    apple: [{ url: "/favicon.svg", type: "image/svg+xml" }],
+  },
 };
 
 export default function RootLayout({ children }) {
