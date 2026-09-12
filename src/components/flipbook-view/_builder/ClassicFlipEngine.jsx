@@ -8,12 +8,15 @@ import {
   ChevronRight,
   Maximize2,
   Minimize2,
+  Pause,
+  Play,
   Volume2,
   VolumeX,
   ZoomIn,
   ZoomOut,
 } from "lucide-react";
 import { useFlipSound } from "./useFlipSound";
+import ViewerThemePicker from "./ViewerThemePicker";
 
 const PAGE_RATIO = 7 / 5;
 const ZOOM_MIN = 0.88;
@@ -23,6 +26,7 @@ const PAGE_FILL = 0.99;
 const FLIP_MS = 750;
 /** Keep in sync with flip so cover shift and page turn run together. */
 const COVER_SHIFT_MS = FLIP_MS;
+const AUTOPLAY_MS = 3200;
 
 function measurePage(stage) {
   const maxW = Math.max((stage?.clientWidth || 0) - 8, 120);
@@ -65,13 +69,14 @@ function coverShift(mode, pageWidth) {
   return "";
 }
 
-function ControlButton({ label, disabled, onClick, children }) {
+function ControlButton({ label, disabled, onClick, children, highlight = false, pressed }) {
   return (
     <button
       type="button"
       aria-label={label}
+      aria-pressed={pressed}
       disabled={disabled}
-      className="flip-control-btn"
+      className={`flip-control-btn${highlight ? " flip-control-btn--highlight" : ""}`}
       onClick={onClick}
     >
       {children}
@@ -87,6 +92,8 @@ export default function ClassicFlipEngine({
   forceLandscape = false,
   isFullscreen = false,
   onToggleFullscreen,
+  themeId,
+  onThemeChange,
 }) {
   const stageRef = useRef(null);
   const bookRef = useRef(null);
@@ -102,10 +109,16 @@ export default function ClassicFlipEngine({
   const [coverMode, setCoverMode] = useState("front");
   const [loading, setLoading] = useState(true);
   const [zoom, setZoom] = useState(1);
+  const [autoPlay, setAutoPlay] = useState(false);
+  const autoPlayRef = useRef(false);
 
   useEffect(() => {
     coverModeRef.current = coverMode;
   }, [coverMode]);
+
+  useEffect(() => {
+    autoPlayRef.current = autoPlay;
+  }, [autoPlay]);
 
   useEffect(() => {
     activeRef.current = active;
@@ -380,6 +393,28 @@ export default function ClassicFlipEngine({
     return () => window.removeEventListener("keydown", onKey);
   }, [active]);
 
+  useEffect(() => {
+    if (!autoPlay || !active || loading) return undefined;
+
+    const timer = window.setInterval(() => {
+      const book = flipRef.current;
+      if (!book || !autoPlayRef.current) return;
+
+      if (coverModeRef.current === "back") {
+        book.turnToPage(0);
+        return;
+      }
+
+      try {
+        book.flipNext("top");
+      } catch {
+        /* ignore mid-flip */
+      }
+    }, AUTOPLAY_MS);
+
+    return () => window.clearInterval(timer);
+  }, [autoPlay, active, loading]);
+
   if (!sheetCount) {
     return (
       <p className="text-sm text-white/60">This album has no pages yet.</p>
@@ -423,16 +458,35 @@ export default function ClassicFlipEngine({
       <div className="flipbook-controls" aria-label="Album controls">
         <div className="flipbook-controls__primary">
           <ControlButton
+            label={autoPlay ? "Pause auto flip" : "Play auto flip"}
+            disabled={busy}
+            highlight
+            pressed={autoPlay}
+            onClick={() => setAutoPlay((value) => !value)}
+          >
+            {autoPlay ? (
+              <Pause className="size-[1.05em]" />
+            ) : (
+              <Play className="size-[1.05em]" />
+            )}
+          </ControlButton>
+          <ControlButton
             label="First page"
             disabled={busy || atStart}
-            onClick={() => api()?.turnToPage(0)}
+            onClick={() => {
+              setAutoPlay(false);
+              api()?.turnToPage(0);
+            }}
           >
             <ChevronFirst className="size-[1.15em]" />
           </ControlButton>
           <ControlButton
             label="Previous page"
             disabled={busy || atStart}
-            onClick={() => api()?.flipPrev("top")}
+            onClick={() => {
+              setAutoPlay(false);
+              api()?.flipPrev("top");
+            }}
           >
             <ChevronLeft className="size-[1.15em]" />
           </ControlButton>
@@ -442,7 +496,10 @@ export default function ClassicFlipEngine({
           <ControlButton
             label="Next page"
             disabled={busy || atEnd}
-            onClick={() => api()?.flipNext("top")}
+            onClick={() => {
+              setAutoPlay(false);
+              api()?.flipNext("top");
+            }}
           >
             <ChevronRight className="size-[1.15em]" />
           </ControlButton>
@@ -450,6 +507,7 @@ export default function ClassicFlipEngine({
             label="Last page"
             disabled={busy || atEnd}
             onClick={() => {
+              setAutoPlay(false);
               const count = api()?.getPageCount?.() ?? 0;
               if (count > 0) api()?.turnToPage(count - 1);
             }}
@@ -470,6 +528,9 @@ export default function ClassicFlipEngine({
         </div>
 
         <div className="flipbook-controls__zoom">
+          {typeof onThemeChange === "function" ? (
+            <ViewerThemePicker themeId={themeId} onChange={onThemeChange} />
+          ) : null}
           {typeof onToggleFullscreen === "function" ? (
             <ControlButton
               label={isFullscreen ? "Exit full view" : "Full view"}

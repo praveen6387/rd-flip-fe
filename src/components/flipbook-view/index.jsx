@@ -7,8 +7,14 @@ import ClassicFlipEngine from "./_builder/ClassicFlipEngine";
 import FullscreenToggle from "./_builder/FullscreenToggle";
 import ViewerBackdrop from "./_builder/ViewerBackdrop";
 import ViewerLandingLoader from "./_builder/ViewerLandingLoader";
+import ViewerThemePicker from "./_builder/ViewerThemePicker";
 import { FlipSoundProvider, useFlipSound } from "./_builder/useFlipSound";
 import ViewerSocialLinks from "./_builder/ViewerSocialLinks";
+import {
+  DEFAULT_VIEWER_THEME,
+  readStoredViewerTheme,
+  storeViewerTheme,
+} from "./_builder/viewerThemes";
 import { prepareClassicMedia } from "./prepareViewerMedia";
 
 function formatDate(value) {
@@ -36,6 +42,16 @@ function FlipbookViewInner({ flipbook }) {
   const [media, setMedia] = useState(null);
   const [mediaError, setMediaError] = useState("");
   const [loadProgress, setLoadProgress] = useState(0);
+  const [themeId, setThemeId] = useState(DEFAULT_VIEWER_THEME);
+
+  useEffect(() => {
+    setThemeId(readStoredViewerTheme());
+  }, []);
+
+  function handleThemeChange(nextId) {
+    setThemeId(nextId);
+    storeViewerTheme(nextId);
+  }
 
   useEffect(() => {
     let cancelled = false;
@@ -90,7 +106,7 @@ function FlipbookViewInner({ flipbook }) {
 
   return (
     <main ref={viewerRef} className="flip-viewer relative h-dvh text-white">
-      <ViewerBackdrop />
+      <ViewerBackdrop themeId={themeId} />
       <div
         className={`flip-viewer__frame relative z-10${
           forceLandscape ? " flip-viewer__frame--landscape" : ""
@@ -121,6 +137,12 @@ function FlipbookViewInner({ flipbook }) {
           </div>
         </header>
 
+        {!media ? (
+          <div className="viewer-theme-picker-solo">
+            <ViewerThemePicker themeId={themeId} onChange={handleThemeChange} />
+          </div>
+        ) : null}
+
         <div className="relative z-10 flex min-h-0 w-full flex-1 flex-col p-2">
           {mediaError ? (
             <p className="grid flex-1 place-items-center text-sm text-rose-300">
@@ -141,6 +163,8 @@ function FlipbookViewInner({ flipbook }) {
               forceLandscape={forceLandscape}
               isFullscreen={isFullscreen}
               onToggleFullscreen={toggleFullscreen}
+              themeId={themeId}
+              onThemeChange={handleThemeChange}
             />
           )}
         </div>

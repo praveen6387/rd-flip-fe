@@ -252,6 +252,45 @@
   contain: layout paint style;
 }
 
+.viewer-backdrop__base {
+  position: absolute;
+  inset: 0;
+  background: #07070a;
+}
+
+.viewer-backdrop--ocean .viewer-backdrop__base {
+  background:
+    radial-gradient(ellipse 90% 60% at 50% 70%, #0a2030 0%, transparent 65%),
+    #05080c;
+}
+
+.viewer-backdrop--river .viewer-backdrop__base {
+  background:
+    radial-gradient(ellipse 80% 55% at 50% 55%, #0a1c18 0%, transparent 70%),
+    #050a09;
+}
+
+.viewer-backdrop--night .viewer-backdrop__base,
+.viewer-backdrop--aurora .viewer-backdrop__base {
+  background:
+    radial-gradient(ellipse 100% 70% at 50% 100%, #1a1028 0%, transparent 55%),
+    linear-gradient(180deg, #04060f 0%, #0a0c1a 55%, #120e1c 100%);
+}
+
+.viewer-backdrop--sunset .viewer-backdrop__base {
+  background:
+    radial-gradient(ellipse 80% 50% at 50% 80%, #2a120c 0%, transparent 60%),
+    #0a0708;
+}
+
+.viewer-backdrop--glow .viewer-backdrop__base {
+  background:
+    radial-gradient(ellipse 80% 55% at 50% 40%, #12161c 0%, transparent 70%),
+    radial-gradient(ellipse 50% 40% at 15% 85%, rgb(55 38 18 / 28%) 0%, transparent 65%),
+    radial-gradient(ellipse 45% 35% at 88% 18%, rgb(28 48 58 / 22%) 0%, transparent 60%),
+    #07070a;
+}
+
 .viewer-backdrop__glow {
   position: absolute;
   border-radius: 50%;
@@ -289,6 +328,33 @@
   animation-duration: 16s;
 }
 
+.viewer-backdrop__canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  opacity: 1;
+}
+
+.viewer-backdrop__stars {
+  position: absolute;
+  inset: 0;
+}
+
+.viewer-backdrop__star {
+  position: absolute;
+  border-radius: 50%;
+  background: rgb(255 245 220 / 90%);
+  box-shadow:
+    0 0 4px rgb(255 230 180 / 55%),
+    0 0 10px rgb(255 210 140 / 25%);
+  animation-name: viewer-star-twinkle;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+  will-change: opacity, transform;
+}
+
 .viewer-backdrop__particles {
   position: absolute;
   inset: 0;
@@ -308,6 +374,162 @@
   will-change: transform, opacity;
 }
 
+.viewer-backdrop__veil {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(
+      ellipse 58% 42% at 50% 48%,
+      rgb(7 7 10 / 42%) 0%,
+      rgb(7 7 10 / 12%) 48%,
+      transparent 74%
+    );
+}
+
+.viewer-backdrop--night .viewer-backdrop__veil,
+.viewer-backdrop--aurora .viewer-backdrop__veil {
+  background:
+    radial-gradient(
+      ellipse 55% 40% at 50% 48%,
+      rgb(4 6 14 / 35%) 0%,
+      transparent 70%
+    );
+}
+
+.viewer-theme-picker {
+  position: relative;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  pointer-events: auto;
+}
+
+.viewer-theme-picker-solo {
+  position: absolute;
+  right: max(0.75rem, env(safe-area-inset-right));
+  bottom: calc(0.5rem + env(safe-area-inset-bottom));
+  z-index: 40;
+  pointer-events: auto;
+}
+
+.viewer-theme-picker__btn {
+  display: grid;
+  place-items: center;
+  width: clamp(30px, 4vw, 40px);
+  height: clamp(30px, 4vw, 40px);
+  margin: 0 0.35rem;
+  border-radius: 9999px;
+  border: 1px solid rgb(251 191 36 / 45%);
+  background: #141414;
+  color: rgb(254 243 199);
+  outline: none;
+  box-shadow: 0 0 0 1px rgb(251 191 36 / 12%);
+  transition: filter 160ms ease, border-color 160ms ease, opacity 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.viewer-theme-picker__btn:hover {
+  filter: brightness(1.35);
+  border-color: rgb(251 191 36 / 75%);
+  box-shadow: 0 0 12px rgb(251 191 36 / 22%);
+}
+
+.viewer-theme-picker__menu {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 0.55rem);
+  width: min(15.5rem, calc(100vw - 1.5rem));
+  padding: 0.45rem;
+  border-radius: 0.9rem;
+  border: 1px solid rgb(255 255 255 / 12%);
+  background: rgb(12 12 16 / 94%);
+  box-shadow: 0 18px 40px rgb(0 0 0 / 45%);
+  backdrop-filter: blur(16px);
+}
+
+.viewer-theme-picker__title {
+  margin: 0.15rem 0.45rem 0.4rem;
+  font-size: 0.65rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgb(255 255 255 / 45%);
+}
+
+.viewer-theme-picker__item {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 0.55rem;
+  width: 100%;
+  padding: 0.45rem 0.5rem;
+  border: 0;
+  border-radius: 0.65rem;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background 140ms ease;
+}
+
+.viewer-theme-picker__item:hover,
+.viewer-theme-picker__item.is-active {
+  background: rgb(255 255 255 / 8%);
+}
+
+.viewer-theme-picker__swatch {
+  width: 1.35rem;
+  height: 1.35rem;
+  border-radius: 9999px;
+  border: 1px solid rgb(255 255 255 / 18%);
+  background: #1a1a22;
+}
+
+.viewer-theme-picker__swatch[data-theme="ocean"] {
+  background: linear-gradient(145deg, #063047, #1b7ea8);
+}
+
+.viewer-theme-picker__swatch[data-theme="river"] {
+  background: linear-gradient(145deg, #0a2e28, #2f9b7a);
+}
+
+.viewer-theme-picker__swatch[data-theme="night"] {
+  background: linear-gradient(145deg, #070b18, #2a2550);
+}
+
+.viewer-theme-picker__swatch[data-theme="aurora"] {
+  background: linear-gradient(145deg, #07121c, #1f8a62 55%, #4b6fd6);
+}
+
+.viewer-theme-picker__swatch[data-theme="sunset"] {
+  background: linear-gradient(145deg, #2a0e0c, #c46a28);
+}
+
+.viewer-theme-picker__swatch[data-theme="glow"] {
+  background: linear-gradient(145deg, #1a1410, #7a5a2a 55%, #3a2a55);
+}
+
+.viewer-theme-picker__copy {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 0.05rem;
+}
+
+.viewer-theme-picker__label {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: rgb(255 255 255 / 92%);
+}
+
+.viewer-theme-picker__desc {
+  font-size: 0.68rem;
+  color: rgb(255 255 255 / 45%);
+}
+
+.viewer-theme-picker__check {
+  color: rgb(251 191 36 / 90%);
+}
+
 @keyframes viewer-glow-drift {
   from {
     transform: translate3d(0, 0, 0) scale(1);
@@ -316,6 +538,22 @@
   to {
     transform: translate3d(4%, -3%, 0) scale(1.12);
     opacity: 0.42;
+  }
+}
+
+@keyframes viewer-star-twinkle {
+  0%,
+  100% {
+    opacity: 0.15;
+    transform: scale(0.7);
+  }
+  40% {
+    opacity: 0.95;
+    transform: scale(1.15);
+  }
+  70% {
+    opacity: 0.35;
+    transform: scale(0.85);
   }
 }
 
@@ -335,8 +573,13 @@
 
 @media (prefers-reduced-motion: reduce) {
   .viewer-backdrop__glow,
+  .viewer-backdrop__star,
   .viewer-backdrop__dot {
     animation: none !important;
+  }
+
+  .viewer-backdrop__star {
+    opacity: 0.45;
   }
 }
 
@@ -379,12 +622,31 @@
   background: #141414;
   color: #f5f5f5;
   outline: none;
-  transition: filter 160ms ease, border-color 160ms ease, opacity 160ms ease;
+  transition: filter 160ms ease, border-color 160ms ease, opacity 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.flip-control-btn--highlight {
+  border: 1px solid rgb(251 191 36 / 45%);
+  color: rgb(254 243 199);
+  box-shadow: 0 0 0 1px rgb(251 191 36 / 12%);
+}
+
+.flip-control-btn--highlight[aria-pressed="true"] {
+  border-color: rgb(251 191 36 / 80%);
+  box-shadow: 0 0 14px rgb(251 191 36 / 28%);
+  color: rgb(253 224 71);
 }
 
 .flip-control-btn:hover:not(:disabled) {
   filter: brightness(1.8);
   border-color: rgb(251 191 36 / 55%);
+}
+
+.flip-control-btn--highlight:hover:not(:disabled) {
+  filter: brightness(1.35);
+  border-color: rgb(251 191 36 / 75%);
+  box-shadow: 0 0 12px rgb(251 191 36 / 22%);
 }
 
 .flip-control-btn:disabled {
@@ -407,8 +669,13 @@
     right: 0.35rem;
   }
 
-  .flip-control-btn {
+  .flip-control-btn,
+  .viewer-theme-picker__btn {
     margin: 0 0.22rem;
+  }
+
+  .viewer-theme-picker-solo {
+    right: max(0.35rem, env(safe-area-inset-right));
   }
 }
 
