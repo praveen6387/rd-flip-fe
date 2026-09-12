@@ -26,12 +26,28 @@ export function buildFlipSheets(pages) {
   const sheets = [];
 
   groups.front.forEach((page, index) => {
-    sheets.push({
-      id: `front-${page.page_number}-${index}`,
-      kind: "image",
-      src: page.image_url,
-      alt: index === 0 ? "Front cover" : `Front page ${index + 1}`,
-    });
+    if(index === 0) {
+      sheets.push({
+        id: `front-${page.page_number}-${index}`,
+        kind: "image",
+        src: page.image_url,
+        alt: "Front cover",
+      });
+    } else {
+      sheets.push({
+        id: `front-blank-${page.page_number}-${index}`,
+        kind: "image",
+        src: "/white.png",
+        alt: `Blank page ${index + 1}`,
+      });
+
+      sheets.push({
+        id: `front-image-${page.page_number}-${index}`,
+        kind: "image",
+        src: page.image_url,
+        alt: `Image page ${index + 1}`,
+      });
+    }
   });
 
   groups.middle.forEach((page, index) => {
@@ -53,12 +69,27 @@ export function buildFlipSheets(pages) {
 
   groups.back.forEach((page, index) => {
     const isLast = index === groups.back.length - 1;
-    sheets.push({
-      id: `back-${page.page_number}-${index}`,
-      kind: "image",
-      src: page.image_url,
-      alt: isLast ? "Back cover" : `Back page ${index + 1}`,
-    });
+    if(isLast) {
+      sheets.push({
+        id: `back-cover-${page.page_number}-${index}`,
+        kind: "image",
+        src: page.image_url,
+        alt: "Back cover",
+      });
+    } else {
+      sheets.push({
+        id: `back-blank-${page.page_number}-${index}`,
+        kind: "blank",
+        src: page.image_url,
+        alt: `Blank page ${index + 1}`,
+      });
+      sheets.push({
+        id: `back-image-${page.page_number}-${index}`,
+        kind: "image",
+        src: '/white.png',
+        alt: `Image page ${index + 1}`,
+      });
+    }
   });
 
   return sheets;
