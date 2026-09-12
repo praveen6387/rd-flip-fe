@@ -88,7 +88,7 @@ export function buildFlipSheets(pages) {
       sheets.push({
         id: `back-image-${page.page_number}-${index}`,
         kind: "image",
-        src: '/white.png',
+        src: WHITE_PAGE,
         alt: `Image page ${index + 1}`,
       });
     }

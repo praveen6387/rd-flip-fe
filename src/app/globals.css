@@ -468,9 +468,11 @@
   background: transparent;
 }
 
-.flip-viewer .classic-flip-stage.is-front-cover .stf__parent,
-.flip-viewer .classic-flip-stage.is-back-cover .stf__parent {
-  overflow: hidden;
+.flip-viewer .classic-flip-shell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  will-change: transform;
 }
 
 .flip-viewer .stf__parent {
@@ -478,6 +480,25 @@
   cursor: pointer;
   background: transparent;
   box-shadow: none;
+}
+
+.flip-viewer .stf__block {
+  background: transparent;
+}
+
+.flip-viewer .classic-flip-page {
+  background: #111;
+  overflow: hidden;
+}
+
+.flip-viewer .classic-flip-page img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
 }
 
 .flip-viewer .stf__canvas {
