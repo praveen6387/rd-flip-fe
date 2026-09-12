@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, GripVertical, ImagePlus, X } from "lucide-react";
 import { toast } from "sonner";
 import { Progress } from "@/components/ui/progress";
+import ViewportCenterOverlay from "@/components/dashboard/_builder/ViewportCenterOverlay";
 import { cn } from "@/lib/cn";
 import { isAcceptedImage, optimizeImage } from "./optimizeImage";
 
@@ -244,12 +245,12 @@ export default function ImageCovers({ covers, onChange, isDark }) {
       </div>
 
       {progress ? (
-        <div className="absolute inset-0 z-20 flex items-center justify-center rounded-[1.6rem] bg-black/45 p-6 backdrop-blur-sm">
+        <ViewportCenterOverlay isDark={isDark}>
           <div
             className={cn(
-              "w-full max-w-sm rounded-2xl border px-5 py-5",
+              "w-full max-w-sm rounded-2xl border px-5 py-5 shadow-2xl",
               isDark
-                ? "border-white/15 bg-slate-900/90 text-white"
+                ? "border-white/15 bg-slate-900/95 text-white"
                 : "border-white/70 bg-white/95 text-slate-900"
             )}
           >
@@ -269,7 +270,7 @@ export default function ImageCovers({ covers, onChange, isDark }) {
             </p>
             <Progress value={progress.percent} className="mt-4 h-1.5" />
           </div>
-        </div>
+        </ViewportCenterOverlay>
       ) : null}
     </section>
   );

@@ -6,6 +6,7 @@ import Link from "next/link";
 import { CalendarDays, Phone, Sparkles, Type } from "lucide-react";
 import { toast } from "sonner";
 import PagePanel from "@/components/dashboard/_builder/PagePanel";
+import ViewportCenterOverlay from "@/components/dashboard/_builder/ViewportCenterOverlay";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -599,12 +600,12 @@ export default function CreateFlipbook({ user, error }) {
         </div>
 
         {submitState ? (
-          <div className="absolute inset-0 z-20 flex items-center justify-center rounded-[2rem] bg-black/45 p-6 backdrop-blur-sm">
+          <ViewportCenterOverlay isDark={isDark}>
             <div
               className={cn(
-                "w-full max-w-sm rounded-2xl border px-5 py-5",
+                "w-full max-w-sm rounded-2xl border px-5 py-5 shadow-2xl",
                 isDark
-                  ? "border-white/15 bg-slate-900/90 text-white"
+                  ? "border-white/15 bg-slate-900/95 text-white"
                   : "border-white/70 bg-white/95 text-slate-900"
               )}
             >
@@ -638,7 +639,7 @@ export default function CreateFlipbook({ user, error }) {
                 className="mt-4 h-1.5"
               />
             </div>
-          </div>
+          </ViewportCenterOverlay>
         ) : null}
       </form>
     </PagePanel>

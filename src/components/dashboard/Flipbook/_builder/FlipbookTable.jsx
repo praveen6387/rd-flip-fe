@@ -298,6 +298,8 @@ export default function FlipbookTable({ flipbooks }) {
                             <>
                               <Link
                                 href={ROUTES.flipbookView(item.flip_id)}
+                                target="_blank"
+                                rel="noopener noreferrer"
                                 className={actionBtn}
                               >
                                 <Eye className="size-3.5" />
