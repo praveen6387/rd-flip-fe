@@ -2,9 +2,18 @@
 
 import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
+import { ROUTES } from "@/lib/routes";
 
 const MIN_VISIBLE_MS = 700;
 export const NAV_PROGRESS_EVENT = "nav-progress:start";
+
+const NAV_PROGRESS_PREFIXES = [ROUTES.dashboard, ROUTES.privacy, ROUTES.terms];
+
+function shouldShowNavProgress(pathname) {
+  return NAV_PROGRESS_PREFIXES.some(
+    (path) => pathname === path || pathname.startsWith(`${path}/`)
+  );
+}
 
 /** Start the shared dashboard nav progress bar (works with router.push). */
 export function startNavProgress() {
@@ -71,7 +80,7 @@ export default function NavProgress() {
 
       const next = new URL(anchor.href, window.location.href);
       if (next.origin !== window.location.origin) return;
-      if (!next.pathname.startsWith("/dashboard")) return;
+      if (!shouldShowNavProgress(next.pathname)) return;
       if (
         next.pathname === window.location.pathname &&
         next.search === window.location.search

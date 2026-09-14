@@ -18,7 +18,8 @@ import {
 import { useFlipSound } from "./useFlipSound";
 import ViewerThemePicker from "./ViewerThemePicker";
 
-const PAGE_RATIO = 7 / 5;
+/** Album page: 12×18 (H×W); open spread: 12×36. PAGE_RATIO = width / height. */
+const PAGE_RATIO = 18 / 12;
 const ZOOM_MIN = 0.88;
 const ZOOM_MAX = 1.55;
 const ZOOM_STEP = 0.12;

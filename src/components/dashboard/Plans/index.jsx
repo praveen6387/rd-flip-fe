@@ -206,22 +206,27 @@ export default function Plans({ plans = [], error }) {
                     </span>
                     Valid for {days} {days === 1 ? "day" : "days"}
                   </li>
-                  <li
-                    className={cn(
-                      "flex items-start gap-2.5 text-sm leading-6",
-                      isDark ? "text-slate-300" : "text-slate-600"
-                    )}
-                  >
-                    <span
-                      className={cn(
-                        "mt-0.5 inline-flex size-5 shrink-0 items-center justify-center rounded-full text-white",
-                        isDark ? "bg-sky-500" : "bg-sky-600"
-                      )}
-                    >
-                      <Check className="size-3" strokeWidth={3} />
-                    </span>
-                    Use credits anytime to create new flipbooks
-                  </li>
+                  {(Array.isArray(plan.features) ? plan.features : []).map(
+                    (feature, index) => (
+                      <li
+                        key={`${plan.id}-feature-${index}`}
+                        className={cn(
+                          "flex items-start gap-2.5 text-sm leading-6",
+                          isDark ? "text-slate-300" : "text-slate-600"
+                        )}
+                      >
+                        <span
+                          className={cn(
+                            "mt-0.5 inline-flex size-5 shrink-0 items-center justify-center rounded-full text-white",
+                            isDark ? "bg-sky-500" : "bg-sky-600"
+                          )}
+                        >
+                          <Check className="size-3" strokeWidth={3} />
+                        </span>
+                        {feature}
+                      </li>
+                    )
+                  )}
                 </ul>
 
                 <button

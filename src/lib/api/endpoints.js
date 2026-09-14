@@ -14,6 +14,8 @@ export const ENDPOINTS = {
   plans: "/api/plans/",
   ordersCreate: "/api/orders/create/",
   paymentsVerify: "/api/payments/verify/",
+  settingsLegal: "/api/settings/legal/",
+  contactCreate: "/api/contact/create/",
 };
 
 export function backendUrl(path) {

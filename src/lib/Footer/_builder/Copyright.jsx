@@ -1,3 +1,6 @@
+import Link from "next/link";
+import { ROUTES } from "@/lib/routes";
+
 export default function Copyright() {
   return (
     <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -5,12 +8,12 @@ export default function Copyright() {
         © {new Date().getFullYear()} RD Flip. All rights reserved.
       </p>
       <div className="flex items-center gap-5 text-sm text-white/45">
-        <a href="#" className="transition hover:text-white/80">
+        <Link href={ROUTES.privacy} className="transition hover:text-white/80">
           Privacy Policy
-        </a>
-        <a href="#" className="transition hover:text-white/80">
-          Terms of Service
-        </a>
+        </Link>
+        <Link href={ROUTES.terms} className="transition hover:text-white/80">
+          Terms & Conditions
+        </Link>
       </div>
     </div>
   );
