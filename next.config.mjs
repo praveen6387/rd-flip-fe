@@ -14,6 +14,15 @@ const nextConfig = {
       },
     ],
   },
+  async redirects() {
+    return [
+      {
+        source: "/media-view/:flip_id",
+        destination: "/flipbook-view/:flip_id",
+        permanent: true,
+      },
+    ];
+  },
   async rewrites() {
     if (!backendOrigin) return [];
 
