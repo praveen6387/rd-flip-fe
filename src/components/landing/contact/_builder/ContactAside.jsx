@@ -30,7 +30,7 @@ const CONTACTS = [
   },
   {
     icon: MapPin,
-    label: "Basti, UP, India",
+    label: "Gurugram, Haryana, India",
     href: null,
     tone: "from-orange-400 to-amber-500",
   },

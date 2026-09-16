@@ -92,9 +92,10 @@ export default function SignupForm({ onSwitch, onSuccess }) {
 
           <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 px-3.5 py-3 text-sm leading-6 text-emerald-800">
             Your Studio Name will be visible on the QR code and the flipbook
-            viewer. You get <span className="font-semibold">1 free credit</span>{" "}
-            usable for up to <span className="font-semibold">7 days</span>. A
-            flipbook created with this credit lasts{" "}
+            viewer. You get{" "}
+            <span className="font-semibold">5 free credits</span> usable for up
+            to <span className="font-semibold">7 days</span>. Flipbooks created
+            with these credits last{" "}
             <span className="font-semibold">30 days</span> if you do not
             recharge.
           </div>
