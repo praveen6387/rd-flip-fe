@@ -124,7 +124,10 @@ export default function UserMenu({
                 ? "focus:bg-white/10 focus:text-white"
                 : "focus:bg-white/80"
             )}
-            onClick={() => router.push(ROUTES.home)}
+            onClick={() => {
+              startNavProgress();
+              router.push(ROUTES.home);
+            }}
           >
             <Globe className="size-4 opacity-80" />
             Go to website

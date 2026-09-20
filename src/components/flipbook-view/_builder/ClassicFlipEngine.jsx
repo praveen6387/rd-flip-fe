@@ -457,6 +457,27 @@ export default function ClassicFlipEngine({
       </div>
 
       <div className="flipbook-controls" aria-label="Album controls">
+        <div className="flipbook-controls__zoom flipbook-controls__zoom--left">
+          <ControlButton
+            label="Zoom out"
+            disabled={busy || zoom <= ZOOM_MIN}
+            onClick={() =>
+              setZoom((z) => Math.max(ZOOM_MIN, Number((z - ZOOM_STEP).toFixed(2))))
+            }
+          >
+            <ZoomOut className="size-[1.05em]" />
+          </ControlButton>
+          <ControlButton
+            label="Zoom in"
+            disabled={busy || zoom >= ZOOM_MAX}
+            onClick={() =>
+              setZoom((z) => Math.min(ZOOM_MAX, Number((z + ZOOM_STEP).toFixed(2))))
+            }
+          >
+            <ZoomIn className="size-[1.05em]" />
+          </ControlButton>
+        </div>
+
         <div className="flipbook-controls__primary">
           <ControlButton
             label={autoPlay ? "Pause auto flip" : "Play auto flip"}
@@ -545,24 +566,6 @@ export default function ClassicFlipEngine({
               )}
             </ControlButton>
           ) : null}
-          <ControlButton
-            label="Zoom out"
-            disabled={busy || zoom <= ZOOM_MIN}
-            onClick={() =>
-              setZoom((z) => Math.max(ZOOM_MIN, Number((z - ZOOM_STEP).toFixed(2))))
-            }
-          >
-            <ZoomOut className="size-[1.05em]" />
-          </ControlButton>
-          <ControlButton
-            label="Zoom in"
-            disabled={busy || zoom >= ZOOM_MAX}
-            onClick={() =>
-              setZoom((z) => Math.min(ZOOM_MAX, Number((z + ZOOM_STEP).toFixed(2))))
-            }
-          >
-            <ZoomIn className="size-[1.05em]" />
-          </ControlButton>
         </div>
       </div>
     </div>

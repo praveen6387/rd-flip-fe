@@ -8,6 +8,7 @@ const MIN_VISIBLE_MS = 700;
 export const NAV_PROGRESS_EVENT = "nav-progress:start";
 
 const NAV_PROGRESS_PREFIXES = [
+  ROUTES.home,
   ROUTES.dashboard,
   ROUTES.privacy,
   ROUTES.terms,
@@ -15,9 +16,10 @@ const NAV_PROGRESS_PREFIXES = [
 ];
 
 function shouldShowNavProgress(pathname) {
-  return NAV_PROGRESS_PREFIXES.some(
-    (path) => pathname === path || pathname.startsWith(`${path}/`)
-  );
+  return NAV_PROGRESS_PREFIXES.some((path) => {
+    if (path === "/") return pathname === "/";
+    return pathname === path || pathname.startsWith(`${path}/`);
+  });
 }
 
 /** Start the shared dashboard nav progress bar (works with router.push). */

@@ -1,4 +1,4 @@
-import { Geist, Geist_Mono, Playfair_Display } from "next/font/google";
+import { Cormorant_Garamond, Geist, Geist_Mono, Playfair_Display } from "next/font/google";
 import Script from "next/script";
 import Providers from "@/components/Providers";
 import { Toaster } from "@/components/ui/sonner";
@@ -20,6 +20,12 @@ const playfair = Playfair_Display({
   subsets: ["latin"],
 });
 
+const cormorant = Cormorant_Garamond({
+  variable: "--font-cormorant",
+  subsets: ["latin"],
+  weight: ["500", "600", "700"],
+});
+
 export const metadata = {
   title: "RD Flip",
   description: "RD Flip frontend",
@@ -33,7 +39,7 @@ export default function RootLayout({ children }) {
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} ${playfair.variable} h-full scroll-smooth antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} ${playfair.variable} ${cormorant.variable} h-full scroll-smooth antialiased`}
     >
       <body className="relative flex min-h-full flex-col bg-[#faf1fb] text-slate-900">
         <TooltipProvider>

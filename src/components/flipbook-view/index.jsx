@@ -4,9 +4,9 @@ import { useEffect, useRef, useState } from "react";
 import { useMobileFlipChrome } from "@/hooks/use-mobile-flip-chrome";
 import { isFlipbookExpired } from "@/lib/flipbook-active";
 import ClassicFlipEngine from "./_builder/ClassicFlipEngine";
-import FullscreenToggle from "./_builder/FullscreenToggle";
 import ViewerBackdrop from "./_builder/ViewerBackdrop";
 import ViewerLandingLoader from "./_builder/ViewerLandingLoader";
+import ViewerShareMenu from "./_builder/ViewerShareMenu";
 import ViewerThemePicker from "./_builder/ViewerThemePicker";
 import { FlipSoundProvider, useFlipSound } from "./_builder/useFlipSound";
 import ViewerSocialLinks from "./_builder/ViewerSocialLinks";
@@ -120,20 +120,17 @@ function FlipbookViewInner({ flipbook }) {
             <ViewerSocialLinks flipbook={flipbook} />
           </div>
           <div className="pointer-events-none text-center">
-            <h1 className="font-heading text-base leading-none tracking-tight sm:text-xl md:text-2xl">
+            <h1 className="font-viewer-title text-lg font-bold leading-tight tracking-wide text-amber-200/85 sm:text-2xl md:text-3xl lg:text-[2.15rem]">
               {flipbook.title}
             </h1>
             {dateLabel ? (
-              <p className="mt-1 text-[10px] tracking-[0.12em] text-white/50 uppercase sm:text-xs sm:tracking-[0.14em]">
+              <p className="mt-1 text-[10px] tracking-[0.12em] text-amber-200/55 uppercase sm:text-xs sm:tracking-[0.14em] lg:text-sm lg:tracking-[0.16em]">
                 {dateLabel}
               </p>
             ) : null}
           </div>
           <div className="pointer-events-auto flex items-center justify-end gap-1.5 sm:gap-2">
-            <FullscreenToggle
-              active={isFullscreen}
-              onToggle={toggleFullscreen}
-            />
+            <ViewerShareMenu title={flipbook.title} />
           </div>
         </header>
 
@@ -186,11 +183,11 @@ function ExpiredView({ flipbook, error, details }) {
           {flipbook ? <ViewerSocialLinks flipbook={flipbook} /> : null}
         </div>
         <div className="text-center">
-          <h1 className="font-heading text-base tracking-tight sm:text-lg md:text-xl">
+          <h1 className="font-viewer-title text-base font-semibold tracking-wide text-amber-200/85 sm:text-lg md:text-xl">
             {flipbook?.title || "Flipbook"}
           </h1>
           {dateLabel ? (
-            <p className="mt-0.5 text-[10px] tracking-[0.12em] text-white/50 uppercase sm:text-[11px] sm:tracking-[0.14em]">
+            <p className="mt-0.5 text-[10px] tracking-[0.12em] text-amber-200/55 uppercase sm:text-[11px] sm:tracking-[0.14em]">
               {dateLabel}
             </p>
           ) : null}
