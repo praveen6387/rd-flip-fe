@@ -7,5 +7,6 @@ export const ROUTES = {
   flipbookView: (flipId) => `/flipbook-view/${flipId}`,
   privacy: "/privacy",
   terms: "/terms",
+  refund: "/refund",
   login: "/?login=1",
 };

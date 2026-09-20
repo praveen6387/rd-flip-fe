@@ -8,5 +8,14 @@ export const CONTACT = {
   email: "rdphotography570@gmail.com",
   phone: "+91 9792098570",
   phoneHref: "tel:+919792098570",
-  location: "Gurugram, Haryana, India",
+  addresses: [
+    {
+      label: "Head branch",
+      location: "Gurugram, Haryana, India",
+    },
+    {
+      label: "Branch",
+      location: "Basti, Lucknow, India",
+    },
+  ],
 };

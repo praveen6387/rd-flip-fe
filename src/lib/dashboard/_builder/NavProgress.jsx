@@ -7,7 +7,12 @@ import { ROUTES } from "@/lib/routes";
 const MIN_VISIBLE_MS = 700;
 export const NAV_PROGRESS_EVENT = "nav-progress:start";
 
-const NAV_PROGRESS_PREFIXES = [ROUTES.dashboard, ROUTES.privacy, ROUTES.terms];
+const NAV_PROGRESS_PREFIXES = [
+  ROUTES.dashboard,
+  ROUTES.privacy,
+  ROUTES.terms,
+  ROUTES.refund,
+];
 
 function shouldShowNavProgress(pathname) {
   return NAV_PROGRESS_PREFIXES.some(

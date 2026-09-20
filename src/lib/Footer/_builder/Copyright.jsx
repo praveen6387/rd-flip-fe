@@ -14,6 +14,9 @@ export default function Copyright() {
         <Link href={ROUTES.terms} className="transition hover:text-white/80">
           Terms & Conditions
         </Link>
+        <Link href={ROUTES.refund} className="transition hover:text-white/80">
+          Refund Policy
+        </Link>
       </div>
     </div>
   );

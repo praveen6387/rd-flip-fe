@@ -1,5 +1,3 @@
-import { Mail, MapPin, Phone } from "lucide-react";
-
 const NOTES = [
   {
     title: "Free credit",
@@ -12,27 +10,6 @@ const NOTES = [
   {
     title: "Find a book",
     body: "Search by client name, date, or studio name in the library.",
-  },
-];
-
-const CONTACTS = [
-  {
-    icon: Mail,
-    label: "rdphotography570@gmail.com",
-    href: "mailto:rdphotography570@gmail.com",
-    tone: "from-teal-400 to-cyan-500",
-  },
-  {
-    icon: Phone,
-    label: "+91 9792098570",
-    href: "tel:+919792098570",
-    tone: "from-sky-400 to-blue-500",
-  },
-  {
-    icon: MapPin,
-    label: "Gurugram, Haryana, India",
-    href: null,
-    tone: "from-orange-400 to-amber-500",
   },
 ];
 

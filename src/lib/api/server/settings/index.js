@@ -11,6 +11,7 @@ export async function getLegalSettings() {
     return {
       privacy_policy: [],
       terms_and_conditions: [],
+      refund: [],
       error: formatFailResult(result, "Failed to fetch legal settings"),
     };
   }
@@ -18,6 +19,7 @@ export async function getLegalSettings() {
   return {
     privacy_policy: result.data?.privacy_policy ?? [],
     terms_and_conditions: result.data?.terms_and_conditions ?? [],
+    refund: result.data?.refund ?? [],
     error: null,
   };
 }
