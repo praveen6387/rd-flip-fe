@@ -3,7 +3,9 @@
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/cn";
+import { useLandingTheme } from "@/lib/landing/ThemeProvider";
 import AuthButtons from "./_builder/AuthButtons";
+import LandingThemeToggle from "./_builder/LandingThemeToggle";
 import Logo from "./_builder/Logo";
 import MobileNav from "./_builder/MobileNav";
 import NavLinks from "./_builder/NavLinks";
@@ -12,6 +14,7 @@ import { useActiveSection } from "./_builder/useActiveSection";
 export default function TopHeader() {
   const pathname = usePathname();
   const active = useActiveSection();
+  const { isDark } = useLandingTheme();
   const isHome = pathname === "/";
   const [scrolled, setScrolled] = useState(false);
 
@@ -31,7 +34,7 @@ export default function TopHeader() {
   }, [isHome]);
 
   const solid = !isHome || scrolled;
-  const onDarkHero = isHome && !scrolled;
+  const onDarkHero = isHome && !scrolled && isDark;
 
   return (
     <header
@@ -46,7 +49,10 @@ export default function TopHeader() {
       <div className="mx-auto flex h-20 w-full max-w-6xl items-center justify-between gap-6 px-4">
         <Logo pathname={pathname} light={onDarkHero} />
         <NavLinks pathname={pathname} active={active} light={onDarkHero} />
-        <AuthButtons light={onDarkHero} />
+        <div className="flex items-center gap-2 sm:gap-3">
+          <LandingThemeToggle light={onDarkHero} />
+          <AuthButtons light={onDarkHero} />
+        </div>
       </div>
       <MobileNav
         pathname={pathname}
