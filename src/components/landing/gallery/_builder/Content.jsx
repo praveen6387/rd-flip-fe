@@ -38,27 +38,47 @@ function MediaTile({ src, alt, className, children, href }) {
   return <div className={shell}>{inner}</div>;
 }
 
-function SectionLabel({ children }) {
+function SectionLabel({ children, isDark = false }) {
   return (
-    <p className="mb-3 text-xs font-semibold tracking-[0.18em] text-slate-400 uppercase">
+    <p
+      className={cn(
+        "mb-3 text-xs font-semibold tracking-[0.18em] uppercase",
+        isDark ? "text-slate-400" : "text-slate-400"
+      )}
+    >
       {children}
     </p>
   );
 }
 
-export default function Content() {
+export default function Content({ isDark = false }) {
   const hasFlipbooks = GALLERY_FLIPBOOKS.length > 0;
 
   return (
     <div>
       <div className="max-w-xl">
-        <p className="text-sm font-medium uppercase tracking-[0.22em] text-indigo-600 sm:text-base">
+        <p
+          className={cn(
+            "text-sm font-medium uppercase tracking-[0.22em] sm:text-base",
+            isDark ? "text-violet-300/80" : "text-indigo-600"
+          )}
+        >
           Gallery
         </p>
-        <h2 className="mt-3 font-heading text-3xl leading-tight text-slate-900 sm:text-4xl">
+        <h2
+          className={cn(
+            "mt-4 font-heading text-4xl leading-tight sm:text-5xl",
+            isDark ? "text-white" : "text-slate-900"
+          )}
+        >
           {hasFlipbooks ? "Flipbooks & frames" : "Frames from the field"}
         </h2>
-        <p className="mt-3 text-base text-slate-500 sm:text-lg">
+        <p
+          className={cn(
+            "mt-5 text-lg leading-8 sm:text-xl sm:leading-9",
+            isDark ? "text-slate-300" : "text-slate-500"
+          )}
+        >
           {hasFlipbooks
             ? "Half live flipbooks, half still images — click a flipbook to open it."
             : "A peek at the stills that become digital flipbooks."}
@@ -68,13 +88,12 @@ export default function Content() {
       <div
         className={cn(
           "mt-10 grid gap-8 lg:gap-6",
-          hasFlipbooks && "lg:grid-cols-2",
+          hasFlipbooks && "lg:grid-cols-2"
         )}
       >
-        {/* Flipbooks — add entries in items.js → GALLERY_FLIPBOOKS */}
         {hasFlipbooks ? (
           <div>
-            <SectionLabel>Flipbooks</SectionLabel>
+            <SectionLabel isDark={isDark}>Flipbooks</SectionLabel>
             <div className="grid auto-rows-[130px] grid-cols-2 gap-2.5 sm:auto-rows-[150px] md:gap-3">
               {GALLERY_FLIPBOOKS.map((item, index) => (
                 <MediaTile
@@ -94,13 +113,12 @@ export default function Content() {
           </div>
         ) : null}
 
-        {/* Images — add entries in items.js → GALLERY_IMAGES */}
         <div>
-          <SectionLabel>Images</SectionLabel>
+          <SectionLabel isDark={isDark}>Images</SectionLabel>
           <div
             className={cn(
               "grid auto-rows-[130px] grid-cols-2 gap-2.5 sm:auto-rows-[150px] md:gap-3",
-              !hasFlipbooks && "sm:grid-cols-3 lg:grid-cols-4",
+              !hasFlipbooks && "sm:grid-cols-3 lg:grid-cols-4"
             )}
           >
             {GALLERY_IMAGES.map((item, index) => (

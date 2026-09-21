@@ -7,6 +7,7 @@ import {
   HowItWorksSection,
   PlansSection,
 } from "@/components/landing";
+import LandingBand from "@/components/landing/_builder/LandingBand";
 import { listPlans } from "@/lib/api/server/plans";
 
 export default async function Home() {
@@ -14,13 +15,15 @@ export default async function Home() {
 
   return (
     <main className="flex-1">
-      <Home2Section />
-      <AboutSection />
-      <FeaturesSection />
-      <HowItWorksSection />
-      <PlansSection plans={plans} />
-      <GallerySection />
-      <ContactSection />
+      <LandingBand>
+        <Home2Section />
+        <AboutSection />
+        <FeaturesSection />
+        <HowItWorksSection />
+        <PlansSection plans={plans} />
+        <GallerySection />
+        <ContactSection />
+      </LandingBand>
     </main>
   );
 }

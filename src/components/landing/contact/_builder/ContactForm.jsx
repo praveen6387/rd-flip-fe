@@ -7,9 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { createContactMessage } from "@/lib/api/client/contact";
-
-const FIELD_CLASS =
-  "h-11 rounded-xl border-slate-200/80 bg-white/70 text-base text-slate-900 placeholder:text-slate-400 focus-visible:border-indigo-300 focus-visible:ring-indigo-200/60";
+import { cn } from "@/lib/cn";
 
 const EMPTY = {
   name: "",
@@ -18,10 +16,22 @@ const EMPTY = {
   message: "",
 };
 
-export default function ContactForm() {
+export default function ContactForm({ isDark = false }) {
   const [form, setForm] = useState(EMPTY);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+
+  const fieldClass = cn(
+    "h-11 rounded-xl text-base focus-visible:border-indigo-300 focus-visible:ring-indigo-200/60",
+    isDark
+      ? "border-white/15 bg-white/10 text-white placeholder:text-slate-400"
+      : "border-slate-200/80 bg-white/70 text-slate-900 placeholder:text-slate-400"
+  );
+
+  const labelClass = cn(
+    "text-sm font-medium",
+    isDark ? "text-slate-300" : "text-slate-600"
+  );
 
   function updateField(key) {
     return (event) => {
@@ -56,12 +66,17 @@ export default function ContactForm() {
 
   return (
     <form
-      className="rounded-3xl border border-white/70 bg-white/45 p-6 shadow-[0_12px_40px_-24px_rgba(79,70,229,0.3)] ring-1 ring-white/40 backdrop-blur-xl sm:p-8"
+      className={cn(
+        "rounded-3xl border p-6 shadow-[0_12px_40px_-24px_rgba(79,70,229,0.3)] ring-1 backdrop-blur-xl sm:p-8",
+        isDark
+          ? "border-white/15 bg-white/8 ring-white/10"
+          : "border-white/70 bg-white/45 ring-white/40"
+      )}
       onSubmit={handleSubmit}
     >
       <div className="grid gap-5">
         <div className="grid gap-2">
-          <Label htmlFor="contact-name" className="text-sm font-medium text-slate-600">
+          <Label htmlFor="contact-name" className={labelClass}>
             Name
           </Label>
           <Input
@@ -71,7 +86,7 @@ export default function ContactForm() {
             value={form.name}
             onChange={updateField("name")}
             disabled={submitting}
-            className={FIELD_CLASS}
+            className={fieldClass}
             placeholder="Studio or your name"
             autoComplete="name"
           />
@@ -79,10 +94,7 @@ export default function ContactForm() {
 
         <div className="grid gap-5 sm:grid-cols-2">
           <div className="grid gap-2">
-            <Label
-              htmlFor="contact-phone"
-              className="text-sm font-medium text-slate-600"
-            >
+            <Label htmlFor="contact-phone" className={labelClass}>
               Phone number
             </Label>
             <Input
@@ -93,16 +105,13 @@ export default function ContactForm() {
               value={form.phone_number}
               onChange={updateField("phone_number")}
               disabled={submitting}
-              className={FIELD_CLASS}
+              className={fieldClass}
               placeholder="10-digit mobile"
               autoComplete="tel"
             />
           </div>
           <div className="grid gap-2">
-            <Label
-              htmlFor="contact-email"
-              className="text-sm font-medium text-slate-600"
-            >
+            <Label htmlFor="contact-email" className={labelClass}>
               Email
             </Label>
             <Input
@@ -113,7 +122,7 @@ export default function ContactForm() {
               value={form.email}
               onChange={updateField("email")}
               disabled={submitting}
-              className={FIELD_CLASS}
+              className={fieldClass}
               placeholder="you@studio.in"
               autoComplete="email"
             />
@@ -121,10 +130,7 @@ export default function ContactForm() {
         </div>
 
         <div className="grid gap-2">
-          <Label
-            htmlFor="contact-message"
-            className="text-sm font-medium text-slate-600"
-          >
+          <Label htmlFor="contact-message" className={labelClass}>
             Message
           </Label>
           <Textarea
@@ -134,13 +140,25 @@ export default function ContactForm() {
             value={form.message}
             onChange={updateField("message")}
             disabled={submitting}
-            className="min-h-28 rounded-xl border-slate-200/80 bg-white/70 text-base text-slate-900 placeholder:text-slate-400 focus-visible:border-indigo-300 focus-visible:ring-indigo-200/60"
+            className={cn(
+              "min-h-28 rounded-xl text-base focus-visible:border-indigo-300 focus-visible:ring-indigo-200/60",
+              isDark
+                ? "border-white/15 bg-white/10 text-white placeholder:text-slate-400"
+                : "border-slate-200/80 bg-white/70 text-slate-900 placeholder:text-slate-400"
+            )}
             placeholder="Tell us what you need help with…"
           />
         </div>
 
         {error ? (
-          <p className="rounded-xl border border-rose-200 bg-rose-50 px-3.5 py-2.5 text-sm leading-6 text-rose-700">
+          <p
+            className={cn(
+              "rounded-xl border px-3.5 py-2.5 text-sm leading-6",
+              isDark
+                ? "border-rose-400/30 bg-rose-500/15 text-rose-200"
+                : "border-rose-200 bg-rose-50 text-rose-700"
+            )}
+          >
             {error}
           </p>
         ) : null}

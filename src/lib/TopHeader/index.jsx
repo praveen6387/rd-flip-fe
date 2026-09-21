@@ -34,7 +34,6 @@ export default function TopHeader() {
   }, [isHome]);
 
   const solid = !isHome || scrolled;
-  const onDarkHero = isHome && !scrolled && isDark;
 
   return (
     <header
@@ -42,23 +41,26 @@ export default function TopHeader() {
         "z-50 font-sans transition-[background-color,border-color,box-shadow,backdrop-filter] duration-300",
         isHome ? "fixed inset-x-0 top-0" : "sticky top-0",
         solid
-          ? "border-b border-slate-200/80 bg-white/80 shadow-sm backdrop-blur-md"
+          ? isDark
+            ? "border-b border-white/10 bg-[#0b1017]/88 shadow-sm backdrop-blur-md"
+            : "border-b border-slate-200/80 bg-white/80 shadow-sm backdrop-blur-md"
           : "border-b border-transparent bg-transparent"
       )}
     >
-      <div className="mx-auto flex h-20 w-full max-w-6xl items-center justify-between gap-6 px-4">
-        <Logo pathname={pathname} light={onDarkHero} />
-        <NavLinks pathname={pathname} active={active} light={onDarkHero} />
+      <div className="mx-auto flex h-20 w-full max-w-7xl items-center justify-between gap-6 px-4">
+        <Logo pathname={pathname} light={isDark} />
+        <NavLinks pathname={pathname} active={active} light={isDark} />
         <div className="flex items-center gap-2 sm:gap-3">
-          <LandingThemeToggle light={onDarkHero} />
-          <AuthButtons light={onDarkHero} />
+          <LandingThemeToggle light={isDark} />
+          <AuthButtons light={isDark} />
         </div>
       </div>
       <MobileNav
         pathname={pathname}
         active={active}
         solid={solid}
-        light={onDarkHero}
+        light={isDark}
+        darkSolid={solid && isDark}
       />
     </header>
   );

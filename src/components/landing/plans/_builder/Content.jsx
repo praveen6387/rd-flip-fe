@@ -1,4 +1,5 @@
 import { Check } from "lucide-react";
+import { cn } from "@/lib/cn";
 
 function formatPrice(value) {
   const amount = Number(value);
@@ -16,19 +17,34 @@ function planTag(type) {
   return key ? key.charAt(0).toUpperCase() + key.slice(1) : "Plan";
 }
 
-export default function Content({ plans = [] }) {
+export default function Content({ plans = [], isDark = false }) {
   const activePlans = plans.filter((plan) => plan.is_active !== false);
 
   return (
     <div>
       <div className="max-w-xl">
-        <p className="text-sm font-medium uppercase tracking-[0.22em] text-indigo-600 sm:text-base">
+        <p
+          className={cn(
+            "text-sm font-medium uppercase tracking-[0.22em] sm:text-base",
+            isDark ? "text-violet-300/80" : "text-indigo-600"
+          )}
+        >
           Plans
         </p>
-        <h2 className="mt-3 font-heading text-3xl leading-tight text-slate-900 sm:text-4xl">
+        <h2
+          className={cn(
+            "mt-4 font-heading text-4xl leading-tight sm:text-5xl",
+            isDark ? "text-white" : "text-slate-900"
+          )}
+        >
           Studio or Lab
         </h2>
-        <p className="mt-3 text-base text-slate-500 sm:text-lg">
+        <p
+          className={cn(
+            "mt-5 text-lg leading-8 sm:text-xl sm:leading-9",
+            isDark ? "text-slate-300" : "text-slate-500"
+          )}
+        >
           Your studio alone, or create flipbooks for others — choose what fits.
         </p>
       </div>
@@ -39,11 +55,28 @@ export default function Content({ plans = [] }) {
           className="pointer-events-none absolute -inset-6 -z-10 rounded-[2rem] bg-[radial-gradient(ellipse_at_20%_40%,rgba(129,140,248,0.35),transparent_55%),radial-gradient(ellipse_at_80%_60%,rgba(244,114,182,0.28),transparent_50%),radial-gradient(ellipse_at_50%_100%,rgba(56,189,248,0.22),transparent_55%)] blur-2xl"
         />
         {activePlans.length === 0 ? (
-          <div className="rounded-3xl border border-dashed border-white/70 bg-white/30 px-6 py-12 text-center shadow-[0_12px_40px_-20px_rgba(79,70,229,0.35)] ring-1 ring-white/40 backdrop-blur-2xl sm:px-8">
-            <p className="font-heading text-2xl text-slate-900">
+          <div
+            className={cn(
+              "rounded-3xl border border-dashed px-6 py-12 text-center shadow-[0_12px_40px_-20px_rgba(79,70,229,0.35)] ring-1 backdrop-blur-2xl sm:px-8",
+              isDark
+                ? "border-white/20 bg-white/8 ring-white/10"
+                : "border-white/70 bg-white/30 ring-white/40"
+            )}
+          >
+            <p
+              className={cn(
+                "font-heading text-2xl",
+                isDark ? "text-white" : "text-slate-900"
+              )}
+            >
               No active plans found
             </p>
-            <p className="mt-2 text-sm text-slate-500 sm:text-base">
+            <p
+              className={cn(
+                "mt-2 text-sm sm:text-base",
+                isDark ? "text-slate-300" : "text-slate-500"
+              )}
+            >
               New credit packs will show up here soon. Please check back later.
             </p>
           </div>
@@ -57,23 +90,57 @@ export default function Content({ plans = [] }) {
               return (
                 <article
                   key={plan.id ?? plan.name}
-                  className="flex flex-col rounded-3xl border border-white/70 bg-white/30 p-6 shadow-[0_12px_40px_-20px_rgba(79,70,229,0.35)] ring-1 ring-white/40 backdrop-blur-2xl sm:p-8"
+                  className={cn(
+                    "flex flex-col rounded-3xl border p-6 shadow-[0_12px_40px_-20px_rgba(79,70,229,0.35)] ring-1 backdrop-blur-2xl sm:p-8",
+                    isDark
+                      ? "border-white/15 bg-white/8 ring-white/10"
+                      : "border-white/70 bg-white/30 ring-white/40"
+                  )}
                 >
                   <p className="text-xs font-medium tracking-[0.18em] text-slate-400 uppercase">
                     {planTag(plan.plan_type)}
                   </p>
-                  <h3 className="mt-2 font-heading text-3xl text-slate-900 sm:text-4xl">
+                  <h3
+                    className={cn(
+                      "mt-2 font-heading text-3xl sm:text-4xl",
+                      isDark ? "text-white" : "text-slate-900"
+                    )}
+                  >
                     {plan.name || "Plan"}
                   </h3>
 
                   <div className="mt-5 flex items-end gap-1.5">
-                    <span className="text-sm font-medium text-slate-500">₹</span>
-                    <span className="font-heading text-5xl leading-none tracking-tight text-slate-900">
+                    <span
+                      className={cn(
+                        "text-sm font-medium",
+                        isDark ? "text-slate-300" : "text-slate-500"
+                      )}
+                    >
+                      ₹
+                    </span>
+                    <span
+                      className={cn(
+                        "font-heading text-5xl leading-none tracking-tight",
+                        isDark ? "text-white" : "text-slate-900"
+                      )}
+                    >
                       {formatPrice(plan.price)}
                     </span>
-                    <span className="mb-1 text-sm text-slate-500">/ month</span>
+                    <span
+                      className={cn(
+                        "mb-1 text-sm",
+                        isDark ? "text-slate-300" : "text-slate-500"
+                      )}
+                    >
+                      / month
+                    </span>
                   </div>
-                  <p className="mt-2 text-sm font-medium text-indigo-600">
+                  <p
+                    className={cn(
+                      "mt-2 text-sm font-medium",
+                      isDark ? "text-violet-300" : "text-indigo-600"
+                    )}
+                  >
                     {credits} {credits === 1 ? "credit" : "credits"} · {days}{" "}
                     {days === 1 ? "day" : "days"}
                   </p>
@@ -82,7 +149,10 @@ export default function Content({ plans = [] }) {
                     {features.map((point, index) => (
                       <li
                         key={`${plan.id}-feature-${index}`}
-                        className="flex items-start gap-2.5 text-sm leading-6 text-slate-600 sm:text-[15px]"
+                        className={cn(
+                          "flex items-start gap-2.5 text-sm leading-6 sm:text-[15px]",
+                          isDark ? "text-slate-300" : "text-slate-600"
+                        )}
                       >
                         <span className="mt-0.5 inline-flex size-5 shrink-0 items-center justify-center rounded-full bg-indigo-500 text-white">
                           <Check className="size-3" strokeWidth={3} />

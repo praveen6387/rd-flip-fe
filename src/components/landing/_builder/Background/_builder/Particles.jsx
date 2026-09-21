@@ -9,7 +9,13 @@ const COLORS = [
   "rgba(129,140,248,",
 ];
 
-export default function Particles({ colors = COLORS, density = 18000 }) {
+export default function Particles({
+  colors = COLORS,
+  density = 7000,
+  maxCount = 280,
+  minAlpha = 0.35,
+  maxAlpha = 0.85,
+}) {
   const canvasRef = useRef(null);
 
   useEffect(() => {
@@ -25,13 +31,14 @@ export default function Particles({ colors = COLORS, density = 18000 }) {
     let width = 0;
     let height = 0;
     const palette = colors.length ? colors : COLORS;
+    const alphaRange = Math.max(0.05, maxAlpha - minAlpha);
 
     const spawn = () => ({
       x: Math.random() * width,
       y: Math.random() * height,
-      r: Math.random() * 1.6 + 0.4,
-      speed: Math.random() * 0.22 + 0.06,
-      alpha: Math.random() * 0.35 + 0.2,
+      r: Math.random() * 2.4 + 0.7,
+      speed: Math.random() * 0.32 + 0.1,
+      alpha: Math.random() * alphaRange + minAlpha,
       color: palette[Math.floor(Math.random() * palette.length)],
     });
 
@@ -46,7 +53,7 @@ export default function Particles({ colors = COLORS, density = 18000 }) {
 
       const count = Math.round((width * height) / density);
       particles = Array.from(
-        { length: Math.min(Math.max(count, 16), 110) },
+        { length: Math.min(Math.max(count, 40), maxCount) },
         spawn
       );
     };
@@ -84,7 +91,7 @@ export default function Particles({ colors = COLORS, density = 18000 }) {
       observer.disconnect();
       window.removeEventListener("resize", resize);
     };
-  }, [colors, density]);
+  }, [colors, density, maxCount, minAlpha, maxAlpha]);
 
   return (
     <canvas

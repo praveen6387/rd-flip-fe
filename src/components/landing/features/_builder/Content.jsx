@@ -1,3 +1,5 @@
+"use client";
+
 import {
   CreditCard,
   Images,
@@ -6,6 +8,7 @@ import {
   Search,
   UserRound,
 } from "lucide-react";
+import { cn } from "@/lib/cn";
 
 const FEATURES = [
   {
@@ -46,17 +49,32 @@ const FEATURES = [
   },
 ];
 
-export default function Content() {
+export default function Content({ isDark = false }) {
   return (
     <div>
       <div className="max-w-xl">
-        <p className="text-sm font-medium uppercase tracking-[0.22em] text-indigo-600 sm:text-base">
+        <p
+          className={cn(
+            "text-sm font-medium uppercase tracking-[0.22em] sm:text-base",
+            isDark ? "text-violet-300/80" : "text-indigo-600"
+          )}
+        >
           Inside the workspace
         </p>
-        <h2 className="mt-3 font-heading text-3xl leading-tight text-slate-900 sm:text-4xl">
+        <h2
+          className={cn(
+            "mt-4 font-heading text-4xl leading-tight sm:text-5xl",
+            isDark ? "text-white" : "text-slate-900"
+          )}
+        >
           Create, share, and manage flipbooks
         </h2>
-        <p className="mt-3 text-base text-slate-500 sm:text-lg">
+        <p
+          className={cn(
+            "mt-5 text-lg leading-8 sm:text-xl sm:leading-9",
+            isDark ? "text-slate-300" : "text-slate-500"
+          )}
+        >
           From profile to QR — the tools you use every day.
         </p>
       </div>
@@ -65,7 +83,12 @@ export default function Content() {
         {FEATURES.map((feature) => (
           <article
             key={feature.title}
-            className="rounded-2xl border border-white/70 bg-white/70 p-5 shadow-[0_1px_0_rgba(15,23,42,0.04)] backdrop-blur-sm transition duration-300 hover:border-indigo-200/80 hover:bg-white hover:shadow-[0_12px_32px_-16px_rgba(79,70,229,0.28)]"
+            className={cn(
+              "rounded-2xl border p-5 backdrop-blur-sm transition duration-300",
+              isDark
+                ? "border-white/12 bg-white/8 shadow-[0_12px_32px_-16px_rgba(0,0,0,0.45)] hover:border-white/20 hover:bg-white/12"
+                : "border-white/70 bg-white/70 shadow-[0_1px_0_rgba(15,23,42,0.04)] hover:border-indigo-200/80 hover:bg-white hover:shadow-[0_12px_32px_-16px_rgba(79,70,229,0.28)]"
+            )}
           >
             <div className="flex items-center gap-3">
               <span
@@ -73,11 +96,21 @@ export default function Content() {
               >
                 <feature.icon className="size-4" strokeWidth={2.25} />
               </span>
-              <h3 className="truncate text-base font-semibold tracking-tight text-slate-900 sm:text-lg">
+              <h3
+                className={cn(
+                  "truncate text-base font-semibold tracking-tight sm:text-lg",
+                  isDark ? "text-white" : "text-slate-900"
+                )}
+              >
                 {feature.title}
               </h3>
             </div>
-            <p className="mt-3 pl-12 text-sm leading-6 text-slate-500 sm:text-[15px] sm:leading-6">
+            <p
+              className={cn(
+                "mt-3 pl-12 text-sm leading-6 sm:text-[15px] sm:leading-6",
+                isDark ? "text-slate-300" : "text-slate-500"
+              )}
+            >
               {feature.body}
             </p>
           </article>

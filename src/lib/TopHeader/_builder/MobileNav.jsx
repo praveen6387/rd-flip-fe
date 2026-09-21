@@ -7,13 +7,16 @@ export default function MobileNav({
   active,
   solid = true,
   light = false,
+  darkSolid = false,
 }) {
   return (
     <nav
       className={cn(
         "flex items-center gap-1 overflow-x-auto px-4 py-2 md:hidden",
         solid
-          ? "border-t border-slate-200"
+          ? darkSolid
+            ? "border-t border-white/10"
+            : "border-t border-slate-200"
           : light
             ? "border-t border-white/10"
             : "border-t border-transparent"

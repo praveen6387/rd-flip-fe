@@ -6,7 +6,7 @@ const LandingThemeContext = createContext(null);
 const STORAGE_KEY = "rd-landing-theme";
 
 export function LandingThemeProvider({ children }) {
-  const [theme, setThemeState] = useState("dark");
+  const [theme, setThemeState] = useState("light");
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
