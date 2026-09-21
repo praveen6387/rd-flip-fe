@@ -1,14 +1,17 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
 import { BookOpen } from "lucide-react";
 import { cn } from "@/lib/cn";
+import MotionCard from "@/components/landing/_builder/MotionCard";
 import {
   GALLERY_FLIPBOOKS,
   GALLERY_IMAGES,
   getFlipbookHref,
 } from "./items";
 
-function MediaTile({ src, alt, className, children, href }) {
+function MediaTile({ src, alt, className, children, href, index = 0 }) {
   const inner = (
     <>
       <Image
@@ -22,20 +25,20 @@ function MediaTile({ src, alt, className, children, href }) {
     </>
   );
 
-  const shell = cn(
-    "group relative block overflow-hidden rounded-xl bg-slate-100 shadow-sm",
-    className,
+  const shell =
+    "group relative block h-full overflow-hidden rounded-xl bg-slate-100 shadow-sm";
+
+  return (
+    <MotionCard index={index} className={cn("h-full", className)} hover>
+      {href ? (
+        <Link href={href} className={shell}>
+          {inner}
+        </Link>
+      ) : (
+        <div className={shell}>{inner}</div>
+      )}
+    </MotionCard>
   );
-
-  if (href) {
-    return (
-      <Link href={href} className={shell}>
-        {inner}
-      </Link>
-    );
-  }
-
-  return <div className={shell}>{inner}</div>;
 }
 
 function SectionLabel({ children, isDark = false }) {
@@ -98,6 +101,7 @@ export default function Content({ isDark = false }) {
               {GALLERY_FLIPBOOKS.map((item, index) => (
                 <MediaTile
                   key={item.id}
+                  index={index}
                   src={item.src}
                   alt={item.alt}
                   href={getFlipbookHref(item.flipbookId)}
@@ -124,6 +128,7 @@ export default function Content({ isDark = false }) {
             {GALLERY_IMAGES.map((item, index) => (
               <MediaTile
                 key={item.id}
+                index={index}
                 src={item.src}
                 alt={item.alt}
                 className={index === 0 ? "row-span-2" : undefined}

@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { createContactMessage } from "@/lib/api/client/contact";
 import { cn } from "@/lib/cn";
+import MotionCard from "@/components/landing/_builder/MotionCard";
 
 const EMPTY = {
   name: "",
@@ -65,7 +66,9 @@ export default function ContactForm({ isDark = false }) {
   }
 
   return (
-    <form
+    <MotionCard
+      index={0}
+      as="form"
       className={cn(
         "rounded-3xl border p-6 shadow-[0_12px_40px_-24px_rgba(79,70,229,0.3)] ring-1 backdrop-blur-xl sm:p-8",
         isDark
@@ -73,6 +76,7 @@ export default function ContactForm({ isDark = false }) {
           : "border-white/70 bg-white/45 ring-white/40"
       )}
       onSubmit={handleSubmit}
+      hover={false}
     >
       <div className="grid gap-5">
         <div className="grid gap-2">
@@ -171,6 +175,6 @@ export default function ContactForm({ isDark = false }) {
           {submitting ? "Sending…" : "Send message"}
         </Button>
       </div>
-    </form>
+    </MotionCard>
   );
 }

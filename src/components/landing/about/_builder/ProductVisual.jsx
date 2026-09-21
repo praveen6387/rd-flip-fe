@@ -2,10 +2,15 @@
 
 import Image from "next/image";
 import { cn } from "@/lib/cn";
+import MotionCard from "@/components/landing/_builder/MotionCard";
 
 export default function ProductVisual({ isDark = false }) {
   return (
-    <div className="relative mx-auto w-full max-w-xl sm:max-w-2xl lg:max-w-none lg:scale-[1.06] lg:origin-right">
+    <MotionCard
+      index={0}
+      className="relative mx-auto w-full max-w-xl sm:max-w-2xl lg:origin-right lg:max-w-none lg:scale-[1.06]"
+      hover={false}
+    >
       <Image
         src="/v2/product/product-content.png"
         alt="RD Flip flipbooks with QR sharing on mobile"
@@ -21,6 +26,6 @@ export default function ProductVisual({ isDark = false }) {
         )}
         sizes="(max-width: 1024px) 90vw, 50vw"
       />
-    </div>
+    </MotionCard>
   );
 }

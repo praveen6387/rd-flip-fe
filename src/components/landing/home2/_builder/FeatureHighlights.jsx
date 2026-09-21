@@ -1,7 +1,7 @@
 "use client";
 
 import { CloudUpload, Monitor, QrCode, Smartphone } from "lucide-react";
-import { motion } from "motion/react";
+import { m } from "motion/react";
 import { cn } from "@/lib/cn";
 
 const HIGHLIGHTS = [
@@ -17,17 +17,16 @@ export default function FeatureHighlights({ isDark = true }) {
   return (
     <ul className="flex flex-wrap items-start gap-x-3 gap-y-4 sm:gap-x-4">
       {HIGHLIGHTS.map(({ label, Icon }, index) => (
-        <motion.li
+        <m.li
           key={label}
-          className="flex w-[4.5rem] flex-col items-center text-center sm:w-[5rem]"
-          initial={{ opacity: 0, y: 18, scale: 0.92 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          transition={{ duration: 0.55, delay: 0.62 + index * 0.08, ease }}
-          whileHover={{ y: -4, transition: { duration: 0.2 } }}
+          className="flex w-[4.5rem] flex-col items-center text-center transition-transform duration-200 will-change-transform hover:-translate-y-1 sm:w-[5rem]"
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.35, delay: 0.35 + index * 0.05, ease }}
         >
           <span
             className={cn(
-              "grid size-12 place-items-center rounded-full border backdrop-blur-xl sm:size-14",
+              "grid size-12 place-items-center rounded-full border sm:size-14",
               isDark
                 ? "border-white/15 bg-white/8 shadow-[0_8px_24px_-12px_rgba(0,0,0,0.55)]"
                 : "border-white/60 bg-white/35 shadow-[0_8px_24px_-12px_rgba(109,61,92,0.28)]"
@@ -50,7 +49,7 @@ export default function FeatureHighlights({ isDark = true }) {
           >
             {label}
           </span>
-        </motion.li>
+        </m.li>
       ))}
     </ul>
   );

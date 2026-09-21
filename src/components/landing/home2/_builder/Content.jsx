@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { motion } from "motion/react";
+import { m } from "motion/react";
 import { ArrowRight, Play, Sparkles } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { ROUTES } from "@/lib/routes";
@@ -10,11 +10,11 @@ import FeatureHighlights from "./FeatureHighlights";
 const ease = [0.22, 1, 0.36, 1];
 
 const fadeUp = {
-  hidden: { opacity: 0, y: 28 },
+  hidden: { opacity: 0, y: 16 },
   show: (delay = 0) => ({
     opacity: 1,
     y: 0,
-    transition: { duration: 0.7, delay, ease },
+    transition: { duration: 0.4, delay, ease },
   }),
 };
 
@@ -22,7 +22,7 @@ export default function Content({ isDark = true }) {
   return (
     <div className="flex w-full max-w-none flex-col lg:pr-2">
       <div className="lg:pt-2">
-        <motion.div
+        <m.div
           className={cn(
             "inline-flex max-w-full items-stretch overflow-hidden rounded-full border backdrop-blur-md",
             isDark
@@ -68,9 +68,9 @@ export default function Content({ isDark = true }) {
               ❤️
             </span>
           </span>
-        </motion.div>
+        </m.div>
 
-        <motion.h1
+        <m.h1
           className={cn(
             "mt-3 font-heading text-4xl font-bold leading-[1.05] tracking-tight sm:mt-3.5 sm:text-5xl lg:text-[3.5rem] xl:text-[3.85rem]",
             isDark ? "text-white" : "text-slate-900"
@@ -81,9 +81,9 @@ export default function Content({ isDark = true }) {
           custom={0.15}
         >
           Create. Share. Impress.
-        </motion.h1>
+        </m.h1>
 
-        <motion.p
+        <m.p
           className={cn(
             "mt-4 max-w-lg text-base leading-7 sm:mt-5 sm:text-lg sm:leading-8",
             isDark ? "text-slate-300" : "text-slate-600"
@@ -95,9 +95,9 @@ export default function Content({ isDark = true }) {
         >
           A modern way for photography studios to deliver albums that clients
           love.
-        </motion.p>
+        </m.p>
 
-        <motion.div
+        <m.div
           className="mt-6 flex flex-wrap items-center gap-3 sm:mt-7"
           variants={fadeUp}
           initial="hidden"
@@ -138,10 +138,10 @@ export default function Content({ isDark = true }) {
             </span>
             View Demo
           </Link>
-        </motion.div>
+        </m.div>
       </div>
 
-      <motion.div
+      <m.div
         className="mt-8 sm:mt-9"
         variants={fadeUp}
         initial="hidden"
@@ -149,7 +149,7 @@ export default function Content({ isDark = true }) {
         custom={0.55}
       >
         <FeatureHighlights isDark={isDark} />
-      </motion.div>
+      </m.div>
     </div>
   );
 }

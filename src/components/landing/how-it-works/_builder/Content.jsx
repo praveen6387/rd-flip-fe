@@ -1,3 +1,7 @@
+"use client";
+
+import MotionCard from "@/components/landing/_builder/MotionCard";
+
 const STEPS = [
   {
     n: "01",
@@ -109,9 +113,10 @@ function OpenSpread({ left, right, title, caption, isDark = false }) {
   );
 }
 
-function LayoutBlock({ badge, title, body, children, isDark = false }) {
+function LayoutBlock({ badge, title, body, children, isDark = false, index = 0 }) {
   return (
-    <div
+    <MotionCard
+      index={index}
       className={`rounded-2xl border p-5 shadow-sm sm:p-6 ${
         isDark
           ? "border-white/12 bg-white/8"
@@ -138,7 +143,7 @@ function LayoutBlock({ badge, title, body, children, isDark = false }) {
       <div className="mt-5 grid items-start gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {children}
       </div>
-    </div>
+    </MotionCard>
   );
 }
 
@@ -170,10 +175,12 @@ export default function Content({ isDark = false }) {
       </div>
 
       <ol className="mt-10 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-        {STEPS.map((step) => (
-          <li
+        {STEPS.map((step, index) => (
+          <MotionCard
             key={step.n}
-            className={`rounded-2xl border p-4 backdrop-blur-sm transition ${
+            as="li"
+            index={index}
+            className={`rounded-2xl border p-4 backdrop-blur-sm ${
               isDark
                 ? "border-white/12 bg-white/8 hover:border-white/20 hover:bg-white/12"
                 : "border-white/70 bg-white/70 hover:border-indigo-200/80 hover:bg-white"
@@ -200,7 +207,7 @@ export default function Content({ isDark = false }) {
             >
               {step.body}
             </p>
-          </li>
+          </MotionCard>
         ))}
       </ol>
 
@@ -231,6 +238,7 @@ export default function Content({ isDark = false }) {
 
         <div className="mt-6 space-y-4">
           <LayoutBlock
+            index={0}
             isDark={isDark}
             badge="F"
             title="Front cover images"
@@ -259,6 +267,7 @@ export default function Content({ isDark = false }) {
           </LayoutBlock>
 
           <LayoutBlock
+            index={1}
             isDark={isDark}
             badge="M"
             title="Middle images"
@@ -288,6 +297,7 @@ export default function Content({ isDark = false }) {
           </LayoutBlock>
 
           <LayoutBlock
+            index={2}
             isDark={isDark}
             badge="B"
             title="Back cover images"

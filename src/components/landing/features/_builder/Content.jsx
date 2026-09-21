@@ -9,6 +9,7 @@ import {
   UserRound,
 } from "lucide-react";
 import { cn } from "@/lib/cn";
+import MotionCard from "@/components/landing/_builder/MotionCard";
 
 const FEATURES = [
   {
@@ -80,11 +81,13 @@ export default function Content({ isDark = false }) {
       </div>
 
       <div className="mt-10 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        {FEATURES.map((feature) => (
-          <article
+        {FEATURES.map((feature, index) => (
+          <MotionCard
             key={feature.title}
+            as="article"
+            index={index}
             className={cn(
-              "rounded-2xl border p-5 backdrop-blur-sm transition duration-300",
+              "rounded-2xl border p-5 backdrop-blur-sm",
               isDark
                 ? "border-white/12 bg-white/8 shadow-[0_12px_32px_-16px_rgba(0,0,0,0.45)] hover:border-white/20 hover:bg-white/12"
                 : "border-white/70 bg-white/70 shadow-[0_1px_0_rgba(15,23,42,0.04)] hover:border-indigo-200/80 hover:bg-white hover:shadow-[0_12px_32px_-16px_rgba(79,70,229,0.28)]"
@@ -113,7 +116,7 @@ export default function Content({ isDark = false }) {
             >
               {feature.body}
             </p>
-          </article>
+          </MotionCard>
         ))}
       </div>
     </div>

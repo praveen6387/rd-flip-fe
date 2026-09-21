@@ -1,5 +1,4 @@
 export { default as Background } from "./_builder/Background";
-export { default as HomeSection } from "./home";
 export { default as Home2Section } from "./home2";
 export { default as AboutSection } from "./about";
 export { default as FeaturesSection } from "./features";

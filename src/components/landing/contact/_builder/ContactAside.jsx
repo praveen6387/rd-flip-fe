@@ -1,4 +1,7 @@
+"use client";
+
 import { cn } from "@/lib/cn";
+import MotionCard from "@/components/landing/_builder/MotionCard";
 
 const NOTES = [
   {
@@ -17,7 +20,9 @@ const NOTES = [
 
 export default function ContactAside({ isDark = false }) {
   return (
-    <aside
+    <MotionCard
+      index={1}
+      as="aside"
       className={cn(
         "rounded-3xl border p-6 shadow-[0_12px_40px_-24px_rgba(79,70,229,0.3)] ring-1 backdrop-blur-xl sm:p-8",
         isDark
@@ -55,6 +60,6 @@ export default function ContactAside({ isDark = false }) {
           </li>
         ))}
       </ul>
-    </aside>
+    </MotionCard>
   );
 }
