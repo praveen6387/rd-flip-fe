@@ -9,9 +9,10 @@ import LoginForm from "./_builder/LoginForm";
 import SignupForm from "./_builder/SignupForm";
 import UserMenu from "./_builder/UserMenu";
 
-export default function AuthModal() {
+export default function AuthModal({ appearance = "light" }) {
   const router = useRouter();
   const { user, logout, ready, authMode, setAuthMode } = useAuth();
+  const isDark = appearance === "dark";
 
   function handleLogout() {
     logout();
@@ -23,20 +24,30 @@ export default function AuthModal() {
   }
 
   if (user) {
-    return <UserMenu user={user} onLogout={handleLogout} />;
+    return (
+      <UserMenu
+        user={user}
+        onLogout={handleLogout}
+        appearance={appearance}
+      />
+    );
   }
 
   return (
     <>
       <div className="flex items-center gap-2">
         <Button
-          className="rounded-full bg-linear-to-r from-rose-500 to-pink-500 px-5 text-base text-white shadow-md hover:from-rose-400 hover:to-pink-400"
+          className={
+            isDark
+              ? "rounded-full border border-white/25 bg-white/10 px-5 text-base text-white shadow-sm hover:bg-white/16"
+              : "rounded-full border border-[#6d3d5c]/55 bg-white/70 px-5 text-base text-[#5a324c] shadow-sm hover:bg-white"
+          }
           onClick={() => setAuthMode("login")}
         >
           Login
         </Button>
         <Button
-          className="rounded-full bg-linear-to-r from-indigo-500 to-sky-600 px-5 text-base text-white shadow-md hover:from-indigo-600 hover:to-sky-700"
+          className="rounded-full bg-linear-to-r from-[#8f5678] to-[#c48a9e] px-5 text-base text-white shadow-md hover:from-[#7a4868] hover:to-[#b87a90]"
           onClick={() => setAuthMode("signup")}
         >
           Signup

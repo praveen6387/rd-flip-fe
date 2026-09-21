@@ -48,7 +48,7 @@ export default function UserMenu({
               : "border-[#d9cfc0]/70 bg-white/50 text-stone-800 backdrop-blur-md hover:bg-white/75"
           )}
         >
-          <span className="flex size-8 items-center justify-center rounded-full bg-linear-to-br from-sky-500 to-rose-500 text-xs font-semibold tracking-wide text-white shadow-inner">
+          <span className="flex size-8 items-center justify-center rounded-full bg-linear-to-br from-[#6d3d5c] to-[#8f5678] text-xs font-semibold tracking-wide text-white shadow-inner">
             {initials}
           </span>
           <span className="hidden max-w-36 truncate text-sm font-semibold tracking-tight sm:inline">
@@ -57,7 +57,7 @@ export default function UserMenu({
           <ChevronDown
             className={cn(
               "size-4",
-              isDark ? "text-slate-400" : "text-sky-500/80"
+              isDark ? "text-slate-400" : "text-[#6d3d5c]/80"
             )}
           />
         </Button>
@@ -78,10 +78,10 @@ export default function UserMenu({
             "flex items-center gap-2.5 rounded-xl px-2.5 py-2",
             isDark
               ? "bg-white/[0.05]"
-              : "bg-linear-to-br from-sky-50 to-rose-50"
+              : "bg-linear-to-br from-[#faf5f8] to-[#f3e8ef]"
           )}
         >
-          <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-linear-to-br from-sky-500 to-rose-500 text-xs font-semibold text-white">
+          <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-linear-to-br from-[#6d3d5c] to-[#8f5678] text-xs font-semibold text-white">
             {initials}
           </span>
           <div className="min-w-0">

@@ -3,7 +3,7 @@ import {
   ContactSection,
   FeaturesSection,
   GallerySection,
-  HomeSection,
+  Home2Section,
   HowItWorksSection,
   PlansSection,
 } from "@/components/landing";
@@ -11,11 +11,10 @@ import { listPlans } from "@/lib/api/server/plans";
 
 export default async function Home() {
   const { plans } = await listPlans();
-  console.log(plans)
 
   return (
     <main className="flex-1">
-      <HomeSection />
+      <Home2Section />
       <AboutSection />
       <FeaturesSection />
       <HowItWorksSection />

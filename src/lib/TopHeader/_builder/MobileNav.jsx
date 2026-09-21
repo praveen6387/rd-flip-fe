@@ -2,9 +2,23 @@ import Link from "next/link";
 import { cn } from "../../cn";
 import { LINKS, sectionHref } from "./links";
 
-export default function MobileNav({ pathname, active }) {
+export default function MobileNav({
+  pathname,
+  active,
+  solid = true,
+  light = false,
+}) {
   return (
-    <nav className="flex items-center gap-1 overflow-x-auto border-t border-slate-200 px-4 py-2 md:hidden">
+    <nav
+      className={cn(
+        "flex items-center gap-1 overflow-x-auto px-4 py-2 md:hidden",
+        solid
+          ? "border-t border-slate-200"
+          : light
+            ? "border-t border-white/10"
+            : "border-t border-transparent"
+      )}
+    >
       {LINKS.map((link) => {
         const isActive = pathname === "/" && active === link.href;
         return (
@@ -14,8 +28,10 @@ export default function MobileNav({ pathname, active }) {
             className={cn(
               "whitespace-nowrap rounded-full px-3.5 py-2 text-base",
               isActive
-                ? "bg-linear-to-r from-indigo-500 to-sky-600 text-white"
-                : "text-slate-500",
+                ? "bg-linear-to-r from-[#8f5678] to-[#c48a9e] text-white"
+                : light
+                  ? "text-white/65"
+                  : "text-slate-500"
             )}
           >
             {link.label}
