@@ -32,3 +32,16 @@ export async function fetchFlipbooks() {
 
   return result.data?.flipbooks ?? [];
 }
+
+export async function deleteFlipbook(id) {
+  const response = await authenticatedFetch(ENDPOINTS.flipbooksDelete(id), {
+    method: "DELETE",
+  });
+  const result = await response.json().catch(() => null);
+
+  if (!response.ok || result?.status === "fail") {
+    throw new Error(formatFailResult(result, "Failed to delete flipbook"));
+  }
+
+  return result;
+}

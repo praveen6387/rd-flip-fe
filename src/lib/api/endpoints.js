@@ -11,6 +11,7 @@ export const ENDPOINTS = {
   updateProfile: "/api/auth/me/",
   flipbooks: "/api/flipbooks/",
   flipbooksCreate: "/api/flipbooks/create/",
+  flipbooksDelete: (id) => `/api/flipbooks/${id}/`,
   plans: "/api/plans/",
   ordersCreate: "/api/orders/create/",
   paymentsVerify: "/api/payments/verify/",

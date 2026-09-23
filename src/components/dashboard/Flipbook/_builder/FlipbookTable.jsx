@@ -1,7 +1,16 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { BookOpen, CalendarDays, Copy, Eye, QrCode, Search } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import {
+  BookOpen,
+  CalendarDays,
+  Copy,
+  Eye,
+  Loader2,
+  QrCode,
+  Search,
+  Trash2,
+} from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
@@ -10,6 +19,7 @@ import { useDashboardTheme } from "@/lib/dashboard/ThemeProvider";
 import { getFlipbookActiveInfo } from "@/lib/flipbook-active";
 import { ROUTES } from "@/lib/routes";
 import { cn } from "@/lib/cn";
+import FlipbookDeleteDialog from "./FlipbookDeleteDialog";
 import FlipbookQrDialog from "./FlipbookQrDialog";
 import FlipbookSocialLinks from "./FlipbookSocialLinks";
 
@@ -36,14 +46,21 @@ function matchesQuery(flipbook, query) {
   return haystack.includes(query);
 }
 
-export default function FlipbookTable({ flipbooks }) {
+export default function FlipbookTable({ flipbooks, onFlipbooksChange }) {
   const { isDark } = useDashboardTheme();
   const [query, setQuery] = useState("");
   const [qrFlipbook, setQrFlipbook] = useState(null);
+  const [pendingDelete, setPendingDelete] = useState(null);
+  const [rows, setRows] = useState(flipbooks);
+
+  useEffect(() => {
+    setRows(flipbooks);
+  }, [flipbooks]);
+
   const filtered = useMemo(() => {
     const needle = query.trim().toLowerCase();
-    return flipbooks.filter((item) => matchesQuery(item, needle));
-  }, [flipbooks, query]);
+    return rows.filter((item) => matchesQuery(item, needle));
+  }, [rows, query]);
 
   async function copyId(flipId) {
     try {
@@ -52,6 +69,14 @@ export default function FlipbookTable({ flipbooks }) {
     } catch {
       toast.error("Could not copy Flip ID");
     }
+  }
+
+  function requestDelete(item) {
+    if (!item?.id) {
+      toast.error("Missing flipbook id");
+      return;
+    }
+    setPendingDelete(item);
   }
 
   const cellBorder = isDark ? "border-white/10" : "border-stone-200/80";
@@ -72,6 +97,12 @@ export default function FlipbookTable({ flipbooks }) {
   const actionBtnDisabled = cn(
     "inline-flex h-9 cursor-not-allowed items-center gap-1.5 rounded-lg border px-3 text-[13px] font-medium opacity-45",
     isDark ? "border-white/10 text-slate-400" : "border-stone-300 text-slate-500"
+  );
+  const deleteBtn = cn(
+    "inline-flex h-9 items-center gap-1.5 rounded-lg border px-3 text-[13px] font-medium",
+    isDark
+      ? "border-rose-400/35 text-rose-200 hover:bg-rose-500/15"
+      : "border-rose-200 text-rose-700 hover:bg-rose-50"
   );
 
   return (
@@ -132,6 +163,7 @@ export default function FlipbookTable({ flipbooks }) {
               filtered.map((item) => {
                 const pages = item.total_pages ?? 0;
                 const active = getFlipbookActiveInfo(item.active_until);
+                const isDeleting = pendingDelete?.id === item.id;
                 return (
                   <tr
                     key={item.id ?? item.flip_id}
@@ -271,9 +303,9 @@ export default function FlipbookTable({ flipbooks }) {
                       )}
                     </td>
                     <td className={cellClass}>
-                      {item.flip_id ? (
-                        <div className="flex flex-wrap items-center gap-2">
-                          {active.expired ? (
+                      <div className="flex flex-wrap items-center gap-2">
+                        {item.flip_id ? (
+                          active.expired ? (
                             <>
                               <span
                                 className={actionBtnDisabled}
@@ -312,11 +344,28 @@ export default function FlipbookTable({ flipbooks }) {
                                 QR
                               </button>
                             </>
-                          )}
-                        </div>
-                      ) : (
-                        "—"
-                      )}
+                          )
+                        ) : null}
+                        {item.id ? (
+                          <button
+                            type="button"
+                            onClick={() => requestDelete(item)}
+                            disabled={isDeleting}
+                            title="Delete flipbook"
+                            className={cn(
+                              deleteBtn,
+                              isDeleting && "cursor-wait opacity-70"
+                            )}
+                          >
+                            {isDeleting ? (
+                              <Loader2 className="size-3.5 animate-spin" />
+                            ) : (
+                              <Trash2 className="size-3.5" />
+                            )}
+                            Delete
+                          </button>
+                        ) : null}
+                      </div>
                     </td>
                   </tr>
                 );
@@ -331,6 +380,19 @@ export default function FlipbookTable({ flipbooks }) {
         open={Boolean(qrFlipbook)}
         onOpenChange={(next) => {
           if (!next) setQrFlipbook(null);
+        }}
+      />
+
+      <FlipbookDeleteDialog
+        flipbook={pendingDelete}
+        open={Boolean(pendingDelete)}
+        onOpenChange={(next) => {
+          if (!next) setPendingDelete(null);
+        }}
+        onDeleted={(id) => {
+          const next = rows.filter((row) => row.id !== id);
+          setRows(next);
+          onFlipbooksChange?.(next);
         }}
       />
     </div>

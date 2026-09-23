@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import PagePanel from "@/components/dashboard/_builder/PagePanel";
 import { useDashboardTheme } from "@/lib/dashboard/ThemeProvider";
@@ -9,7 +10,13 @@ import FlipbookTable from "./_builder/FlipbookTable";
 
 export default function Flipbook({ flipbooks = [], error }) {
   const { isDark } = useDashboardTheme();
-  const count = flipbooks.length;
+  const [items, setItems] = useState(flipbooks);
+
+  useEffect(() => {
+    setItems(flipbooks);
+  }, [flipbooks]);
+
+  const count = items.length;
 
   return (
     <PagePanel
@@ -72,7 +79,7 @@ export default function Flipbook({ flipbooks = [], error }) {
           </p>
         </div>
       ) : (
-        <FlipbookTable flipbooks={flipbooks} />
+        <FlipbookTable flipbooks={items} onFlipbooksChange={setItems} />
       )}
     </PagePanel>
   );
