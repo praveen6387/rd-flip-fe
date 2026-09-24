@@ -174,6 +174,24 @@ export async function updateSocialLinks(payload) {
   return result;
 }
 
+export async function changePassword({ current_password, new_password }) {
+  const response = await authenticatedFetch(ENDPOINTS.changePassword, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ current_password, new_password }),
+  });
+
+  const result = await response.json().catch(() => null);
+
+  if (!response.ok || result?.status === "fail") {
+    throw new Error(result?.message || "Failed to update password");
+  }
+
+  return result;
+}
+
 export async function fetchMe() {
   const response = await authenticatedFetch(ENDPOINTS.me, {
     method: "GET",

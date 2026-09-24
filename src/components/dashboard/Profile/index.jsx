@@ -2,6 +2,7 @@
 
 import { CalendarDays, Info, Mail, Phone } from "lucide-react";
 import PagePanel from "@/components/dashboard/_builder/PagePanel";
+import ChangePassword from "./_builder/ChangePassword";
 import SocialLinks from "./_builder/SocialLinks";
 import {
   Tooltip,
@@ -168,7 +169,7 @@ export default function Profile({ user, error }) {
     <PagePanel
       eyebrow="Account"
       title={fullName}
-      description="Your studio profile, social presence, and credits."
+      description="Your studio profile, password, social presence, and credits."
       lead={
         <div
           className={cn(
@@ -278,6 +279,8 @@ export default function Profile({ user, error }) {
         </section>
 
         <SocialLinks user={user} isDark={isDark} />
+
+        <ChangePassword isDark={isDark} />
 
         <section>
           <SectionHeader

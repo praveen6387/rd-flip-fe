@@ -9,6 +9,7 @@ export const ENDPOINTS = {
   refresh: "/api/auth/refresh/",
   me: "/api/auth/me/",
   updateProfile: "/api/auth/me/",
+  changePassword: "/api/auth/change-password/",
   flipbooks: "/api/flipbooks/",
   flipbooksCreate: "/api/flipbooks/create/",
   flipbooksDelete: (id) => `/api/flipbooks/${id}/`,
