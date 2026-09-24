@@ -152,6 +152,22 @@ export async function login(payload) {
   return authRequest(ENDPOINTS.login, payload, "Login failed");
 }
 
+export async function forgotPassword(email) {
+  return authRequest(
+    ENDPOINTS.forgotPassword,
+    { email },
+    "Failed to send reset link"
+  );
+}
+
+export async function resetPassword({ password_reset_token, new_password }) {
+  return authRequest(
+    ENDPOINTS.resetPassword,
+    { password_reset_token, new_password },
+    "Failed to reset password"
+  );
+}
+
 export async function updateSocialLinks(payload) {
   const response = await authenticatedFetch(ENDPOINTS.updateProfile, {
     method: "PUT",

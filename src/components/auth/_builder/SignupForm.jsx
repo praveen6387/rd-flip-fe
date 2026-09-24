@@ -5,11 +5,11 @@ import { useRouter } from "next/navigation";
 import { CalendarDays, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ROUTES } from "@/lib/routes";
 import { useAuth } from "../AuthProvider";
 import AuthPanel, { AuthOrb } from "./AuthPanel";
+import { AuthPillField } from "./AuthTextField";
 
 function Field({ id, label, required, children }) {
   return (
@@ -20,15 +20,6 @@ function Field({ id, label, required, children }) {
       </Label>
       {children}
     </div>
-  );
-}
-
-function SoftInput({ className = "", ...props }) {
-  return (
-    <Input
-      className={`h-11 rounded-xl border-slate-200/80 bg-slate-50 text-base text-slate-900 placeholder:text-slate-400 focus-visible:border-blue-300 focus-visible:bg-white focus-visible:ring-blue-200/70 ${className}`}
-      {...props}
-    />
   );
 }
 
@@ -105,7 +96,7 @@ export default function SignupForm({ onSwitch, onSuccess }) {
             onSubmit={handleSubmit}
           >
             <Field id="signup-first-name" label="First Name" required>
-              <SoftInput
+              <AuthPillField
                 id="signup-first-name"
                 name="first_name"
                 placeholder="First name"
@@ -113,7 +104,7 @@ export default function SignupForm({ onSwitch, onSuccess }) {
               />
             </Field>
             <Field id="signup-last-name" label="Last Name" required>
-              <SoftInput
+              <AuthPillField
                 id="signup-last-name"
                 name="last_name"
                 placeholder="Last name"
@@ -122,7 +113,7 @@ export default function SignupForm({ onSwitch, onSuccess }) {
             </Field>
 
             <Field id="signup-phone" label="Phone" required>
-              <SoftInput
+              <AuthPillField
                 id="signup-phone"
                 name="phone"
                 type="tel"
@@ -132,7 +123,7 @@ export default function SignupForm({ onSwitch, onSuccess }) {
               />
             </Field>
             <Field id="signup-email" label="Email Address" required>
-              <SoftInput
+              <AuthPillField
                 id="signup-email"
                 name="email"
                 type="email"
@@ -142,7 +133,7 @@ export default function SignupForm({ onSwitch, onSuccess }) {
             </Field>
 
             <Field id="signup-studio" label="Studio Name" required>
-              <SoftInput
+              <AuthPillField
                 id="signup-studio"
                 name="studio_name"
                 placeholder="Enter studio name"
@@ -151,67 +142,64 @@ export default function SignupForm({ onSwitch, onSuccess }) {
             </Field>
 
             <Field id="signup-dob" label="Date of Birth" required>
-              <div className="relative">
-                <SoftInput
-                  id="signup-dob"
-                  name="dob"
-                  type="date"
-                  required
-                  className="pr-10"
-                />
-                <CalendarDays className="pointer-events-none absolute top-1/2 right-3 size-4 -translate-y-1/2 text-slate-400" />
-              </div>
+              <AuthPillField
+                id="signup-dob"
+                name="dob"
+                type="date"
+                required
+                endAdornment={
+                  <CalendarDays className="pointer-events-none size-4 text-slate-400" />
+                }
+              />
             </Field>
 
             <Field id="signup-password" label="Password" required>
-              <div className="relative">
-                <SoftInput
-                  id="signup-password"
-                  name="password"
-                  type={showPassword ? "text" : "password"}
-                  placeholder="Create password"
-                  minLength={8}
-                  required
-                  className="pr-10"
-                />
-                <button
-                  type="button"
-                  className="absolute top-1/2 right-3 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-                  onClick={() => setShowPassword((value) => !value)}
-                  aria-label={showPassword ? "Hide password" : "Show password"}
-                >
-                  {showPassword ? (
-                    <EyeOff className="size-4" />
-                  ) : (
-                    <Eye className="size-4" />
-                  )}
-                </button>
-              </div>
+              <AuthPillField
+                id="signup-password"
+                name="password"
+                type={showPassword ? "text" : "password"}
+                placeholder="Create password"
+                minLength={8}
+                required
+                endAdornment={
+                  <button
+                    type="button"
+                    className="text-slate-400 transition hover:text-blue-600"
+                    onClick={() => setShowPassword((value) => !value)}
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                  >
+                    {showPassword ? (
+                      <EyeOff className="size-4" />
+                    ) : (
+                      <Eye className="size-4" />
+                    )}
+                  </button>
+                }
+              />
             </Field>
             <Field id="signup-confirm" label="Confirm Password" required>
-              <div className="relative">
-                <SoftInput
-                  id="signup-confirm"
-                  name="confirm_password"
-                  type={showConfirm ? "text" : "password"}
-                  placeholder="Re-enter password"
-                  minLength={8}
-                  required
-                  className="pr-10"
-                />
-                <button
-                  type="button"
-                  className="absolute top-1/2 right-3 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-                  onClick={() => setShowConfirm((value) => !value)}
-                  aria-label={showConfirm ? "Hide password" : "Show password"}
-                >
-                  {showConfirm ? (
-                    <EyeOff className="size-4" />
-                  ) : (
-                    <Eye className="size-4" />
-                  )}
-                </button>
-              </div>
+              <AuthPillField
+                id="signup-confirm"
+                name="confirm_password"
+                type={showConfirm ? "text" : "password"}
+                placeholder="Re-enter password"
+                minLength={8}
+                required
+                endAdornment={
+                  <button
+                    type="button"
+                    className="text-slate-400 transition hover:text-blue-600"
+                    onClick={() => setShowConfirm((value) => !value)}
+                    aria-label={showConfirm ? "Hide password" : "Show password"}
+                  >
+                    {showConfirm ? (
+                      <EyeOff className="size-4" />
+                    ) : (
+                      <Eye className="size-4" />
+                    )}
+                  </button>
+                }
+              />
             </Field>
 
             <div className="sm:col-span-2">

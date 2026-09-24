@@ -10,6 +10,8 @@ export const ENDPOINTS = {
   me: "/api/auth/me/",
   updateProfile: "/api/auth/me/",
   changePassword: "/api/auth/change-password/",
+  forgotPassword: "/api/auth/forgot-password/",
+  resetPassword: "/api/auth/reset-password/",
   flipbooks: "/api/flipbooks/",
   flipbooksCreate: "/api/flipbooks/create/",
   flipbooksDelete: (id) => `/api/flipbooks/${id}/`,

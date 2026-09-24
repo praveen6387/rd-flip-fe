@@ -5,12 +5,12 @@ import { useRouter } from "next/navigation";
 import { Eye, EyeOff, Lock, Phone } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { ROUTES } from "@/lib/routes";
 import { useAuth } from "../AuthProvider";
 import AuthPanel, { AuthOrb } from "./AuthPanel";
+import { AuthPillField } from "./AuthTextField";
 
-export default function LoginForm({ onSwitch, onSuccess }) {
+export default function LoginForm({ onSwitch, onForgot, onSuccess }) {
   const router = useRouter();
   const { login } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
@@ -60,42 +60,48 @@ export default function LoginForm({ onSwitch, onSuccess }) {
           </h3>
 
           <form className="mt-8 space-y-4" onSubmit={handleSubmit}>
-            <label className="flex h-12 items-center gap-3 rounded-full bg-slate-100 px-4 transition focus-within:bg-slate-50 focus-within:ring-2 focus-within:ring-blue-200">
-              <Phone className="size-4 shrink-0 text-slate-400" />
-              <Input
-                id="login-identifier"
-                name="identifier"
-                type="text"
-                inputMode="email"
-                placeholder="Phone or email"
-                required
-                className="h-auto border-0 bg-transparent p-0 text-base text-slate-900 shadow-none placeholder:text-slate-400 focus-visible:ring-0"
-              />
-            </label>
+            <AuthPillField
+              icon={Phone}
+              id="login-identifier"
+              name="identifier"
+              type="text"
+              inputMode="email"
+              placeholder="Phone or email"
+              required
+            />
 
-            <label className="flex h-12 items-center gap-3 rounded-full bg-slate-100 px-4 transition focus-within:bg-slate-50 focus-within:ring-2 focus-within:ring-blue-200">
-              <Lock className="size-4 shrink-0 text-slate-400" />
-              <Input
-                id="login-password"
-                name="password"
-                type={showPassword ? "text" : "password"}
-                placeholder="Password"
-                required
-                className="h-auto flex-1 border-0 bg-transparent p-0 text-base text-slate-900 shadow-none placeholder:text-slate-400 focus-visible:ring-0"
-              />
+            <AuthPillField
+              icon={Lock}
+              id="login-password"
+              name="password"
+              type={showPassword ? "text" : "password"}
+              placeholder="Password"
+              required
+              endAdornment={
+                <button
+                  type="button"
+                  className="text-slate-400 transition hover:text-blue-600"
+                  onClick={() => setShowPassword((value) => !value)}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? (
+                    <EyeOff className="size-4" />
+                  ) : (
+                    <Eye className="size-4" />
+                  )}
+                </button>
+              }
+            />
+
+            <div className="flex justify-end">
               <button
                 type="button"
-                className="shrink-0 text-slate-400 transition hover:text-blue-600"
-                onClick={() => setShowPassword((value) => !value)}
-                aria-label={showPassword ? "Hide password" : "Show password"}
+                className="text-sm font-semibold text-blue-600 hover:text-blue-700"
+                onClick={onForgot}
               >
-                {showPassword ? (
-                  <EyeOff className="size-4" />
-                ) : (
-                  <Eye className="size-4" />
-                )}
+                Forgot password?
               </button>
-            </label>
+            </div>
 
             <Button
               type="submit"

@@ -37,7 +37,7 @@ function PasswordField({
       >
         {label}
       </Label>
-      <div className="relative">
+      <div className="relative overflow-hidden rounded-xl">
         <Input
           id={id}
           name={id}
@@ -47,7 +47,7 @@ function PasswordField({
           value={value}
           onChange={(event) => onChange(event.target.value)}
           className={cn(
-            "h-11 rounded-xl pr-11 text-[15px]",
+            "auth-soft-input h-12 rounded-xl py-0 pr-11 text-[15px] leading-normal",
             isDark
               ? "border-white/15 bg-white/8 text-white placeholder:text-slate-500 focus-visible:border-sky-400/50"
               : "border-stone-200 bg-white text-slate-900 placeholder:text-slate-400 focus-visible:border-sky-300"

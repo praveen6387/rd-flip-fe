@@ -9,4 +9,5 @@ export const ROUTES = {
   terms: "/terms",
   refund: "/refund",
   login: "/?login=1",
+  resetPassword: "/reset-password",
 };

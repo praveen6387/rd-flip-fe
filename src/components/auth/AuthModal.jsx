@@ -5,6 +5,7 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { ROUTES } from "@/lib/routes";
 import { useAuth } from "./AuthProvider";
+import ForgotPasswordForm from "./_builder/ForgotPasswordForm";
 import LoginForm from "./_builder/LoginForm";
 import SignupForm from "./_builder/SignupForm";
 import UserMenu from "./_builder/UserMenu";
@@ -63,16 +64,23 @@ export default function AuthModal({ appearance = "light" }) {
           className="max-h-[min(92vh,880px)] gap-0 overflow-y-auto overflow-x-hidden rounded-3xl border-0 bg-white p-0 shadow-2xl ring-0 sm:max-w-3xl md:max-w-4xl"
         >
           <DialogTitle className="sr-only">
-            {authMode === "signup" ? "Create Account" : "Login"}
+            {authMode === "signup"
+              ? "Create Account"
+              : authMode === "forgot"
+                ? "Forgot password"
+                : "Login"}
           </DialogTitle>
           {authMode === "signup" ? (
             <SignupForm
               onSwitch={() => setAuthMode("login")}
               onSuccess={() => setAuthMode(null)}
             />
+          ) : authMode === "forgot" ? (
+            <ForgotPasswordForm onBack={() => setAuthMode("login")} />
           ) : (
             <LoginForm
               onSwitch={() => setAuthMode("signup")}
+              onForgot={() => setAuthMode("forgot")}
               onSuccess={() => setAuthMode(null)}
             />
           )}
