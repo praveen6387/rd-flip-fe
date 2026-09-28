@@ -2,6 +2,8 @@ import { authenticatedFetch } from "@/lib/api/client/auth";
 import { ENDPOINTS } from "@/lib/api/endpoints";
 import { formatFailResult } from "@/lib/api/error";
 
+const MAX_SONG_BYTES = 10 * 1024 * 1024;
+
 function mapSong(song) {
   return { ...song, id: String(song.id) };
 }
@@ -25,16 +27,62 @@ export async function fetchSongs(query = "") {
 }
 
 export async function createSong(file) {
-  const form = new FormData();
-  form.append("file", file);
+  if (!file?.size) {
+    throw new Error("Choose an MP3 file.");
+  }
+  if (file.size > MAX_SONG_BYTES) {
+    throw new Error("Song must be 20 MB or smaller.");
+  }
 
-  const uploadResponse = await fetch("/songs/upload", {
+  const startResponse = await fetch("/songs/upload", {
     method: "POST",
-    body: form,
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      filename: file.name,
+      size: file.size,
+    }),
   });
-  const uploaded = await uploadResponse.json().catch(() => null);
+  const started = await startResponse.json().catch(() => null);
+  if (
+    !startResponse.ok ||
+    started?.status === "fail" ||
+    !started?.data?.sessionUri
+  ) {
+    throw new Error(formatFailResult(started, "Failed to start song upload"));
+  }
 
-  if (!uploadResponse.ok || uploaded?.status === "fail" || !uploaded?.data?.audio_url) {
+  const putResponse = await fetch(started.data.sessionUri, {
+    method: "PUT",
+    headers: { "Content-Type": "audio/mpeg" },
+    body: file,
+  });
+  const driveText = await putResponse.text().catch(() => "");
+  let driveFile = null;
+  try {
+    driveFile = driveText ? JSON.parse(driveText) : null;
+  } catch {
+    driveFile = null;
+  }
+  const fileId = driveFile?.id;
+  if (!putResponse.ok || !fileId) {
+    throw new Error("Could not upload the song to Google Drive.");
+  }
+
+  const finishResponse = await fetch("/songs/upload/complete", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      fileId,
+      name: started.data.name,
+    }),
+  });
+  const uploaded = await finishResponse.json().catch(() => null);
+
+  if (
+    !finishResponse.ok ||
+    uploaded?.status === "fail" ||
+    !uploaded?.data?.audio_url
+  ) {
     throw new Error(formatFailResult(uploaded, "Failed to upload song"));
   }
 

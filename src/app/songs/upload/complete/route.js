@@ -1,6 +1,6 @@
 import { cookies } from "next/headers";
 import { ACCESS_COOKIE } from "@/lib/api/cookie-names";
-import { startDriveResumableUpload } from "@/lib/drive/upload";
+import { completeDriveUpload } from "@/lib/drive/upload";
 
 export const runtime = "nodejs";
 export const maxDuration = 30;
@@ -25,18 +25,14 @@ export async function POST(request) {
   }
 
   try {
-    const uploaded = await startDriveResumableUpload({
-      filename: payload?.filename,
-      size: payload?.size,
-      origin: request.headers.get("origin") || "",
-    });
+    const uploaded = await completeDriveUpload(payload?.fileId, payload?.name);
     return Response.json({ status: "success", data: uploaded });
   } catch (error) {
     return Response.json(
       {
         status: "fail",
         message:
-          error.message || "Could not start the song upload to Google Drive.",
+          error.message || "Could not finish the song upload to Google Drive.",
       },
       { status: 400 }
     );
