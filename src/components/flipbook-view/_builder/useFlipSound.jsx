@@ -29,6 +29,15 @@ function createAudioContext() {
   return new AudioCtx();
 }
 
+function isStoredMuted() {
+  if (typeof window === "undefined") return false;
+  try {
+    return window.localStorage.getItem(MUTE_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
 function playFlipTone(ctx) {
   const now = ctx.currentTime;
   const duration = 0.14;
@@ -78,7 +87,19 @@ export function FlipSoundProvider({ children, audioUrl = "" }) {
 
   const beginSong = useCallback(async () => {
     const audio = audioRef.current;
-    if (!audio || mutedRef.current) return;
+    const storedMuted = isStoredMuted();
+    if (storedMuted) {
+      mutedRef.current = true;
+      setMuted(true);
+    }
+    if (!audio || mutedRef.current || storedMuted) {
+      if (audio && (mutedRef.current || storedMuted)) {
+        audio.muted = true;
+        audio.volume = 0;
+        audio.pause();
+      }
+      return;
+    }
     try {
       audio.muted = false;
       audio.volume = 0.45;
@@ -89,10 +110,15 @@ export function FlipSoundProvider({ children, audioUrl = "" }) {
   }, []);
 
   useEffect(() => {
-    const stored = window.localStorage.getItem(MUTE_KEY) === "1";
+    const stored = isStoredMuted();
     setMuted(stored);
     mutedRef.current = stored;
-    if (audioRef.current) audioRef.current.volume = 0.45;
+    const audio = audioRef.current;
+    if (audio) {
+      audio.muted = stored;
+      audio.volume = stored ? 0 : 0.45;
+      if (stored) audio.pause();
+    }
 
     return () => {
       audioRef.current?.pause();
@@ -168,10 +194,10 @@ export function FlipSoundProvider({ children, audioUrl = "" }) {
     >
       <audio
         ref={audioRef}
-        autoPlay
         loop
         playsInline
         preload="auto"
+        muted={muted}
         src={trackUrl}
         className="pointer-events-none fixed h-px w-px opacity-0"
       />
