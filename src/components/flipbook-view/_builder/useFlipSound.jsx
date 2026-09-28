@@ -11,13 +11,9 @@ import {
 
 const MUTE_KEY = "rd-flip-viewer-muted";
 
-/**
- * Public streamable track for the viewer.
- * Override with NEXT_PUBLIC_VIEWER_MUSIC_URL (your licensed Bollywood / studio MP3).
- */
 const VIEWER_MUSIC_URL =
   process.env.NEXT_PUBLIC_VIEWER_MUSIC_URL ||
-  "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3";
+  "/tone/default.mp3";
 
 const FlipSoundContext = createContext({
   muted: false,
@@ -33,7 +29,6 @@ function createAudioContext() {
   return new AudioCtx();
 }
 
-/** Short page-turn click (not the background song). */
 function playFlipTone(ctx) {
   const now = ctx.currentTime;
   const duration = 0.14;
@@ -74,27 +69,33 @@ function playFlipTone(ctx) {
   noise.stop(now + 0.07);
 }
 
-export function FlipSoundProvider({ children }) {
+export function FlipSoundProvider({ children, audioUrl = "" }) {
+  const trackUrl = String(audioUrl || "").trim() || VIEWER_MUSIC_URL;
   const [muted, setMuted] = useState(false);
   const mutedRef = useRef(false);
   const ctxRef = useRef(null);
   const audioRef = useRef(null);
-  const songStartedRef = useRef(false);
+
+  const beginSong = useCallback(async () => {
+    const audio = audioRef.current;
+    if (!audio || mutedRef.current) return;
+    try {
+      audio.muted = false;
+      audio.volume = 0.45;
+      await audio.play();
+    } catch {
+      /* ignored */
+    }
+  }, []);
 
   useEffect(() => {
     const stored = window.localStorage.getItem(MUTE_KEY) === "1";
     setMuted(stored);
     mutedRef.current = stored;
+    if (audioRef.current) audioRef.current.volume = 0.45;
 
     return () => {
-      const audio = audioRef.current;
-      if (audio) {
-        audio.pause();
-        audio.removeAttribute("src");
-        audio.load();
-      }
-      audioRef.current = null;
-      songStartedRef.current = false;
+      audioRef.current?.pause();
     };
   }, []);
 
@@ -105,41 +106,17 @@ export function FlipSoundProvider({ children }) {
     return ctxRef.current;
   }, []);
 
-  const ensureAudio = useCallback(() => {
-    if (audioRef.current) return audioRef.current;
-    const audio = new Audio(VIEWER_MUSIC_URL);
-    audio.loop = true;
-    audio.preload = "auto";
-    audio.volume = mutedRef.current ? 0 : 0.45;
-    audioRef.current = audio;
-    return audio;
-  }, []);
-
   const applyMuteToAudio = useCallback((isMuted) => {
     const audio = audioRef.current;
     if (!audio) return;
+    audio.muted = isMuted;
     audio.volume = isMuted ? 0 : 0.45;
     if (isMuted) {
       audio.pause();
-    } else if (songStartedRef.current) {
+    } else {
       audio.play().catch(() => {});
     }
   }, []);
-
-  const beginSong = useCallback(async () => {
-    try {
-      const audio = ensureAudio();
-      if (audio.paused || !songStartedRef.current) {
-        audio.volume = mutedRef.current ? 0 : 0.45;
-        if (!mutedRef.current) {
-          await audio.play();
-        }
-        songStartedRef.current = true;
-      }
-    } catch {
-      /* autoplay blocked until next gesture */
-    }
-  }, [ensureAudio]);
 
   const stopBackgroundSong = useCallback(() => {
     const audio = audioRef.current;
@@ -147,7 +124,6 @@ export function FlipSoundProvider({ children }) {
       audio.pause();
       audio.currentTime = 0;
     }
-    songStartedRef.current = false;
   }, []);
 
   const toggleMute = useCallback(() => {
@@ -156,14 +132,13 @@ export function FlipSoundProvider({ children }) {
       mutedRef.current = next;
       window.localStorage.setItem(MUTE_KEY, next ? "1" : "0");
       applyMuteToAudio(next);
-      if (!next) {
-        beginSong();
-      }
+      if (!next) beginSong();
       return next;
     });
   }, [applyMuteToAudio, beginSong]);
 
   const playFlipSound = useCallback(() => {
+    beginSong();
     if (mutedRef.current) return;
     try {
       const ctx = ensureContext();
@@ -175,7 +150,7 @@ export function FlipSoundProvider({ children }) {
     } catch {
       /* ignore */
     }
-  }, [ensureContext]);
+  }, [beginSong, ensureContext]);
 
   const startBackgroundSong = useCallback(() => {
     beginSong();
@@ -191,6 +166,15 @@ export function FlipSoundProvider({ children }) {
         stopBackgroundSong,
       }}
     >
+      <audio
+        ref={audioRef}
+        autoPlay
+        loop
+        playsInline
+        preload="auto"
+        src={trackUrl}
+        className="pointer-events-none fixed h-px w-px opacity-0"
+      />
       {children}
     </FlipSoundContext.Provider>
   );

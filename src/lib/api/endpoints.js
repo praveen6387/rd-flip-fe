@@ -20,6 +20,8 @@ export const ENDPOINTS = {
   paymentsVerify: "/api/payments/verify/",
   settingsLegal: "/api/settings/legal/",
   contactCreate: "/api/contact/create/",
+  songs: "/api/songs/",
+  songsCreate: "/api/songs/create/",
 };
 
 export function backendUrl(path) {

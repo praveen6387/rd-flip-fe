@@ -16,6 +16,7 @@ import { createFlipbook } from "@/lib/api/client/flipbook";
 import { uploadCoverImages } from "@/lib/api/client/s3";
 import { ROUTES } from "@/lib/routes";
 import ImageCovers from "./_builder/ImageCovers";
+import SongPicker from "./_builder/SongPicker";
 import { cn } from "@/lib/cn";
 import {
   formatCreditExpireDate,
@@ -126,8 +127,8 @@ function NoCreditsState({ isDark, expireLabel, reason }) {
 
 function FieldShell({ label, hint, htmlFor, required, isDark, children }) {
   return (
-    <div className="space-y-2.5">
-      <div className="flex items-baseline justify-between gap-3">
+    <div className="min-w-0 space-y-2.5">
+      <div className="flex h-6 items-center justify-between gap-2">
         <Label
           htmlFor={htmlFor}
           className={cn(
@@ -154,7 +155,7 @@ function FieldShell({ label, hint, htmlFor, required, isDark, children }) {
         {hint ? (
           <span
             className={cn(
-              "text-[13px] font-medium",
+              "shrink-0 text-[13px] font-medium",
               isDark ? "text-slate-300" : "text-slate-600"
             )}
           >
@@ -176,7 +177,7 @@ function glassInput(isDark) {
   );
 }
 
-export default function CreateFlipbook({ user, error }) {
+export default function CreateFlipbook({ user, error, songs = [] }) {
   const router = useRouter();
   const { isDark } = useDashboardTheme();
   const lab = isLabPlan(user?.plan);
@@ -189,6 +190,7 @@ export default function CreateFlipbook({ user, error }) {
     whatsapp_number: user?.whatsapp_number || "",
     instagram_url: user?.instagram_url || "",
     facebook_url: user?.facebook_url || "",
+    song_id: "",
   });
   const [covers, setCovers] = useState({
     front: [],
@@ -250,6 +252,10 @@ export default function CreateFlipbook({ user, error }) {
         description: form.description.trim(),
         images,
       };
+
+      if (form.song_id) {
+        payload.song_id = form.song_id;
+      }
 
       if (lab) {
         payload.studio_name = form.studio_name.trim();
@@ -343,7 +349,7 @@ export default function CreateFlipbook({ user, error }) {
         ) : null}
         <section
           className={cn(
-            "space-y-5 rounded-[1.6rem] border p-5 sm:p-7",
+            "relative z-20 space-y-5 rounded-[1.6rem] border p-5 sm:p-7",
             isDark
               ? "border-white/10 bg-[#141b24]/96 shadow-[0_18px_50px_-28px_rgba(0,0,0,0.7)]"
               : "border-[#e4d9c8]/80 bg-[#fffcf8]/92 shadow-[0_18px_40px_-28px_rgba(120,90,50,0.22)]"
@@ -421,22 +427,37 @@ export default function CreateFlipbook({ user, error }) {
             </FieldShell>
           </div>
 
-          <FieldShell
-            label="Description"
-            htmlFor="flipbook-description"
-            isDark={isDark}
-            hint={`${form.description.length}/80`}
-          >
-            <Input
-              id="flipbook-description"
-              name="description"
-              maxLength={80}
-              placeholder="Short note about this album"
-              value={form.description}
-              onChange={(event) => update("description", event.target.value)}
-              className={glassInput(isDark)}
-            />
-          </FieldShell>
+          <div className="grid grid-cols-2 items-start gap-4">
+            <FieldShell
+              label="Description"
+              htmlFor="flipbook-description"
+              isDark={isDark}
+              hint={`${form.description.length}/80`}
+            >
+              <Input
+                id="flipbook-description"
+                name="description"
+                maxLength={80}
+                placeholder="Short note about this album"
+                value={form.description}
+                onChange={(event) => update("description", event.target.value)}
+                className={glassInput(isDark)}
+              />
+            </FieldShell>
+
+            <FieldShell
+              label="Song"
+              htmlFor="flipbook-song"
+              isDark={isDark}
+            >
+              <SongPicker
+                isDark={isDark}
+                value={form.song_id}
+                onChange={(songId) => update("song_id", songId)}
+                initialSongs={songs}
+              />
+            </FieldShell>
+          </div>
         </section>
 
         {lab ? (

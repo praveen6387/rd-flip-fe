@@ -1,4 +1,5 @@
 import { requireDashboardUser } from "@/lib/api/server/session";
+import { listSongs } from "@/lib/api/server/songs";
 import { CreateFlipbook } from "@/components/dashboard";
 import { ROUTES } from "@/lib/routes";
 
@@ -7,9 +8,10 @@ export const metadata = {
 };
 
 export default async function CreateFlipbookPage() {
-  const { user, error } = await requireDashboardUser(
-    ROUTES.dashboardCreateFlipbook
-  );
+  const [{ user, error }, { songs }] = await Promise.all([
+    requireDashboardUser(ROUTES.dashboardCreateFlipbook),
+    listSongs(),
+  ]);
 
-  return <CreateFlipbook user={user} error={error} />;
+  return <CreateFlipbook user={user} error={error} songs={songs} />;
 }

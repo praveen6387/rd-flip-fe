@@ -37,7 +37,7 @@ function FlipbookViewInner({ flipbook }) {
     enterImmersive,
     toggleFullscreen,
   } = useMobileFlipChrome(viewerRef);
-  const { startBackgroundSong, stopBackgroundSong } = useFlipSound();
+  const { startBackgroundSong } = useFlipSound();
 
   const [media, setMedia] = useState(null);
   const [mediaError, setMediaError] = useState("");
@@ -80,27 +80,14 @@ function FlipbookViewInner({ flipbook }) {
   }, [flipbook.pages]);
 
   useEffect(() => {
-    startBackgroundSong();
-
-    function unlock() {
+    function onFirstPointer() {
       startBackgroundSong();
       enterImmersive();
-      window.removeEventListener("pointerdown", unlock);
-      window.removeEventListener("keydown", unlock);
-      window.removeEventListener("touchstart", unlock);
     }
 
-    window.addEventListener("pointerdown", unlock, { once: true });
-    window.addEventListener("keydown", unlock, { once: true });
-    window.addEventListener("touchstart", unlock, { once: true });
-
-    return () => {
-      window.removeEventListener("pointerdown", unlock);
-      window.removeEventListener("keydown", unlock);
-      window.removeEventListener("touchstart", unlock);
-      stopBackgroundSong();
-    };
-  }, [startBackgroundSong, stopBackgroundSong, enterImmersive]);
+    window.addEventListener("pointerdown", onFirstPointer, { once: true });
+    return () => window.removeEventListener("pointerdown", onFirstPointer);
+  }, [startBackgroundSong, enterImmersive]);
 
   const dateLabel = formatDate(flipbook.date);
 
@@ -258,7 +245,7 @@ export default function FlipbookView({
   }
 
   return (
-    <FlipSoundProvider>
+    <FlipSoundProvider audioUrl={flipbook.audio_url || ""}>
       <FlipbookViewInner flipbook={flipbook} />
     </FlipSoundProvider>
   );
