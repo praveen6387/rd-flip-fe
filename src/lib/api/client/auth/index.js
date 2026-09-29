@@ -30,23 +30,10 @@ function clearAuthCookies() {
   clearCookie(REFRESH_COOKIE);
 }
 
-export function getStoredUser() {
-  if (typeof window === "undefined") return null;
-
-  try {
-    const raw = localStorage.getItem(USER_STORAGE_KEY);
-    return raw ? JSON.parse(raw) : null;
-  } catch {
-    return null;
-  }
-}
-
-export function setStoredUser(user) {
-  localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user));
-}
-
 export function clearAuth() {
-  localStorage.removeItem(USER_STORAGE_KEY);
+  if (typeof window !== "undefined") {
+    localStorage.removeItem(USER_STORAGE_KEY);
+  }
   clearAuthCookies();
 }
 
@@ -181,10 +168,6 @@ export async function updateSocialLinks(payload) {
 
   if (!response.ok || result.status === "fail") {
     throw new Error(result.message || "Failed to update social links");
-  }
-
-  if (result.data?.user) {
-    setStoredUser(result.data.user);
   }
 
   return result;

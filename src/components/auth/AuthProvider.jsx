@@ -6,10 +6,8 @@ import {
   SESSION_EXPIRED_EVENT,
   clearAuth,
   fetchMe,
-  getStoredUser,
   hasAccessToken,
   login as loginRequest,
-  setStoredUser,
   signup as signupRequest,
 } from "@/lib/api/client/auth";
 import { ROUTES } from "@/lib/routes";
@@ -33,22 +31,50 @@ export function AuthProvider({ children }) {
   }, [router]);
 
   useEffect(() => {
-    const forceLogin =
-      new URLSearchParams(window.location.search).get("login") === "1";
+    let cancelled = false;
 
-    if (forceLogin) {
-      clearAuth();
-      setUser(null);
-      setAuthMode("login");
-      router.replace(ROUTES.home, { scroll: false });
-    } else if (!hasAccessToken()) {
-      clearAuth();
-      setUser(null);
-    } else {
-      setUser(getStoredUser());
+    async function boot() {
+      const forceLogin =
+        new URLSearchParams(window.location.search).get("login") === "1";
+
+      if (forceLogin) {
+        clearAuth();
+        setUser(null);
+        setAuthMode("login");
+        router.replace(ROUTES.home, { scroll: false });
+        if (!cancelled) setReady(true);
+        return;
+      }
+
+      if (!hasAccessToken()) {
+        clearAuth();
+        setUser(null);
+        if (!cancelled) setReady(true);
+        return;
+      }
+
+      try {
+        const nextUser = await fetchMe();
+        if (cancelled) return;
+        if (nextUser) {
+          setUser(nextUser);
+        } else {
+          clearAuth();
+          setUser(null);
+        }
+      } catch {
+        if (cancelled) return;
+        clearAuth();
+        setUser(null);
+      } finally {
+        if (!cancelled) setReady(true);
+      }
     }
 
-    setReady(true);
+    boot();
+    return () => {
+      cancelled = true;
+    };
   }, [router]);
 
   useEffect(() => {
@@ -70,9 +96,6 @@ export function AuthProvider({ children }) {
 
   function applySession(result) {
     const nextUser = result.data?.user ?? null;
-    if (nextUser) {
-      setStoredUser(nextUser);
-    }
     setUser(nextUser);
     setAuthMode(null);
     return result;
@@ -94,10 +117,7 @@ export function AuthProvider({ children }) {
 
   async function refreshUser() {
     const nextUser = await fetchMe();
-    if (nextUser) {
-      setStoredUser(nextUser);
-      setUser(nextUser);
-    }
+    if (nextUser) setUser(nextUser);
     return nextUser;
   }
 
