@@ -247,6 +247,7 @@ export default function FlipbookTable({ flipbooks, onFlipbooksChange }) {
                                 {active.hint}{" "}
                                 <Link
                                   href={ROUTES.dashboardPlans}
+                                  prefetch={false}
                                   className={cn(
                                     "font-semibold underline-offset-2 hover:underline",
                                     isDark ? "text-sky-300" : "text-sky-700"

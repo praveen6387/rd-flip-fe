@@ -221,6 +221,7 @@ export default function CreditsDropdown({ user, isDark }) {
           </p>
           <Link
             href={ROUTES.dashboardPlans}
+            prefetch={false}
             className={cn(
               "mt-2 inline-flex h-9 w-full cursor-pointer items-center justify-center gap-1.5 rounded-full px-3 text-xs font-semibold text-white transition hover:brightness-110 active:scale-[0.98]",
               "bg-linear-to-r from-sky-500 to-rose-500"

@@ -20,19 +20,6 @@ export async function createFlipbook(payload) {
   return result;
 }
 
-export async function fetchFlipbooks() {
-  const response = await authenticatedFetch(ENDPOINTS.flipbooks, {
-    method: "GET",
-  });
-  const result = await response.json().catch(() => null);
-
-  if (!response.ok || result?.status === "fail") {
-    throw new Error(formatFailResult(result, "Failed to fetch flipbooks"));
-  }
-
-  return result.data?.flipbooks ?? [];
-}
-
 export async function deleteFlipbook(id) {
   const response = await authenticatedFetch(ENDPOINTS.flipbooksDelete(id), {
     method: "DELETE",

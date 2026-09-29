@@ -117,6 +117,7 @@ function NoCreditsState({ isDark, expireLabel, reason }) {
         ) : null}
         <Link
           href={ROUTES.dashboardPlans}
+          prefetch={false}
           className="mt-6 inline-flex h-10 cursor-pointer items-center justify-center gap-1.5 rounded-full bg-linear-to-r from-sky-500 to-rose-500 px-5 text-sm font-semibold text-white transition hover:brightness-110 active:scale-[0.98]"
         >
           View Plans
@@ -180,7 +181,7 @@ function glassInput(isDark) {
 
 export default function CreateFlipbook({ error, songs = [] }) {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, refreshUser } = useAuth();
   const { isDark } = useDashboardTheme();
   const lab = isLabPlan(user?.plan);
 
@@ -267,6 +268,11 @@ export default function CreateFlipbook({ error, songs = [] }) {
       }
 
       await createFlipbook(payload);
+      try {
+        await refreshUser();
+      } catch {
+        // Flipbook is already saved; keep navigating with current session data.
+      }
       toast.success("Flipbook created.");
       router.push(ROUTES.dashboardFlipbook);
     } catch (submitError) {

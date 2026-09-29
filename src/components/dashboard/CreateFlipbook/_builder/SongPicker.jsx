@@ -3,7 +3,7 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Loader2, Music2, Pause, Play, Plus, Search, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { createSong, fetchSongs } from "@/lib/api/client/songs";
+import { createSong } from "@/lib/api/client/songs";
 import { cn } from "@/lib/cn";
 
 function glassInput(isDark) {
@@ -408,10 +408,10 @@ export default function SongPicker({ isDark, value, onChange, initialSongs = [] 
     setAddError("");
     try {
       const song = await createSong(addFile);
-      const latest = await fetchSongs("");
-      const next = latest.length
-        ? latest
-        : [song, ...catalogRef.current.filter((item) => item.id !== song.id)];
+      const next = [
+        song,
+        ...catalogRef.current.filter((item) => item.id !== song.id),
+      ];
       catalogRef.current = next;
       setCatalog(next);
       setQuery("");

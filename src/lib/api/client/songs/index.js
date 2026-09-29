@@ -8,24 +8,6 @@ function mapSong(song) {
   return { ...song, id: String(song.id) };
 }
 
-export async function fetchSongs(query = "") {
-  const term = String(query || "").trim();
-  const path = term
-    ? `${ENDPOINTS.songs}?q=${encodeURIComponent(term)}`
-    : ENDPOINTS.songs;
-
-  const response = await authenticatedFetch(path, {
-    method: "GET",
-  });
-  const result = await response.json().catch(() => null);
-
-  if (!response.ok || result?.status === "fail") {
-    throw new Error(formatFailResult(result, "Failed to fetch songs"));
-  }
-
-  return (result.data?.songs ?? []).map(mapSong);
-}
-
 export async function createSong(file) {
   if (!file?.size) {
     throw new Error("Choose an MP3 file.");

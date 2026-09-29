@@ -1,9 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { Pencil, Phone, Sparkles, X } from "lucide-react";
 import { toast } from "sonner";
+import { useAuth } from "@/components/auth";
 import { updateSocialLinks } from "@/lib/api/client/auth";
 import { Button } from "@/components/ui/button";
 import {
@@ -221,7 +221,7 @@ function SocialField({ platform, value, onChange, isDark }) {
 }
 
 export default function SocialLinks({ user, isDark }) {
-  const router = useRouter();
+  const { applyUser } = useAuth();
   const [open, setOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [form, setForm] = useState({
@@ -252,14 +252,14 @@ export default function SocialLinks({ user, isDark }) {
     setIsSaving(true);
 
     try {
-      await updateSocialLinks({
+      const result = await updateSocialLinks({
         whatsapp_number: form.whatsapp_number.trim(),
         instagram_url: form.instagram_url.trim(),
         facebook_url: form.facebook_url.trim(),
       });
+      if (result.data?.user) applyUser(result.data.user);
       toast.success("Social links updated");
       setOpen(false);
-      router.refresh();
     } catch (error) {
       toast.error(error.message || "Failed to update social links");
     } finally {

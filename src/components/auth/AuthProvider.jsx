@@ -114,11 +114,14 @@ export function AuthProvider({ children }) {
     };
   }, [router]);
 
-  function applySession(result) {
-    const nextUser = result.data?.user ?? null;
+  const applyUser = useCallback((nextUser) => {
     setCachedUser(nextUser);
     setUser(nextUser);
     setVerified(Boolean(nextUser));
+  }, []);
+
+  function applySession(result) {
+    applyUser(result.data?.user ?? null);
     setAuthMode(null);
     return result;
   }
@@ -140,11 +143,7 @@ export function AuthProvider({ children }) {
 
   async function refreshUser() {
     const nextUser = await fetchMe();
-    if (nextUser) {
-      setCachedUser(nextUser);
-      setUser(nextUser);
-      setVerified(true);
-    }
+    if (nextUser) applyUser(nextUser);
     return nextUser;
   }
 
@@ -157,6 +156,7 @@ export function AuthProvider({ children }) {
         signup,
         logout,
         refreshUser,
+        applyUser,
         ready,
         authMode,
         setAuthMode,

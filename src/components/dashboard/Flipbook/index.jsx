@@ -34,6 +34,7 @@ export default function Flipbook({ flipbooks = [], error }) {
       actions={
         <Link
           href={ROUTES.dashboardCreateFlipbook}
+          prefetch={false}
           className="inline-flex h-10 items-center justify-center rounded-full bg-linear-to-r from-sky-500 to-rose-500 px-5 text-sm font-semibold text-white transition hover:brightness-110 active:scale-[0.98]"
         >
           Create new

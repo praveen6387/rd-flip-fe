@@ -208,15 +208,25 @@ export async function changePassword({ current_password, new_password }) {
   return result;
 }
 
+let meInFlight = null;
+
 export async function fetchMe() {
-  const response = await authenticatedFetch(ENDPOINTS.me, {
-    method: "GET",
+  if (meInFlight) return meInFlight;
+
+  meInFlight = (async () => {
+    const response = await authenticatedFetch(ENDPOINTS.me, {
+      method: "GET",
+    });
+    const result = await response.json().catch(() => null);
+
+    if (!response.ok || result?.status === "fail") {
+      throw new Error(result?.message || "Failed to fetch profile");
+    }
+
+    return result.data?.user ?? null;
+  })().finally(() => {
+    meInFlight = null;
   });
-  const result = await response.json().catch(() => null);
 
-  if (!response.ok || result?.status === "fail") {
-    throw new Error(result?.message || "Failed to fetch profile");
-  }
-
-  return result.data?.user ?? null;
+  return meInFlight;
 }

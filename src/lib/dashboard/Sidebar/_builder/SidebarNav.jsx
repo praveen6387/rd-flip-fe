@@ -21,6 +21,7 @@ export default function SidebarNav({ onNavigate }) {
           <Link
             key={item.href}
             href={item.href}
+            prefetch={false}
             onClick={onNavigate}
             style={{ animationDelay: `${index * 60}ms` }}
             className={cn(

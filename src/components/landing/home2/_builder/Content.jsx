@@ -106,6 +106,7 @@ export default function Content({ isDark = true }) {
         >
           <Link
             href={ROUTES.dashboardCreateFlipbook}
+            prefetch={false}
             className={cn(
               "group inline-flex h-11 items-center gap-2 rounded-full px-6 text-sm font-semibold text-white transition sm:h-12 sm:px-7 sm:text-base",
               isDark
