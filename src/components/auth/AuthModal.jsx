@@ -20,16 +20,25 @@ export default function AuthModal({ appearance = "light" }) {
     router.push(ROUTES.home);
   }
 
-  if (!ready) {
-    return <div className="h-10 w-28" aria-hidden />;
-  }
-
   if (user) {
     return (
       <UserMenu
         user={user}
         onLogout={handleLogout}
         appearance={appearance}
+      />
+    );
+  }
+
+  if (!ready) {
+    return (
+      <div
+        className={
+          isDark
+            ? "h-10 w-40 rounded-full bg-white/15"
+            : "h-10 w-40 rounded-full bg-white/70"
+        }
+        aria-hidden
       />
     );
   }

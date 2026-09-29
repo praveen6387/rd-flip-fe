@@ -30,10 +30,27 @@ function clearAuthCookies() {
   clearCookie(REFRESH_COOKIE);
 }
 
-export function clearAuth() {
-  if (typeof window !== "undefined") {
-    localStorage.removeItem(USER_STORAGE_KEY);
+export function getCachedUser() {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = localStorage.getItem(USER_STORAGE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
   }
+}
+
+export function setCachedUser(user) {
+  if (typeof window === "undefined") return;
+  if (!user) {
+    localStorage.removeItem(USER_STORAGE_KEY);
+    return;
+  }
+  localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user));
+}
+
+export function clearAuth() {
+  setCachedUser(null);
   clearAuthCookies();
 }
 

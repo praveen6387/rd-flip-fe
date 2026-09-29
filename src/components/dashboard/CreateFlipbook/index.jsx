@@ -15,6 +15,7 @@ import { useDashboardTheme } from "@/lib/dashboard/ThemeProvider";
 import { createFlipbook } from "@/lib/api/client/flipbook";
 import { uploadCoverImages } from "@/lib/api/client/s3";
 import { ROUTES } from "@/lib/routes";
+import { useAuth } from "@/components/auth";
 import ImageCovers from "./_builder/ImageCovers";
 import SongPicker from "./_builder/SongPicker";
 import { cn } from "@/lib/cn";
@@ -177,8 +178,9 @@ function glassInput(isDark) {
   );
 }
 
-export default function CreateFlipbook({ user, error, songs = [] }) {
+export default function CreateFlipbook({ error, songs = [] }) {
   const router = useRouter();
+  const { user } = useAuth();
   const { isDark } = useDashboardTheme();
   const lab = isLabPlan(user?.plan);
 

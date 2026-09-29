@@ -5,16 +5,16 @@ import { hasAccessToken } from "@/lib/api/client/auth";
 import { useAuth } from "@/components/auth";
 
 export default function AuthGuard({ children }) {
-  const { ready, expireSession } = useAuth();
+  const { ready, user, expireSession } = useAuth();
 
   useEffect(() => {
     if (!ready) return;
-    if (!hasAccessToken()) {
+    if (!hasAccessToken() || !user) {
       expireSession();
     }
-  }, [ready, expireSession]);
+  }, [ready, user, expireSession]);
 
-  if (!ready || !hasAccessToken()) {
+  if (!ready || !hasAccessToken() || !user) {
     return (
       <div className="flex min-h-full flex-1 items-center justify-center bg-[#f8f4ee]">
         <div className="size-9 animate-spin rounded-full border-2 border-stone-300 border-t-sky-500" />

@@ -13,21 +13,21 @@ import { Button } from "@/components/ui/button";
 import { ROUTES } from "@/lib/routes";
 import { cn } from "@/lib/cn";
 import {
-  DASHBOARD_NAV_ITEMS,
+  getDashboardNavItems,
   isDashboardNavActive,
 } from "@/lib/dashboard/Sidebar/_builder/nav-items";
 
 export default function DashboardHeader() {
   const router = useRouter();
   const pathname = usePathname();
-  const { user, logout } = useAuth();
+  const { user, verified, logout } = useAuth();
   const { isDark } = useDashboardTheme();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
+  const items = getDashboardNavItems(user, { verified });
   const activeItem =
-    DASHBOARD_NAV_ITEMS.find((item) =>
-      isDashboardNavActive(pathname, item.href)
-    ) ?? DASHBOARD_NAV_ITEMS[0];
+    items.find((item) => isDashboardNavActive(pathname, item.href)) ??
+    items[0];
 
   function handleLogout() {
     logout();
@@ -75,7 +75,7 @@ export default function DashboardHeader() {
                 isDark ? "text-white" : "text-stone-900"
               )}
             >
-              {activeItem.label}
+              {activeItem?.label || "Dashboard"}
             </h1>
           </div>
         </div>

@@ -22,6 +22,8 @@ export const ENDPOINTS = {
   contactCreate: "/api/contact/create/",
   songs: "/api/songs/",
   songsCreate: "/api/songs/create/",
+  adminUsers: "/api/auth/users/",
+  adminOrders: "/api/orders/",
 };
 
 export function backendUrl(path) {

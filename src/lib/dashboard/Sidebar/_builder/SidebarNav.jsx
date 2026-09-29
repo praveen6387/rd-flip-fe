@@ -2,15 +2,18 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useAuth } from "@/components/auth";
 import { cn } from "@/lib/cn";
-import { DASHBOARD_NAV_ITEMS, isDashboardNavActive } from "./nav-items";
+import { getDashboardNavItems, isDashboardNavActive } from "./nav-items";
 
 export default function SidebarNav({ onNavigate }) {
   const pathname = usePathname();
+  const { user, verified } = useAuth();
+  const items = getDashboardNavItems(user, { verified });
 
   return (
     <nav className="flex flex-1 flex-col gap-1.5 overflow-y-auto px-3 py-5">
-      {DASHBOARD_NAV_ITEMS.map((item, index) => {
+      {items.map((item, index) => {
         const Icon = item.icon;
         const active = isDashboardNavActive(pathname, item.href);
 

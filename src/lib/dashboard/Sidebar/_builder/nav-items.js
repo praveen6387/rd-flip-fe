@@ -1,4 +1,4 @@
-import { BookOpen, PlusCircle, UserRound, WalletCards } from "lucide-react";
+import { BookOpen, PlusCircle, Receipt, UserRound, Users, WalletCards } from "lucide-react";
 import { ROUTES } from "@/lib/routes";
 
 /** Add future dashboard tabs here — used by desktop + mobile sidenav. */
@@ -23,7 +23,27 @@ export const DASHBOARD_NAV_ITEMS = [
     href: ROUTES.dashboardPlans,
     icon: WalletCards,
   },
+  {
+    label: "Users",
+    href: ROUTES.dashboardUsers,
+    icon: Users,
+    roles: ["admin"],
+  },
+  {
+    label: "Orders",
+    href: ROUTES.dashboardOrders,
+    icon: Receipt,
+    roles: ["admin"],
+  },
 ];
+
+export function getDashboardNavItems(user, { verified = true } = {}) {
+  const role = verified ? user?.role : "studio";
+  return DASHBOARD_NAV_ITEMS.filter((item) => {
+    if (!item.roles?.length) return true;
+    return item.roles.includes(role);
+  });
+}
 
 export function isDashboardNavActive(pathname, href) {
   if (href === ROUTES.dashboard) {

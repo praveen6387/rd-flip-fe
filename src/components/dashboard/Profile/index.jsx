@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/tooltip";
 import { useDashboardTheme } from "@/lib/dashboard/ThemeProvider";
 import { cn } from "@/lib/cn";
+import { useAuth } from "@/components/auth";
 
 const cardSurface = (isDark) =>
   isDark
@@ -137,10 +138,11 @@ function SectionHeader({ title, description, isDark }) {
   );
 }
 
-export default function Profile({ user, error }) {
+export default function Profile() {
   const { isDark } = useDashboardTheme();
+  const { user } = useAuth();
 
-  if (error || !user) {
+  if (!user) {
     return (
       <PagePanel
         eyebrow="Account"
@@ -155,7 +157,7 @@ export default function Profile({ user, error }) {
               : "border-rose-200/80 bg-rose-50/80 text-rose-700"
           )}
         >
-          {error || "Profile unavailable"}
+          Profile unavailable
         </div>
       </PagePanel>
     );

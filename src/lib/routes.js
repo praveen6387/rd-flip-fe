@@ -4,6 +4,8 @@ export const ROUTES = {
   dashboardFlipbook: "/dashboard/flipbook",
   dashboardCreateFlipbook: "/dashboard/create-flipbook",
   dashboardPlans: "/dashboard/plans",
+  dashboardUsers: "/dashboard/users",
+  dashboardOrders: "/dashboard/orders",
   flipbookView: (flipId) => `/flipbook-view/${flipId}`,
   privacy: "/privacy",
   terms: "/terms",

@@ -1,13 +1,22 @@
 "use client";
 
-import { createContext, useCallback, useContext, useEffect, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useLayoutEffect,
+  useEffect,
+  useState,
+} from "react";
 import { useRouter } from "next/navigation";
 import {
   SESSION_EXPIRED_EVENT,
   clearAuth,
   fetchMe,
+  getCachedUser,
   hasAccessToken,
   login as loginRequest,
+  setCachedUser,
   signup as signupRequest,
 } from "@/lib/api/client/auth";
 import { ROUTES } from "@/lib/routes";
@@ -18,11 +27,13 @@ export function AuthProvider({ children }) {
   const router = useRouter();
   const [user, setUser] = useState(null);
   const [ready, setReady] = useState(false);
+  const [verified, setVerified] = useState(false);
   const [authMode, setAuthMode] = useState(null);
 
   const expireSession = useCallback(() => {
     clearAuth();
     setUser(null);
+    setVerified(false);
     setAuthMode("login");
 
     if (window.location.pathname.startsWith("/dashboard")) {
@@ -30,7 +41,7 @@ export function AuthProvider({ children }) {
     }
   }, [router]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     let cancelled = false;
 
     async function boot() {
@@ -40,6 +51,7 @@ export function AuthProvider({ children }) {
       if (forceLogin) {
         clearAuth();
         setUser(null);
+        setVerified(false);
         setAuthMode("login");
         router.replace(ROUTES.home, { scroll: false });
         if (!cancelled) setReady(true);
@@ -49,25 +61,32 @@ export function AuthProvider({ children }) {
       if (!hasAccessToken()) {
         clearAuth();
         setUser(null);
+        setVerified(false);
         if (!cancelled) setReady(true);
         return;
       }
+
+      const cached = getCachedUser();
+      if (cached) setUser(cached);
+      if (!cancelled) setReady(true);
 
       try {
         const nextUser = await fetchMe();
         if (cancelled) return;
         if (nextUser) {
+          setCachedUser(nextUser);
           setUser(nextUser);
+          setVerified(true);
         } else {
           clearAuth();
           setUser(null);
+          setVerified(false);
         }
       } catch {
         if (cancelled) return;
         clearAuth();
         setUser(null);
-      } finally {
-        if (!cancelled) setReady(true);
+        setVerified(false);
       }
     }
 
@@ -81,6 +100,7 @@ export function AuthProvider({ children }) {
     function onSessionExpired() {
       clearAuth();
       setUser(null);
+      setVerified(false);
       setAuthMode("login");
 
       if (window.location.pathname.startsWith("/dashboard")) {
@@ -96,7 +116,9 @@ export function AuthProvider({ children }) {
 
   function applySession(result) {
     const nextUser = result.data?.user ?? null;
+    setCachedUser(nextUser);
     setUser(nextUser);
+    setVerified(Boolean(nextUser));
     setAuthMode(null);
     return result;
   }
@@ -112,12 +134,17 @@ export function AuthProvider({ children }) {
   function logout() {
     clearAuth();
     setUser(null);
+    setVerified(false);
     setAuthMode(null);
   }
 
   async function refreshUser() {
     const nextUser = await fetchMe();
-    if (nextUser) setUser(nextUser);
+    if (nextUser) {
+      setCachedUser(nextUser);
+      setUser(nextUser);
+      setVerified(true);
+    }
     return nextUser;
   }
 
@@ -125,6 +152,7 @@ export function AuthProvider({ children }) {
     <AuthContext.Provider
       value={{
         user,
+        verified,
         login,
         signup,
         logout,
