@@ -15,6 +15,8 @@ export const ENDPOINTS = {
   flipbooks: "/api/flipbooks/",
   flipbooksCreate: "/api/flipbooks/create/",
   flipbooksDelete: (id) => `/api/flipbooks/${id}/`,
+  flipbookView: (flipId) => `/api/flipbooks/${encodeURIComponent(flipId)}/view/`,
+  flipbookLike: (flipId) => `/api/flipbooks/${encodeURIComponent(flipId)}/like/`,
   plans: "/api/plans/",
   ordersCreate: "/api/orders/create/",
   paymentsVerify: "/api/payments/verify/",

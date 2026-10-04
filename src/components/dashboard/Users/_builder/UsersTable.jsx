@@ -4,6 +4,8 @@ import { useMemo, useState } from "react";
 import {
   Coins,
   CreditCard,
+  Eye,
+  Heart,
   MoreHorizontal,
   Receipt,
   Search,
@@ -37,6 +39,10 @@ function matchesQuery(user, query) {
     .join(" ")
     .toLowerCase();
   return haystack.includes(query);
+}
+
+function formatCount(value) {
+  return Number(value || 0).toLocaleString("en-IN");
 }
 
 function userName(user) {
@@ -140,6 +146,7 @@ export default function UsersTable({ users = [] }) {
               <th className={cn(headClass, "border-r")}>Plan</th>
               <th className={cn(headClass, "border-r")}>Role</th>
               <th className={cn(headClass, "border-r")}>Credits</th>
+              <th className={cn(headClass, "border-r")}>Activity</th>
               <th className={cn(headClass, "border-r")}>Expires</th>
               <th className={cn(headClass, "w-14 text-right")}> </th>
             </tr>
@@ -148,7 +155,7 @@ export default function UsersTable({ users = [] }) {
             {filtered.length === 0 ? (
               <tr>
                 <td
-                  colSpan={7}
+                  colSpan={8}
                   className={cn(
                     "px-4 py-10 text-center",
                     isDark ? "text-slate-400" : "text-slate-500"
@@ -219,6 +226,23 @@ export default function UsersTable({ users = [] }) {
                         {item.used_credit ?? 0} used · {item.total_credit ?? 0}{" "}
                         total
                       </p>
+                    </td>
+                    <td className={cn(cellClass, "border-r whitespace-nowrap")}>
+                      <div
+                        className={cn(
+                          "flex flex-col gap-1 text-xs",
+                          isDark ? "text-slate-200" : "text-slate-700"
+                        )}
+                      >
+                        <span className="inline-flex items-center gap-1.5">
+                          <Eye className="size-3.5 opacity-70" />
+                          {formatCount(item.total_view_count)}
+                        </span>
+                        <span className="inline-flex items-center gap-1.5">
+                          <Heart className="size-3.5 opacity-70" />
+                          {formatCount(item.total_like_count)}
+                        </span>
+                      </div>
                     </td>
                     <td className={cn(cellClass, "border-r")}>
                       <span

@@ -50,6 +50,7 @@ export function setCachedUser(user) {
 }
 
 export function clearAuth() {
+  clearMeCache();
   setCachedUser(null);
   clearAuthCookies();
 }
@@ -68,7 +69,24 @@ export function hasAccessToken() {
 
 export const SESSION_EXPIRED_EVENT = "rd-flip:session-expired";
 
+let leavingPage = false;
+
+if (typeof window !== "undefined") {
+  window.addEventListener("beforeunload", () => {
+    leavingPage = true;
+  });
+  window.addEventListener("pagehide", () => {
+    leavingPage = true;
+  });
+}
+
+export function isRequestDropped(error) {
+  if (leavingPage) return true;
+  return error?.name === "AbortError";
+}
+
 function goToLogin() {
+  if (leavingPage) return;
   clearAuth();
   if (typeof window !== "undefined") {
     window.dispatchEvent(new Event(SESSION_EXPIRED_EVENT));
@@ -113,7 +131,7 @@ export async function authenticatedFetch(url, options = {}) {
   }
 
   const response = await fetch(url, { ...options, headers });
-  if (response.status !== 401) return response;
+  if (response.status !== 401 || leavingPage) return response;
 
   const refreshed = await refreshSession();
   if (!refreshed) {
@@ -208,12 +226,16 @@ export async function changePassword({ current_password, new_password }) {
   return result;
 }
 
-let meInFlight = null;
+let meResult = null;
 
-export async function fetchMe() {
-  if (meInFlight) return meInFlight;
+export function clearMeCache() {
+  meResult = null;
+}
 
-  meInFlight = (async () => {
+export function fetchMe({ force = false } = {}) {
+  if (!force && meResult) return meResult;
+
+  const request = (async () => {
     const response = await authenticatedFetch(ENDPOINTS.me, {
       method: "GET",
     });
@@ -224,9 +246,12 @@ export async function fetchMe() {
     }
 
     return result.data?.user ?? null;
-  })().finally(() => {
-    meInFlight = null;
+  })();
+
+  meResult = request;
+  request.catch(() => {
+    if (meResult === request) meResult = null;
   });
 
-  return meInFlight;
+  return request;
 }

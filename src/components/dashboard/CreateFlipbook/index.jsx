@@ -228,11 +228,6 @@ export default function CreateFlipbook({ error, songs = [] }) {
       return;
     }
 
-    if (lab && !form.studio_name.trim()) {
-      fail("Studio name is required for lab flipbooks.");
-      return;
-    }
-
     const photoCount =
       covers.front.length + covers.back.length + covers.middle.length;
 
@@ -512,13 +507,11 @@ export default function CreateFlipbook({ error, songs = [] }) {
               <FieldShell
                 label="Studio name"
                 htmlFor="studio_name"
-                required
                 isDark={isDark}
               >
                 <Input
                   id="studio_name"
                   name="studio_name"
-                  required
                   placeholder="Praveen Studio"
                   value={form.studio_name}
                   onChange={(event) => update("studio_name", event.target.value)}

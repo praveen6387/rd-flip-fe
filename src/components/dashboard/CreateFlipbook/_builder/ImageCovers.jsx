@@ -8,10 +8,6 @@ import ViewportCenterOverlay from "@/components/dashboard/_builder/ViewportCente
 import { cn } from "@/lib/cn";
 import { isAcceptedImage, optimizeImage } from "./optimizeImage";
 
-export const IMAGE_LIMITS = {
-  total: 60,
-};
-
 const ZONES = [
   {
     key: "front",
@@ -63,16 +59,8 @@ export default function ImageCovers({ covers, onChange, isDark }) {
     const files = Array.from(fileList || []);
     if (!files.length || progress) return;
 
-    const room = IMAGE_LIMITS.total - (totalCount(covers) - covers[zone].length);
-
-    if (room <= 0) {
-      toast.error("You can upload about 60 photos in total.");
-      return;
-    }
-
     const queued = [];
     for (const file of files) {
-      if (queued.length >= room) break;
       if (!isAcceptedImage(file)) {
         toast.error(`${file.name} isn’t a JPG, PNG, or WebP.`);
         continue;
@@ -81,10 +69,6 @@ export default function ImageCovers({ covers, onChange, isDark }) {
     }
 
     if (!queued.length) return;
-
-    if (queued.length < files.length && files.length > room) {
-      toast.error(`Only ${room} more photo${room === 1 ? "" : "s"} fit in the 60 total.`);
-    }
 
     const created = [];
     try {
@@ -200,8 +184,7 @@ export default function ImageCovers({ covers, onChange, isDark }) {
               isDark ? "text-slate-300" : "text-slate-600"
             )}
           >
-            Front, then back, then the middle pages. A new upload in a section
-            replaces the photos already there.
+            Front, back, then middle. A new upload replaces that section.
           </p>
         </div>
         <p
@@ -210,7 +193,7 @@ export default function ImageCovers({ covers, onChange, isDark }) {
             isDark ? "text-slate-200" : "text-slate-700"
           )}
         >
-          {used} / {IMAGE_LIMITS.total} photos
+          {used} {used === 1 ? "photo" : "photos"}
         </p>
       </div>
 
@@ -223,9 +206,7 @@ export default function ImageCovers({ covers, onChange, isDark }) {
             isDark={isDark}
             dense={zone.key === "middle"}
             disabled={Boolean(progress)}
-            canAdd={
-              used - covers[zone.key].length < IMAGE_LIMITS.total
-            }
+            canAdd
             dragging={dragging}
             dropTarget={dropTarget}
             onFiles={(files) => addFiles(zone.key, files)}

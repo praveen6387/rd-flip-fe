@@ -18,6 +18,10 @@ const cardSurface = (isDark) =>
     ? "border-white/10 bg-[#141b24]/96 shadow-[0_18px_50px_-28px_rgba(0,0,0,0.7)]"
     : "border-[#e4d9c8]/80 bg-[#fffcf8]/92 shadow-[0_18px_40px_-28px_rgba(120,90,50,0.2)]";
 
+function formatCount(value) {
+  return Number(value || 0).toLocaleString("en-IN");
+}
+
 function formatDate(value) {
   if (!value) return "—";
   return new Date(value).toLocaleDateString("en-IN", {
@@ -283,6 +287,33 @@ export default function Profile() {
         <SocialLinks user={user} isDark={isDark} />
 
         <ChangePassword isDark={isDark} />
+
+        <section>
+          <SectionHeader
+            title="Audience"
+            description="Views and likes across your active flipbooks."
+            isDark={isDark}
+          />
+          <div
+            className={cn(
+              "grid grid-cols-2 gap-y-6 rounded-[1.6rem] border px-4 py-6 sm:px-3 sm:py-7",
+              cardSurface(isDark)
+            )}
+          >
+            <CreditStat
+              label="Views"
+              value={formatCount(user.total_view_count)}
+              hint="Opens of your flipbooks. Each browser counts once."
+              isDark={isDark}
+            />
+            <CreditStat
+              label="Likes"
+              value={formatCount(user.total_like_count)}
+              hint="Likes currently on your flipbooks."
+              isDark={isDark}
+            />
+          </div>
+        </section>
 
         <section>
           <SectionHeader

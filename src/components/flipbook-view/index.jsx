@@ -6,6 +6,7 @@ import { isFlipbookExpired } from "@/lib/flipbook-active";
 import ClassicFlipEngine from "./_builder/ClassicFlipEngine";
 import ViewerBackdrop from "./_builder/ViewerBackdrop";
 import ViewerLandingLoader from "./_builder/ViewerLandingLoader";
+import ViewerEngagement from "./_builder/ViewerEngagement";
 import ViewerShareMenu from "./_builder/ViewerShareMenu";
 import ViewerThemePicker from "./_builder/ViewerThemePicker";
 import { FlipSoundProvider, useFlipSound } from "./_builder/useFlipSound";
@@ -106,8 +107,8 @@ function FlipbookViewInner({ flipbook }) {
             </p>
             <ViewerSocialLinks flipbook={flipbook} />
           </div>
-          <div className="pointer-events-none text-center">
-            <h1 className="font-viewer-title text-lg font-bold leading-tight tracking-wide text-amber-200/85 sm:text-2xl md:text-3xl lg:text-[2.15rem]">
+          <div className="pointer-events-none min-w-0 text-center">
+            <h1 className="truncate font-viewer-title text-lg font-bold leading-tight tracking-wide text-amber-200/85 sm:text-2xl md:text-3xl lg:text-[2.15rem]">
               {flipbook.title}
             </h1>
             {dateLabel ? (
@@ -117,6 +118,7 @@ function FlipbookViewInner({ flipbook }) {
             ) : null}
           </div>
           <div className="pointer-events-auto flex items-center justify-end gap-1.5 sm:gap-2">
+            <ViewerEngagement flipId={flipbook.flip_id} />
             <ViewerShareMenu title={flipbook.title} />
           </div>
         </header>

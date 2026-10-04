@@ -6,6 +6,7 @@ import {
   CalendarDays,
   Copy,
   Eye,
+  Heart,
   Loader2,
   QrCode,
   Search,
@@ -22,6 +23,10 @@ import { cn } from "@/lib/cn";
 import FlipbookDeleteDialog from "./FlipbookDeleteDialog";
 import FlipbookQrDialog from "./FlipbookQrDialog";
 import FlipbookSocialLinks from "./FlipbookSocialLinks";
+
+function formatCount(value) {
+  return Number(value || 0).toLocaleString("en-IN");
+}
 
 function formatDate(value) {
   if (!value) return "—";
@@ -142,6 +147,7 @@ export default function FlipbookTable({ flipbooks, onFlipbooksChange }) {
               <th className={cn(headClass, "border-r")}>Date</th>
               <th className={cn(headClass, "border-r")}>Studio</th>
               <th className={cn(headClass, "border-r")}>Social</th>
+              <th className={cn(headClass, "border-r")}>Activity</th>
               <th className={cn(headClass, "border-r")}>ID</th>
               <th className={headClass}>Actions</th>
             </tr>
@@ -150,7 +156,7 @@ export default function FlipbookTable({ flipbooks, onFlipbooksChange }) {
             {filtered.length === 0 ? (
               <tr>
                 <td
-                  colSpan={6}
+                  colSpan={7}
                   className={cn(
                     "px-4 py-10 text-center",
                     isDark ? "text-slate-400" : "text-slate-500"
@@ -283,6 +289,23 @@ export default function FlipbookTable({ flipbooks, onFlipbooksChange }) {
                     </td>
                     <td className={cn(cellClass, "border-r")}>
                       <FlipbookSocialLinks flipbook={item} isDark={isDark} />
+                    </td>
+                    <td className={cn(cellClass, "border-r whitespace-nowrap")}>
+                      <div
+                        className={cn(
+                          "flex flex-col gap-1 text-xs",
+                          isDark ? "text-slate-200" : "text-slate-700"
+                        )}
+                      >
+                        <span className="inline-flex items-center gap-1.5">
+                          <Eye className="size-3.5 opacity-70" />
+                          {formatCount(item.view_count)}
+                        </span>
+                        <span className="inline-flex items-center gap-1.5">
+                          <Heart className="size-3.5 opacity-70" />
+                          {formatCount(item.like_count)}
+                        </span>
+                      </div>
                     </td>
                     <td className={cn(cellClass, "border-r")}>
                       {item.flip_id ? (

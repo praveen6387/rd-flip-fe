@@ -13,8 +13,8 @@ import {
   SESSION_EXPIRED_EVENT,
   clearAuth,
   fetchMe,
-  getCachedUser,
   hasAccessToken,
+  isRequestDropped,
   login as loginRequest,
   setCachedUser,
   signup as signupRequest,
@@ -66,9 +66,7 @@ export function AuthProvider({ children }) {
         return;
       }
 
-      const cached = getCachedUser();
-      if (cached) setUser(cached);
-      if (!cancelled) setReady(true);
+      let dropped = false;
 
       try {
         const nextUser = await fetchMe();
@@ -82,11 +80,16 @@ export function AuthProvider({ children }) {
           setUser(null);
           setVerified(false);
         }
-      } catch {
-        if (cancelled) return;
+      } catch (error) {
+        if (cancelled || isRequestDropped(error)) {
+          dropped = true;
+          return;
+        }
         clearAuth();
         setUser(null);
         setVerified(false);
+      } finally {
+        if (!cancelled && !dropped) setReady(true);
       }
     }
 
@@ -120,18 +123,30 @@ export function AuthProvider({ children }) {
     setVerified(Boolean(nextUser));
   }, []);
 
-  function applySession(result) {
-    applyUser(result.data?.user ?? null);
-    setAuthMode(null);
-    return result;
+  async function openSession(request) {
+    const result = await request();
+    try {
+      const nextUser = await fetchMe({ force: true });
+      if (!nextUser) {
+        throw new Error("Could not load your profile.");
+      }
+      applyUser(nextUser);
+      setAuthMode(null);
+      return result;
+    } catch (error) {
+      clearAuth();
+      setUser(null);
+      setVerified(false);
+      throw error;
+    }
   }
 
-  async function login(payload) {
-    return applySession(await loginRequest(payload));
+  function login(payload) {
+    return openSession(() => loginRequest(payload));
   }
 
-  async function signup(payload) {
-    return applySession(await signupRequest(payload));
+  function signup(payload) {
+    return openSession(() => signupRequest(payload));
   }
 
   function logout() {
@@ -142,7 +157,7 @@ export function AuthProvider({ children }) {
   }
 
   async function refreshUser() {
-    const nextUser = await fetchMe();
+    const nextUser = await fetchMe({ force: true });
     if (nextUser) applyUser(nextUser);
     return nextUser;
   }
