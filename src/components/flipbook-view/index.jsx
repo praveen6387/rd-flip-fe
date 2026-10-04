@@ -1,14 +1,12 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useMobileFlipChrome } from "@/hooks/use-mobile-flip-chrome";
 import { isFlipbookExpired } from "@/lib/flipbook-active";
 import ClassicFlipEngine from "./_builder/ClassicFlipEngine";
 import ViewerBackdrop from "./_builder/ViewerBackdrop";
-import ViewerLandingLoader from "./_builder/ViewerLandingLoader";
 import ViewerEngagement from "./_builder/ViewerEngagement";
 import ViewerShareMenu from "./_builder/ViewerShareMenu";
-import ViewerThemePicker from "./_builder/ViewerThemePicker";
 import { FlipSoundProvider, useFlipSound } from "./_builder/useFlipSound";
 import ViewerSocialLinks from "./_builder/ViewerSocialLinks";
 import {
@@ -40,10 +38,11 @@ function FlipbookViewInner({ flipbook }) {
   } = useMobileFlipChrome(viewerRef);
   const { startBackgroundSong } = useFlipSound();
 
-  const [media, setMedia] = useState(null);
-  const [mediaError, setMediaError] = useState("");
-  const [loadProgress, setLoadProgress] = useState(0);
   const [themeId, setThemeId] = useState(DEFAULT_VIEWER_THEME);
+  const sheets = useMemo(
+    () => prepareClassicMedia(flipbook.pages),
+    [flipbook.pages]
+  );
 
   useEffect(() => {
     setThemeId(readStoredViewerTheme());
@@ -53,32 +52,6 @@ function FlipbookViewInner({ flipbook }) {
     setThemeId(nextId);
     storeViewerTheme(nextId);
   }
-
-  useEffect(() => {
-    let cancelled = false;
-    setMedia(null);
-    setMediaError("");
-    setLoadProgress(0);
-
-    prepareClassicMedia(flipbook.pages, {
-      onProgress: (ratio) => {
-        if (!cancelled) setLoadProgress(ratio);
-      },
-    })
-      .then((prepared) => {
-        if (!cancelled) {
-          setLoadProgress(1);
-          setMedia(prepared);
-        }
-      })
-      .catch(() => {
-        if (!cancelled) setMediaError("Could not load album photos.");
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [flipbook.pages]);
 
   useEffect(() => {
     function onFirstPointer() {
@@ -123,36 +96,18 @@ function FlipbookViewInner({ flipbook }) {
           </div>
         </header>
 
-        {!media ? (
-          <div className="viewer-theme-picker-solo">
-            <ViewerThemePicker themeId={themeId} onChange={handleThemeChange} />
-          </div>
-        ) : null}
-
         <div className="relative z-10 flex min-h-0 w-full flex-1 flex-col p-2">
-          {mediaError ? (
-            <p className="grid flex-1 place-items-center text-sm text-rose-300">
-              {mediaError}
-            </p>
-          ) : !media ? (
-            <ViewerLandingLoader
-              progress={loadProgress}
-              studioName={flipbook.studio_name || "RD Flip"}
-              title={flipbook.title}
-            />
-          ) : (
-            <ClassicFlipEngine
-              imageUrls={media.classicUrls}
-              sheetCount={media.classicUrls.length}
-              active
-              isMobile={isMobile}
-              forceLandscape={forceLandscape}
-              isFullscreen={isFullscreen}
-              onToggleFullscreen={toggleFullscreen}
-              themeId={themeId}
-              onThemeChange={handleThemeChange}
-            />
-          )}
+          <ClassicFlipEngine
+            sheets={sheets}
+            sheetCount={sheets.length}
+            active
+            isMobile={isMobile}
+            forceLandscape={forceLandscape}
+            isFullscreen={isFullscreen}
+            onToggleFullscreen={toggleFullscreen}
+            themeId={themeId}
+            onThemeChange={handleThemeChange}
+          />
         </div>
       </div>
     </main>

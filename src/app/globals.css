@@ -825,6 +825,16 @@
   -webkit-user-drag: none;
 }
 
+.flip-viewer .classic-flip-page img.flip-crop {
+  width: 200%;
+  max-width: none;
+  object-fit: fill;
+}
+
+.flip-viewer .classic-flip-page img.flip-crop--right {
+  margin-left: -100%;
+}
+
 .flip-viewer .stf__canvas {
   display: block;
   background: transparent;

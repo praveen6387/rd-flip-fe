@@ -47,16 +47,19 @@ function measurePage(stage) {
   };
 }
 
-function buildHardPages(imageUrls) {
-  return (imageUrls || []).map((src, index) => {
+function buildHardPages(sheets) {
+  return (sheets || []).map((sheet, index) => {
     const page = document.createElement("div");
     page.className = "classic-flip-page";
     page.dataset.density = "hard";
 
     const img = document.createElement("img");
-    img.src = src;
+    img.src = sheet.src;
     img.alt = `Page ${index + 1}`;
     img.draggable = false;
+    if (sheet.crop === "left" || sheet.crop === "right") {
+      img.className = `flip-crop flip-crop--${sheet.crop}`;
+    }
     page.appendChild(img);
 
     return page;
@@ -86,7 +89,7 @@ function ControlButton({ label, disabled, onClick, children, highlight = false, 
 }
 
 export default function ClassicFlipEngine({
-  imageUrls,
+  sheets,
   sheetCount,
   active = true,
   isMobile = false,
@@ -212,7 +215,7 @@ export default function ClassicFlipEngine({
     if (!active) return undefined;
 
     const stage = stageRef.current;
-    if (!stage || !imageUrls?.length) {
+    if (!stage || !sheets?.length) {
       setLoading(false);
       return undefined;
     }
@@ -270,10 +273,10 @@ export default function ClassicFlipEngine({
         disableFlipByClick: true,
         useMouseEvents: false,
         showPageCorners: false,
-        startPage: Math.min(pageRef.current, Math.max(imageUrls.length - 1, 0)),
+        startPage: Math.min(pageRef.current, Math.max(sheets.length - 1, 0)),
       });
 
-      pageFlip.loadFromHTML(buildHardPages(imageUrls));
+      pageFlip.loadFromHTML(buildHardPages(sheets));
 
       const syncSpread = (index) => {
         const collection = pageFlip.getPageCollection();
@@ -378,7 +381,7 @@ export default function ClassicFlipEngine({
       bookRef.current = null;
       if (stageRef.current) stageRef.current.innerHTML = "";
     };
-  }, [active, imageUrls, isMobile]);
+  }, [active, sheets, isMobile]);
 
   useEffect(() => {
     if (!active) return undefined;
