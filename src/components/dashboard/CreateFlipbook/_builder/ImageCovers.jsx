@@ -26,6 +26,8 @@ const ZONES = [
   },
 ];
 
+const OPTIMIZE_CONCURRENCY = 3;
+
 function createItemId() {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
@@ -70,33 +72,50 @@ export default function ImageCovers({ covers, onChange, isDark }) {
 
     if (!queued.length) return;
 
-    const created = [];
+    const created = new Array(queued.length);
+    let finished = 0;
+    let cursor = 0;
+
+    setProgress({
+      percent: 0,
+      current: 0,
+      total: queued.length,
+      name: queued[0].name,
+    });
+
     try {
-      for (let index = 0; index < queued.length; index += 1) {
-        const file = queued[index];
-        const optimized = await optimizeImage(file, {
-          onProgress: (filePercent) => {
-            const overall = Math.round(
-              ((index + filePercent / 100) / queued.length) * 100
-            );
-            setProgress({
-              percent: overall,
-              current: index + 1,
-              total: queued.length,
-              name: file.name,
-            });
-          },
-        });
-        created.push({
-          id: createItemId(),
-          name: file.name,
-          previewUrl: URL.createObjectURL(optimized.blob),
-          blob: optimized.blob,
-          width: optimized.width,
-          height: optimized.height,
-        });
-        await new Promise((resolve) => setTimeout(resolve, 0));
+      async function run() {
+        while (cursor < queued.length) {
+          const index = cursor;
+          cursor += 1;
+          const file = queued[index];
+          setProgress((current) => ({
+            percent: current?.percent ?? 0,
+            current: current?.current ?? 0,
+            total: queued.length,
+            name: file.name,
+          }));
+          const optimized = await optimizeImage(file);
+          created[index] = {
+            id: createItemId(),
+            name: file.name,
+            previewUrl: URL.createObjectURL(optimized.blob),
+            blob: optimized.blob,
+            width: optimized.width,
+            height: optimized.height,
+          };
+          finished += 1;
+          setProgress({
+            percent: Math.round((finished / queued.length) * 100),
+            current: finished,
+            total: queued.length,
+            name: file.name,
+          });
+        }
       }
+
+      const workers = Math.min(OPTIMIZE_CONCURRENCY, queued.length);
+      await Promise.all(Array.from({ length: workers }, () => run()));
 
       covers[zone].forEach((item) => URL.revokeObjectURL(item.previewUrl));
       onChange({
@@ -104,7 +123,7 @@ export default function ImageCovers({ covers, onChange, isDark }) {
         [zone]: created,
       });
     } catch (error) {
-      created.forEach((item) => URL.revokeObjectURL(item.previewUrl));
+      created.filter(Boolean).forEach((item) => URL.revokeObjectURL(item.previewUrl));
       toast.error(error.message || "Could not optimize those photos.");
     } finally {
       setProgress(null);
@@ -236,10 +255,10 @@ export default function ImageCovers({ covers, onChange, isDark }) {
             )}
           >
             <p className="text-[11px] font-medium tracking-[0.18em] uppercase text-sky-600">
-              Optimizing
+              Optimizing photos
             </p>
             <p className="mt-2 text-3xl font-semibold tracking-tight">
-              {progress.percent}%
+              {progress.current} of {progress.total}
             </p>
             <p
               className={cn(
@@ -247,7 +266,7 @@ export default function ImageCovers({ covers, onChange, isDark }) {
                 isDark ? "text-slate-300" : "text-slate-500"
               )}
             >
-              {progress.current} of {progress.total} · {progress.name}
+              Optimizing {progress.name}
             </p>
             <Progress value={progress.percent} className="mt-4 h-1.5" />
           </div>

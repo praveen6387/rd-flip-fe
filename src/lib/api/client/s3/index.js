@@ -1,7 +1,7 @@
 import { formatFailResult } from "@/lib/api/error";
 
 const UPLOAD_URL = "/s3/upload";
-const UPLOAD_CONCURRENCY = 3;
+const UPLOAD_CONCURRENCY = 6;
 
 const ZONE_ORDER = ["front", "middle", "back"];
 

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { CalendarDays, Phone, Sparkles, Type } from "lucide-react";
+import { CalendarDays, Check, Loader2, Phone, Sparkles, Type } from "lucide-react";
 import { toast } from "sonner";
 import PagePanel from "@/components/dashboard/_builder/PagePanel";
 import ViewportCenterOverlay from "@/components/dashboard/_builder/ViewportCenterOverlay";
@@ -170,6 +170,145 @@ function FieldShell({ label, hint, htmlFor, required, isDark, children }) {
   );
 }
 
+const CREATE_STEPS = [
+  {
+    id: "upload",
+    title: "Upload your photos",
+    activeText: "Sending each photo safely",
+  },
+  {
+    id: "save",
+    title: "Save your flipbook",
+    activeText: "Putting the pages together",
+  },
+];
+
+function createStepStatus(phase, id) {
+  if (phase === "done") return "done";
+  const order = CREATE_STEPS.map((step) => step.id);
+  const current = order.indexOf(phase);
+  const index = order.indexOf(id);
+  if (current > index) return "done";
+  if (current === index) return "active";
+  return "wait";
+}
+
+function CreateProgress({ state, isDark }) {
+  const finished = state.phase === "done";
+  const uploadPercent = Math.round(
+    (state.current / Math.max(state.total, 1)) * 100
+  );
+
+  return (
+    <div
+      className={cn(
+        "w-full max-w-md rounded-2xl border px-5 py-5 shadow-2xl sm:px-6",
+        isDark
+          ? "border-white/15 bg-slate-900/95 text-white"
+          : "border-white/70 bg-white/95 text-slate-900"
+      )}
+    >
+      <p className="text-[11px] font-medium tracking-[0.18em] text-sky-600 uppercase">
+        {finished ? "All set" : "Creating your flipbook"}
+      </p>
+      <ol className="mt-5">
+        {CREATE_STEPS.map((step, index) => {
+          const status = createStepStatus(state.phase, step.id);
+          const last = index === CREATE_STEPS.length - 1;
+          return (
+            <li key={step.id} className="flex gap-3">
+              <div className="flex flex-col items-center">
+                <span
+                  className={cn(
+                    "grid size-7 shrink-0 place-items-center rounded-full",
+                    status === "done" && "bg-emerald-500 text-white",
+                    status === "active" &&
+                      (isDark
+                        ? "bg-sky-400/15 text-sky-300"
+                        : "bg-sky-50 text-sky-600"),
+                    status === "wait" &&
+                      (isDark
+                        ? "border border-white/15 text-slate-500"
+                        : "border border-slate-200 text-slate-300")
+                  )}
+                >
+                  {status === "done" ? (
+                    <Check className="size-3.5" strokeWidth={2.5} />
+                  ) : status === "active" ? (
+                    <Loader2 className="size-3.5 animate-spin" />
+                  ) : (
+                    <span className="size-1.5 rounded-full bg-current" />
+                  )}
+                </span>
+                {last ? null : (
+                  <span
+                    className={cn(
+                      "my-1 w-px flex-1",
+                      status === "done"
+                        ? "bg-emerald-400/70"
+                        : isDark
+                          ? "bg-white/10"
+                          : "bg-slate-200"
+                    )}
+                  />
+                )}
+              </div>
+              <div className={cn("min-w-0 flex-1", last ? "pb-0" : "pb-5")}>
+                <p
+                  className={cn(
+                    "text-[15px] font-semibold leading-7",
+                    status === "wait" &&
+                      (isDark ? "text-slate-500" : "text-slate-400")
+                  )}
+                >
+                  {step.title}
+                </p>
+                {status === "active" ? (
+                  <div className="mt-1">
+                    <p
+                      className={cn(
+                        "text-sm",
+                        isDark ? "text-slate-300" : "text-slate-500"
+                      )}
+                    >
+                      {step.id === "upload"
+                        ? `${state.current} of ${state.total} photos`
+                        : step.activeText}
+                    </p>
+                    {step.id === "upload" ? (
+                      <Progress value={uploadPercent} className="mt-2.5 h-1.5" />
+                    ) : null}
+                  </div>
+                ) : null}
+              </div>
+            </li>
+          );
+        })}
+      </ol>
+      {finished ? (
+        <div
+          className={cn(
+            "mt-5 border-t pt-4",
+            isDark ? "border-white/10" : "border-slate-200"
+          )}
+        >
+          <p className="text-lg font-semibold tracking-tight">
+            Your flipbook is ready
+          </p>
+          <p
+            className={cn(
+              "mt-1 text-sm",
+              isDark ? "text-slate-300" : "text-slate-500"
+            )}
+          >
+            Opening your albums
+          </p>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 function glassInput(isDark) {
   return cn(
     "h-11 rounded-xl border px-3.5 text-[15px] shadow-none",
@@ -237,12 +376,20 @@ export default function CreateFlipbook({ error, songs = [] }) {
     }
 
     try {
-      setSubmitState({ phase: "upload", current: 0, total: photoCount });
+      setSubmitState({
+        phase: "upload",
+        current: 0,
+        total: photoCount,
+      });
       const images = await uploadCoverImages(covers, (progress) => {
         setSubmitState({ phase: "upload", ...progress });
       });
 
-      setSubmitState({ phase: "save", current: photoCount, total: photoCount });
+      setSubmitState({
+        phase: "save",
+        current: photoCount,
+        total: photoCount,
+      });
 
       const payload = {
         title: form.title.trim(),
@@ -268,7 +415,12 @@ export default function CreateFlipbook({ error, songs = [] }) {
       } catch {
         // Flipbook is already saved; keep navigating with current session data.
       }
-      toast.success("Flipbook created.");
+      setSubmitState({
+        phase: "done",
+        current: photoCount,
+        total: photoCount,
+      });
+      await new Promise((resolve) => setTimeout(resolve, 1100));
       router.push(ROUTES.dashboardFlipbook);
     } catch (submitError) {
       fail(submitError.message || "Could not create flipbook.");
@@ -617,50 +769,13 @@ export default function CreateFlipbook({ error, songs = [] }) {
                 : "bg-slate-900 text-white hover:bg-slate-800"
             )}
           >
-            {submitState ? "Saving…" : "Create flipbook"}
+            {submitState ? "Working…" : "Create flipbook"}
           </Button>
         </div>
 
         {submitState ? (
           <ViewportCenterOverlay isDark={isDark}>
-            <div
-              className={cn(
-                "w-full max-w-sm rounded-2xl border px-5 py-5 shadow-2xl",
-                isDark
-                  ? "border-white/15 bg-slate-900/95 text-white"
-                  : "border-white/70 bg-white/95 text-slate-900"
-              )}
-            >
-              <p className="text-[11px] font-medium tracking-[0.18em] uppercase text-sky-600">
-                {submitState.phase === "save" ? "Saving" : "Uploading"}
-              </p>
-              <p className="mt-2 text-3xl font-semibold tracking-tight">
-                {submitState.phase === "save"
-                  ? "Almost done"
-                  : `${submitState.current} / ${submitState.total}`}
-              </p>
-              <p
-                className={cn(
-                  "mt-1 text-sm",
-                  isDark ? "text-slate-300" : "text-slate-500"
-                )}
-              >
-                {submitState.phase === "save"
-                  ? "Writing flipbook details"
-                  : "Sending photos to storage"}
-              </p>
-              <Progress
-                value={
-                  submitState.phase === "save"
-                    ? 100
-                    : Math.round(
-                        (submitState.current / Math.max(submitState.total, 1)) *
-                          100
-                      )
-                }
-                className="mt-4 h-1.5"
-              />
-            </div>
+            <CreateProgress state={submitState} isDark={isDark} />
           </ViewportCenterOverlay>
         ) : null}
       </form>

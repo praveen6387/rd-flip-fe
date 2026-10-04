@@ -1,10 +1,9 @@
 const ACCEPT = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
 
 export const TARGET_PHOTO_BYTES = 1 * 1024 * 1024; // 1 MB
-const MIN_QUALITY = 0.8;
-const MIN_EDGE = 2000;
-const START_EDGE = 3600;
-const START_QUALITY = 0.92;
+const LONG_EDGE = 2200;
+const FIRST_QUALITY = 0.86;
+const SECOND_QUALITY = 0.8;
 
 export function isAcceptedImage(file) {
   return ACCEPT.includes(file.type);
@@ -34,17 +33,15 @@ function paint(bitmap, width, height) {
   context.fillStyle = "#ffffff";
   context.fillRect(0, 0, width, height);
   context.imageSmoothingEnabled = true;
-  context.imageSmoothingQuality = "high";
+  context.imageSmoothingQuality = "medium";
   context.drawImage(bitmap, 0, 0, width, height);
   return canvas;
 }
 
 export async function optimizeImage(
   file,
-  { targetBytes = TARGET_PHOTO_BYTES, onProgress } = {}
+  { targetBytes = TARGET_PHOTO_BYTES } = {}
 ) {
-  onProgress?.(8);
-
   const bitmap = await createImageBitmap(file);
   const sourceW = bitmap.width;
   const sourceH = bitmap.height;
@@ -56,39 +53,19 @@ export async function optimizeImage(
 
   if (isJpeg && file.size <= targetBytes) {
     bitmap.close();
-    onProgress?.(100);
     return { blob: file, width: sourceW, height: sourceH };
   }
 
-  const startScale = Math.min(1, START_EDGE / Math.max(sourceW, sourceH));
-  let width = Math.max(1, Math.round(sourceW * startScale));
-  let height = Math.max(1, Math.round(sourceH * startScale));
-  let quality = START_QUALITY;
-  onProgress?.(28);
+  const scale = Math.min(1, LONG_EDGE / Math.max(sourceW, sourceH));
+  const width = Math.max(1, Math.round(sourceW * scale));
+  const height = Math.max(1, Math.round(sourceH * scale));
+  const canvas = paint(bitmap, width, height);
+  bitmap.close();
 
-  let canvas = paint(bitmap, width, height);
-  let blob = await toJpeg(canvas, quality);
-  onProgress?.(48);
-
-  let steps = 0;
-  while (blob.size > targetBytes && steps < 16) {
-    steps += 1;
-    const longEdge = Math.max(width, height);
-    if (longEdge > MIN_EDGE) {
-      const nextScale = Math.max(MIN_EDGE / longEdge, 0.92);
-      width = Math.max(1, Math.round(width * nextScale));
-      height = Math.max(1, Math.round(height * nextScale));
-      canvas = paint(bitmap, width, height);
-    } else if (quality > MIN_QUALITY + 0.01) {
-      quality = Math.max(MIN_QUALITY, quality - 0.02);
-    } else {
-      break;
-    }
-    blob = await toJpeg(canvas, quality);
-    onProgress?.(48 + Math.min(44, steps * 3));
+  let blob = await toJpeg(canvas, FIRST_QUALITY);
+  if (blob.size > targetBytes) {
+    blob = await toJpeg(canvas, SECOND_QUALITY);
   }
 
-  bitmap.close();
-  onProgress?.(100);
   return { blob, width, height };
 }
