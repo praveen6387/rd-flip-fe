@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Pencil, Phone, Sparkles, X } from "lucide-react";
+import { Link2, Pencil, Phone, Sparkles, X } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/components/auth";
 import { updateSocialLinks } from "@/lib/api/client/auth";
@@ -83,7 +83,7 @@ const PLATFORMS = [
   },
 ];
 
-function SocialCard({ platform, value, isDark }) {
+function SocialCard({ platform, value, isDark, onConnect }) {
   const Icon = platform.icon;
   const href = platform.href(value);
   const hasValue = Boolean(value);
@@ -91,80 +91,82 @@ function SocialCard({ platform, value, isDark }) {
   return (
     <div
       className={cn(
-        "group relative overflow-hidden rounded-[1.4rem] border p-5 transition duration-500 hover:-translate-y-0.5",
+        "flex min-w-0 items-center gap-3 rounded-2xl border px-4 py-4 backdrop-blur-xl",
         isDark
-          ? "border-white/12 bg-white/[0.05] hover:border-white/20 hover:bg-white/[0.08]"
-          : "border-white/45 bg-white/25 hover:border-white/70 hover:bg-white/40"
+          ? "border-white/10 bg-white/8"
+          : "border-white/50 bg-white/30"
       )}
     >
-      <div
-        aria-hidden
+      <span
         className={cn(
-          "pointer-events-none absolute -right-6 -top-6 size-24 rounded-full blur-2xl transition-opacity",
-          platform.glow,
-          hasValue ? "opacity-100" : "opacity-40"
+          "grid size-11 shrink-0 place-items-center rounded-xl bg-linear-to-br text-white shadow-md",
+          platform.accent
         )}
-      />
+      >
+        <Icon className="size-4.5" />
+      </span>
 
-      <div className="relative flex items-start gap-3">
-        <span
+      <div className="min-w-0 flex-1">
+        <p
           className={cn(
-            "grid size-11 shrink-0 place-items-center rounded-xl bg-linear-to-br text-white shadow-lg",
-            platform.accent
+            "text-xs",
+            isDark ? "text-slate-400" : "text-slate-500"
           )}
         >
-          <Icon className="size-4.5" />
-        </span>
+          {platform.label}
+        </p>
 
-        <div className="min-w-0 flex-1">
-          <p
+        {hasValue && href ? (
+          <a
+            href={href}
+            target="_blank"
+            rel="noreferrer"
             className={cn(
-              "text-xs font-semibold tracking-[0.14em] uppercase",
-              isDark ? "text-slate-400" : "text-slate-500"
+              "mt-0.5 block truncate text-sm font-semibold underline-offset-4 transition hover:underline",
+              isDark ? "text-white" : "text-slate-900"
             )}
           >
-            {platform.label}
+            {platform.display(value)}
+          </a>
+        ) : (
+          <p
+            className={cn(
+              "mt-0.5 text-sm",
+              isDark ? "text-slate-500" : "text-slate-400"
+            )}
+          >
+            Not connected
           </p>
+        )}
 
-          {hasValue && href ? (
-            <a
-              href={href}
-              target="_blank"
-              rel="noreferrer"
-              className={cn(
-                "mt-1.5 block truncate text-[15px] font-semibold underline-offset-4 transition hover:underline",
-                isDark ? "text-white" : "text-slate-900"
-              )}
-            >
-              {platform.display(value)}
-            </a>
-          ) : (
-            <p
-              className={cn(
-                "mt-1.5 text-[15px]",
-                isDark ? "text-slate-500" : "text-slate-400"
-              )}
-            >
-              Not connected
-            </p>
-          )}
-        </div>
+        {hasValue ? (
+          <span
+            className={cn(
+              "mt-2 inline-flex rounded-full px-2 py-0.5 text-[11px] font-semibold",
+              isDark
+                ? "bg-emerald-400/15 text-emerald-200"
+                : "bg-emerald-50/80 text-emerald-600"
+            )}
+          >
+            Connected
+          </span>
+        ) : null}
+      </div>
 
-        <span
+      {hasValue ? null : (
+        <button
+          type="button"
+          onClick={onConnect}
           className={cn(
-            "mt-0.5 shrink-0 rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide",
-            hasValue
-              ? isDark
-                ? "bg-emerald-400/15 text-emerald-200 ring-1 ring-emerald-400/25"
-                : "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200"
-              : isDark
-                ? "bg-white/8 text-slate-500 ring-1 ring-white/10"
-                : "bg-stone-100 text-slate-500 ring-1 ring-stone-200"
+            "shrink-0 rounded-full px-3.5 py-1.5 text-xs font-semibold",
+            isDark
+              ? "border border-white/15 bg-white/10 text-slate-100"
+              : "border border-slate-200 bg-white text-slate-700"
           )}
         >
-          {hasValue ? "Live" : "Empty"}
-        </span>
-      </div>
+          Connect
+        </button>
+      )}
     </div>
   );
 }
@@ -268,50 +270,68 @@ export default function SocialLinks({ user, isDark }) {
   }
 
   return (
-    <section className="space-y-4">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h3
+    <section
+      className={cn(
+        "space-y-4 rounded-[1.6rem] border p-4 backdrop-blur-xl sm:p-5",
+        isDark
+          ? "border-white/10 bg-white/8"
+          : "border-white/50 bg-white/25 shadow-[0_8px_32px_-24px_rgba(80,90,140,0.4)]"
+      )}
+    >
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-3">
+          <span
             className={cn(
-              "font-heading text-xl tracking-tight sm:text-[1.35rem]",
-              isDark ? "text-slate-100" : "text-slate-900"
+              "grid size-9 shrink-0 place-items-center rounded-full",
+              isDark ? "bg-sky-400/15 text-sky-200" : "bg-sky-100/80 text-sky-600"
             )}
           >
-            Social links
-          </h3>
-          <p
-            className={cn(
-              "mt-1.5 text-[15px]",
-              isDark ? "text-slate-400" : "text-slate-600"
-            )}
-          >
-            {connectedCount} of {PLATFORMS.length} connected — shown on your
-            flipbooks
-          </p>
+            <Link2 className="size-4" />
+          </span>
+          <div>
+            <h3
+              className={cn(
+                "text-base font-semibold tracking-tight",
+                isDark ? "text-white" : "text-slate-900"
+              )}
+            >
+              Social Links
+            </h3>
+            <p
+              className={cn(
+                "text-sm",
+                isDark ? "text-slate-400" : "text-slate-500"
+              )}
+            >
+              {connectedCount} of {PLATFORMS.length} connected — shown on your
+              flipbooks.
+            </p>
+          </div>
         </div>
         <Button
           type="button"
           size="sm"
           onClick={openEditor}
           className={cn(
-            "h-10 shrink-0 gap-1.5 rounded-full px-4 text-sm",
+            "h-9 shrink-0 gap-1.5 rounded-full px-3.5 text-sm shadow-none",
             isDark
-              ? "bg-white/10 text-white hover:bg-white/16"
-              : "bg-slate-900 text-white hover:bg-slate-800"
+              ? "bg-sky-400/15 text-sky-100 hover:bg-sky-400/25"
+              : "bg-sky-50 text-sky-700 hover:bg-sky-100"
           )}
         >
           <Pencil className="size-3.5" />
-          Update links
+          Update Links
         </Button>
       </div>
 
-      <div className="grid gap-3 lg:grid-cols-3">
+      <div className="grid gap-4 lg:grid-cols-3">
         {PLATFORMS.map((platform) => (
           <SocialCard
             key={platform.key}
             platform={platform}
             value={user[platform.key]}
             isDark={isDark}
+            onConnect={openEditor}
           />
         ))}
       </div>

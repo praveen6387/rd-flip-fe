@@ -1,19 +1,28 @@
-import Link from "next/link";
-import { ROUTES } from "@/lib/routes";
 import BrandMark from "@/lib/_builder/BrandMark";
 import { cn } from "@/lib/cn";
 
-export default function SidebarBrand({ className, compactCloseSpace = false }) {
+export default function SidebarBrand({
+  className,
+  compactCloseSpace = false,
+  collapsed = false,
+  edgeToggle = false,
+}) {
   return (
-    <Link
-      href={ROUTES.home}
+    <div
       className={cn(
-        "block border-b border-white/10 px-4 py-5 transition hover:bg-white/8",
-        compactCloseSpace && "pr-14",
+        "relative flex h-[4.75rem] items-center border-b border-white/10",
         className
       )}
     >
-      <BrandMark light />
-    </Link>
+      <div
+        className={cn(
+          "flex h-full min-w-0 flex-1 items-center overflow-hidden pl-[18px]",
+          compactCloseSpace && "pr-14",
+          edgeToggle && !collapsed && "pr-14"
+        )}
+      >
+        <BrandMark light compact={collapsed} />
+      </div>
+    </div>
   );
 }

@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { Eye, EyeOff, KeyRound, Lock, X } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Eye, EyeOff, KeyRound, X } from "lucide-react";
 import { toast } from "sonner";
 import { changePassword } from "@/lib/api/client/auth";
 import { Button } from "@/components/ui/button";
@@ -37,7 +37,14 @@ function PasswordField({
       >
         {label}
       </Label>
-      <div className="relative overflow-hidden rounded-xl">
+      <div
+        className={cn(
+          "flex h-12 items-center rounded-xl border bg-white px-1 transition-colors focus-within:ring-2",
+          isDark
+            ? "border-white/20 bg-white/8 focus-within:border-sky-400 focus-within:ring-sky-400/25"
+            : "border-stone-300 focus-within:border-sky-500 focus-within:ring-sky-100"
+        )}
+      >
         <Input
           id={id}
           name={id}
@@ -47,17 +54,17 @@ function PasswordField({
           value={value}
           onChange={(event) => onChange(event.target.value)}
           className={cn(
-            "auth-soft-input h-12 rounded-xl py-0 pr-11 text-[15px] leading-normal",
+            "auth-soft-input h-full min-w-0 flex-1 rounded-xl border-0 bg-transparent px-3 py-0 text-[15px] leading-normal shadow-none outline-none focus-visible:border-0 focus-visible:ring-0 md:text-[15px]",
             isDark
-              ? "border-white/15 bg-white/8 text-white placeholder:text-slate-500 focus-visible:border-sky-400/50"
-              : "border-stone-200 bg-white text-slate-900 placeholder:text-slate-400 focus-visible:border-sky-300"
+              ? "text-white placeholder:text-slate-500"
+              : "text-slate-900 placeholder:text-slate-400"
           )}
         />
         <button
           type="button"
           onClick={onToggleVisible}
           className={cn(
-            "absolute top-1/2 right-2 grid size-8 -translate-y-1/2 place-items-center rounded-full transition",
+            "grid size-8 shrink-0 place-items-center rounded-full transition",
             isDark
               ? "text-slate-400 hover:bg-white/10 hover:text-white"
               : "text-slate-500 hover:bg-stone-100 hover:text-slate-800"
@@ -71,28 +78,29 @@ function PasswordField({
   );
 }
 
-export default function ChangePassword({ isDark }) {
-  const [open, setOpen] = useState(false);
+const EMPTY_FORM = {
+  current_password: "",
+  new_password: "",
+  confirm_password: "",
+};
+
+export default function ChangePassword({ open, onOpenChange, isDark }) {
   const [isSaving, setIsSaving] = useState(false);
-  const [form, setForm] = useState({
-    current_password: "",
-    new_password: "",
-    confirm_password: "",
-  });
+  const [form, setForm] = useState(EMPTY_FORM);
   const [visible, setVisible] = useState({
     current: false,
     next: false,
     confirm: false,
   });
 
-  function openEditor() {
-    setForm({
-      current_password: "",
-      new_password: "",
-      confirm_password: "",
-    });
+  useEffect(() => {
+    if (!open) return;
+    setForm(EMPTY_FORM);
     setVisible({ current: false, next: false, confirm: false });
-    setOpen(true);
+  }, [open]);
+
+  function setOpen(next) {
+    onOpenChange(next);
   }
 
   async function handleSave(event) {
@@ -144,81 +152,7 @@ export default function ChangePassword({ isDark }) {
   }
 
   return (
-    <section className="space-y-4">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h3
-            className={cn(
-              "font-heading text-xl tracking-tight sm:text-[1.35rem]",
-              isDark ? "text-slate-100" : "text-slate-900"
-            )}
-          >
-            Security
-          </h3>
-          <p
-            className={cn(
-              "mt-1.5 text-[15px]",
-              isDark ? "text-slate-400" : "text-slate-600"
-            )}
-          >
-            Change your password to keep this account private.
-          </p>
-        </div>
-        <Button
-          type="button"
-          size="sm"
-          onClick={openEditor}
-          className={cn(
-            "h-10 shrink-0 gap-1.5 rounded-full px-4 text-sm",
-            isDark
-              ? "bg-white/10 text-white hover:bg-white/16"
-              : "bg-slate-900 text-white hover:bg-slate-800"
-          )}
-        >
-          <KeyRound className="size-3.5" />
-          Update password
-        </Button>
-      </div>
-
-      <div
-        className={cn(
-          "flex items-center gap-4 rounded-[1.6rem] border px-5 py-5 sm:px-6",
-          isDark
-            ? "border-white/10 bg-[#141b24]/96"
-            : "border-[#e4d9c8]/80 bg-[#fffcf8]/92"
-        )}
-      >
-        <span
-          className={cn(
-            "grid size-11 shrink-0 place-items-center rounded-xl",
-            isDark
-              ? "bg-sky-500/15 text-sky-200"
-              : "bg-sky-50 text-sky-700"
-          )}
-        >
-          <Lock className="size-5" />
-        </span>
-        <div className="min-w-0">
-          <p
-            className={cn(
-              "text-xs font-semibold tracking-[0.14em] uppercase",
-              isDark ? "text-slate-400" : "text-slate-500"
-            )}
-          >
-            Password
-          </p>
-          <p
-            className={cn(
-              "mt-1.5 text-[15px] font-semibold tracking-[0.28em]",
-              isDark ? "text-white" : "text-slate-900"
-            )}
-          >
-            ••••••••
-          </p>
-        </div>
-      </div>
-
-      <Dialog
+    <Dialog
         open={open}
         onOpenChange={(next) => {
           if (isSaving) return;
@@ -339,17 +273,17 @@ export default function ChangePassword({ isDark }) {
               />
             </div>
 
-            <div className="flex justify-end gap-2 pt-1">
+            <div className="flex items-center justify-end gap-2 pt-1">
               <Button
                 type="button"
                 variant="outline"
                 disabled={isSaving}
                 onClick={() => setOpen(false)}
                 className={cn(
-                  "rounded-full px-5",
+                  "h-10 rounded-full px-5",
                   isDark
                     ? "border-white/15 bg-white/5 text-white hover:bg-white/10"
-                    : "border-stone-200 bg-white text-slate-700"
+                    : "border-stone-300 bg-white text-slate-700"
                 )}
               >
                 Cancel
@@ -357,7 +291,7 @@ export default function ChangePassword({ isDark }) {
               <Button
                 type="submit"
                 disabled={isSaving}
-                className="rounded-full bg-linear-to-r from-sky-600 to-indigo-600 px-5 text-white shadow-md hover:from-sky-500 hover:to-indigo-500"
+                className="h-10 rounded-full bg-linear-to-r from-sky-600 to-indigo-600 px-5 text-white shadow-none hover:from-sky-500 hover:to-indigo-500"
               >
                 {isSaving ? "Updating…" : "Update password"}
               </Button>
@@ -365,6 +299,5 @@ export default function ChangePassword({ isDark }) {
           </form>
         </DialogContent>
       </Dialog>
-    </section>
   );
 }

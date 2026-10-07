@@ -1,4 +1,13 @@
-import { BookOpen, PlusCircle, Receipt, UserRound, Users, WalletCards } from "lucide-react";
+import {
+  BookOpen,
+  FileText,
+  Images,
+  PlusCircle,
+  Receipt,
+  UserRound,
+  Users,
+  WalletCards,
+} from "lucide-react";
 import { ROUTES } from "@/lib/routes";
 
 /** Add future dashboard tabs here — used by desktop + mobile sidenav. */
@@ -24,6 +33,18 @@ export const DASHBOARD_NAV_ITEMS = [
     icon: WalletCards,
   },
   {
+    id: "invoices",
+    label: "Invoices & Payments",
+    icon: FileText,
+    locked: true,
+  },
+  {
+    id: "photo-selection",
+    label: "Photo Selection",
+    icon: Images,
+    locked: true,
+  },
+  {
     label: "Users",
     href: ROUTES.dashboardUsers,
     icon: Users,
@@ -46,6 +67,7 @@ export function getDashboardNavItems(user, { verified = true } = {}) {
 }
 
 export function isDashboardNavActive(pathname, href) {
+  if (!href) return false;
   if (href === ROUTES.dashboard) {
     return pathname === href;
   }

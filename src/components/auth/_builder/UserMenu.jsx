@@ -1,7 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { ChevronDown, Globe, LayoutDashboard, LogOut } from "lucide-react";
+import { ChevronDown, Globe, KeyRound, LayoutDashboard, LogOut } from "lucide-react";
+import ChangePassword from "@/components/dashboard/Profile/_builder/ChangePassword";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -12,7 +14,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/cn";
 import { ROUTES } from "@/lib/routes";
-import ThemeToggle from "@/lib/dashboard/_builder/ThemeToggle";
 import { startNavProgress } from "@/lib/dashboard/_builder/NavProgress";
 
 function getInitials(user) {
@@ -26,10 +27,10 @@ export default function UserMenu({
   user,
   onLogout,
   appearance = "light",
-  showMobileThemeToggle = false,
 }) {
   const router = useRouter();
   const pathname = usePathname();
+  const [passwordOpen, setPasswordOpen] = useState(false);
   const onDashboard = pathname.startsWith(ROUTES.dashboard);
   const isDark = appearance === "dark";
   const displayName =
@@ -37,6 +38,7 @@ export default function UserMenu({
   const initials = getInitials(user);
 
   return (
+    <>
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button
@@ -106,16 +108,24 @@ export default function UserMenu({
           </div>
         </div>
 
-        {showMobileThemeToggle ? (
-          <div className="mt-1 px-0.5 md:hidden">
-            <ThemeToggle variant="menu" />
-          </div>
-        ) : null}
-
         <DropdownMenuSeparator
           className={cn("my-1.5", isDark ? "bg-white/10" : "bg-stone-200/80")}
         />
 
+        <DropdownMenuItem
+          className={cn(
+            "cursor-pointer gap-2 rounded-lg px-2.5 py-2",
+            isDark
+              ? "focus:bg-white/10 focus:text-white"
+              : "focus:bg-white/80"
+          )}
+          onSelect={() => {
+            setTimeout(() => setPasswordOpen(true), 0);
+          }}
+        >
+          <KeyRound className="size-4 opacity-80" />
+          Update password
+        </DropdownMenuItem>
         {onDashboard ? (
           <DropdownMenuItem
             className={cn(
@@ -161,5 +171,11 @@ export default function UserMenu({
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
+    <ChangePassword
+      open={passwordOpen}
+      onOpenChange={setPasswordOpen}
+      isDark={isDark}
+    />
+    </>
   );
 }

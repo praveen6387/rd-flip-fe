@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { Plus } from "lucide-react";
 import PagePanel from "@/components/dashboard/_builder/PagePanel";
 import { useDashboardTheme } from "@/lib/dashboard/ThemeProvider";
 import { ROUTES } from "@/lib/routes";
@@ -35,8 +36,9 @@ export default function Flipbook({ flipbooks = [], error }) {
         <Link
           href={ROUTES.dashboardCreateFlipbook}
           prefetch={false}
-          className="inline-flex h-10 items-center justify-center rounded-full bg-linear-to-r from-sky-500 to-rose-500 px-5 text-sm font-semibold text-white transition hover:brightness-110 active:scale-[0.98]"
+          className="inline-flex h-10 items-center justify-center gap-1.5 rounded-full bg-linear-to-r from-sky-500 to-rose-500 px-5 text-sm font-semibold text-white transition hover:brightness-110 active:scale-[0.98]"
         >
+          <Plus className="size-4" strokeWidth={2.25} />
           Create new
         </Link>
       }

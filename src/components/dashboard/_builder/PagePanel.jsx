@@ -4,58 +4,50 @@ import { cn } from "@/lib/cn";
 import { useDashboardTheme } from "@/lib/dashboard/ThemeProvider";
 
 export default function PagePanel({
-  eyebrow,
   title,
   description,
   children,
   actions,
   lead,
-  simple,
 }) {
   const { isDark } = useDashboardTheme();
+  const hasHeader = Boolean(title || description || actions);
 
   return (
     <section className="dash-fade-up w-full">
-      <div className="relative flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
-        <div className="min-w-0">
-          {eyebrow ? (
-            <p
-              className={cn(
-                "text-xs font-semibold tracking-[0.22em] uppercase",
-                isDark ? "text-sky-300" : "text-sky-700"
-              )}
-            >
-              {eyebrow}
-            </p>
-          ) : null}
-          <h2
-            className={cn(
-              "mt-2.5 leading-[1.12] tracking-tight",
-              simple
-                ? "text-3xl font-semibold sm:text-[2.1rem]"
-                : "font-heading text-[2rem] sm:text-4xl lg:text-[2.85rem]",
-              isDark ? "text-white" : "text-slate-900"
-            )}
-          >
-            {title}
-          </h2>
-          {description ? (
-            <p
-              className={cn(
-                "mt-3.5 max-w-xl text-[15px] leading-7",
-                isDark ? "text-slate-300" : "text-slate-600"
-              )}
-            >
-              {description}
-            </p>
-          ) : null}
+      {hasHeader ? (
+        <div className="relative flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="min-w-0">
+            {title ? (
+              <h2
+                className={cn(
+                  "text-2xl font-semibold leading-tight tracking-tight",
+                  isDark ? "text-white" : "text-slate-900"
+                )}
+              >
+                {title}
+              </h2>
+            ) : null}
+            {description ? (
+              <p
+                className={cn(
+                  "mt-1 max-w-xl text-sm leading-6",
+                  isDark ? "text-slate-300" : "text-slate-600"
+                )}
+              >
+                {description}
+              </p>
+            ) : null}
+          </div>
+          {actions ? <div className="shrink-0">{actions}</div> : null}
         </div>
-        {actions ? <div className="shrink-0">{actions}</div> : null}
-      </div>
+      ) : null}
 
-      {lead ? <div className="relative mt-8">{lead}</div> : null}
+      {lead ? <div className={cn("relative", hasHeader && "mt-5")}>{lead}</div> : null}
       {children ? (
-        <div className={cn("relative", lead ? "mt-8" : "mt-7")}>{children}</div>
+        <div className={cn("relative", (hasHeader || lead) && (lead ? "mt-5" : "mt-4"))}>
+          {children}
+        </div>
       ) : null}
     </section>
   );

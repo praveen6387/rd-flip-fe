@@ -40,8 +40,8 @@ export default function DashboardHeader() {
         className={cn(
           "z-20 flex h-14 shrink-0 items-center justify-between gap-3 border-b px-3 backdrop-blur-2xl transition-colors duration-300 sm:h-16 sm:px-6",
           isDark
-            ? "border-white/8 bg-[#0b1017]/72 shadow-[inset_0_-1px_0_rgba(255,255,255,0.05)]"
-            : "border-[#e4d9c8]/70 bg-[#f8f4ee]/70 shadow-[inset_0_-1px_0_rgba(255,255,255,0.55)]"
+            ? "border-white/8 bg-[#0b1017]/55 shadow-[inset_0_-1px_0_rgba(255,255,255,0.05)]"
+            : "border-white/50 bg-white/35 shadow-[inset_0_-1px_0_rgba(255,255,255,0.55)]"
         )}
       >
         <div className="flex min-w-0 items-center gap-2">
@@ -84,13 +84,12 @@ export default function DashboardHeader() {
           {user?.left_credit != null ? (
             <CreditsDropdown user={user} isDark={isDark} />
           ) : null}
-          <ThemeToggle className="hidden md:flex" />
+          <ThemeToggle />
           {user ? (
             <UserMenu
               user={user}
               onLogout={handleLogout}
               appearance={isDark ? "dark" : "light"}
-              showMobileThemeToggle
             />
           ) : null}
         </div>
