@@ -21,7 +21,9 @@ import SongPicker from "./_builder/SongPicker";
 import { cn } from "@/lib/cn";
 import {
   formatCreditExpireDate,
-  getLeftCredit,
+  getFlipbookBalances,
+  getFlipbookCredit,
+  getFlipbookPlanType,
   hasUsableCredit,
   isCreditExpired,
 } from "@/lib/credits";
@@ -73,8 +75,8 @@ function NoCreditsState({ isDark, expireLabel, reason }) {
         className={cn(
           "mx-auto max-w-md rounded-[1.6rem] border border-dashed px-6 py-8 text-center sm:px-8",
           isDark
-            ? "border-white/10 bg-[#141b24]/96"
-            : "border-[#e4d9c8]/80 bg-[#fffcf8]/88"
+            ? "border-white/12 bg-[#121820]/68 backdrop-blur-2xl"
+            : "border-white/70 bg-white/62 backdrop-blur-2xl"
         )}
       >
         <span
@@ -322,7 +324,7 @@ export default function CreateFlipbook({ error, songs = [] }) {
   const router = useRouter();
   const { user, refreshUser } = useAuth();
   const { isDark } = useDashboardTheme();
-  const lab = isLabPlan(user?.plan);
+  const lab = isLabPlan(getFlipbookPlanType(user));
 
   const [form, setForm] = useState({
     title: "",
@@ -450,9 +452,12 @@ export default function CreateFlipbook({ error, songs = [] }) {
     );
   }
 
-  const leftCredit = getLeftCredit(user);
-  const expired = isCreditExpired(user.credit_expire_date);
-  const expireLabel = formatCreditExpireDate(user.credit_expire_date);
+  const covering = getFlipbookBalances(user);
+  const leftCredit = getFlipbookCredit(user);
+  const expired =
+    covering.length > 0 &&
+    covering.every((balance) => isCreditExpired(balance.expiry_date));
+  const expireLabel = formatCreditExpireDate(covering[0]?.expiry_date);
 
   if (!hasUsableCredit(user)) {
     return (
@@ -506,8 +511,8 @@ export default function CreateFlipbook({ error, songs = [] }) {
           className={cn(
             "relative z-20 space-y-5 rounded-[1.6rem] border p-5 sm:p-7",
             isDark
-              ? "border-white/10 bg-[#141b24]/96 shadow-[0_18px_50px_-28px_rgba(0,0,0,0.7)]"
-              : "border-[#e4d9c8]/80 bg-[#fffcf8]/92 shadow-[0_18px_40px_-28px_rgba(120,90,50,0.22)]"
+              ? "border-white/12 bg-[#121820]/68 backdrop-blur-2xl"
+              : "border-white/70 bg-white/62 shadow-[0_18px_40px_-24px_rgba(80,90,140,0.32)] backdrop-blur-2xl"
           )}
         >
           <div>
@@ -620,8 +625,8 @@ export default function CreateFlipbook({ error, songs = [] }) {
             className={cn(
               "space-y-5 rounded-[1.6rem] border p-5 sm:p-7",
               isDark
-                ? "border-white/10 bg-[#141b24]/96 shadow-[0_18px_50px_-28px_rgba(0,0,0,0.7)]"
-                : "border-[#e4d9c8]/80 bg-[#fffcf8]/92 shadow-[0_18px_40px_-28px_rgba(120,90,50,0.22)]"
+                ? "border-white/12 bg-[#121820]/68 backdrop-blur-2xl"
+                : "border-white/70 bg-white/62 shadow-[0_18px_40px_-24px_rgba(80,90,140,0.32)] backdrop-blur-2xl"
             )}
           >
             <div className="flex items-start justify-between gap-3">

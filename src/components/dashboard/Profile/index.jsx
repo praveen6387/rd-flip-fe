@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/tooltip";
 import { useDashboardTheme } from "@/lib/dashboard/ThemeProvider";
 import { PROFILE_IMAGES } from "@/lib/dashboard/images";
+import { getCreditBalances } from "@/lib/credits";
 import { cn } from "@/lib/cn";
 import { useAuth } from "@/components/auth";
 
@@ -271,11 +272,7 @@ export default function Profile() {
   const fullName =
     [user.first_name, user.last_name].filter(Boolean).join(" ") || "—";
   const initials = getInitials(user);
-  const planLabel = user.plan || "Studio";
-  const left = Number(user.left_credit) || 0;
-  const used = Number(user.used_credit) || 0;
-  const expired = Number(user.expired_credit) || 0;
-  const total = Number(user.total_credit) || 0;
+  const balances = getCreditBalances(user);
 
   const panel = cn(
     "rounded-[1.6rem] border p-4 backdrop-blur-xl sm:p-5",
@@ -316,26 +313,14 @@ export default function Profile() {
                 {initials}
               </span>
               <div className="min-w-0">
-                <div className="flex flex-wrap items-center gap-2">
-                  <h2
-                    className={cn(
-                      "truncate text-2xl font-semibold tracking-tight",
-                      isDark ? "text-white" : "text-slate-900"
-                    )}
-                  >
-                    {fullName}
-                  </h2>
-                  <span
-                    className={cn(
-                      "rounded-full px-2.5 py-1 text-xs font-semibold capitalize",
-                      isDark
-                        ? "bg-sky-400/15 text-sky-200"
-                        : "bg-sky-500/15 text-sky-700"
-                    )}
-                  >
-                    {planLabel} Plan
-                  </span>
-                </div>
+                <h2
+                  className={cn(
+                    "truncate text-2xl font-semibold tracking-tight",
+                    isDark ? "text-white" : "text-slate-900"
+                  )}
+                >
+                  {fullName}
+                </h2>
                 <p
                   className={cn(
                     "mt-0 text-sm font-medium",
@@ -482,66 +467,111 @@ export default function Profile() {
               >
                 <Layers className="size-5" />
               </span>
-              <h3
-                className={cn(
-                  "text-lg font-semibold tracking-tight",
-                  isDark ? "text-white" : "text-slate-900"
-                )}
-              >
-                Credits
-              </h3>
-            </div>
-            <div className="mt-5 flex items-center gap-5">
-              <CreditDonut
-                left={left}
-                used={used}
-                expired={expired}
-                total={total}
-                isDark={isDark}
-              />
-              <div className="min-w-0 flex-1">
-                <ul className="space-y-3 text-sm">
-                  {[
-                    { ...CREDIT_SLICES[0], value: left },
-                    { ...CREDIT_SLICES[1], value: used },
-                    { ...CREDIT_SLICES[2], value: expired },
-                  ].map((item) => (
-                    <li key={item.key} className="flex items-center gap-2.5">
-                      <span
-                        className="size-2.5 shrink-0 rounded-full"
-                        style={{ backgroundColor: item.color }}
-                      />
-                      <span className={isDark ? "text-slate-300" : "text-slate-600"}>
-                        {item.label}
-                      </span>
-                      <span
-                        className={cn(
-                          "ml-auto font-semibold tabular-nums",
-                          isDark ? "text-white" : "text-slate-900"
-                        )}
-                      >
-                        {item.value}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-                <p
+              <div>
+                <h3
                   className={cn(
-                    "mt-4 text-sm text-nowrap",
-                    isDark ? "text-slate-400" : "text-slate-500"
+                    "text-lg font-semibold tracking-tight",
+                    isDark ? "text-white" : "text-slate-900"
                   )}
                 >
-                  Expires on{" "}
-                  <span
+                  Credits
+                </h3>
+                {balances.length === 1 && balances[0].product !== "signup" ? (
+                  <p
                     className={cn(
-                      "font-semibold",
-                      isDark ? "text-white" : "text-slate-900"
+                      "text-xs",
+                      isDark ? "text-slate-400" : "text-slate-500"
                     )}
                   >
-                    {formatDate(user.credit_expire_date)}
-                  </span>
-                </p>
+                    {balances[0].label}
+                  </p>
+                ) : null}
               </div>
+            </div>
+            {balances.length === 0 ? (
+              <p
+                className={cn(
+                  "mt-5 text-sm",
+                  isDark ? "text-slate-400" : "text-slate-500"
+                )}
+              >
+                No active credits
+              </p>
+            ) : null}
+            <div className={cn(balances.length > 1 && "mt-5 space-y-6")}>
+              {balances.map((balance) => (
+                <div key={balance.product}>
+                  {balances.length > 1 ? (
+                    <p
+                      className={cn(
+                        "mb-3 text-sm font-semibold",
+                        isDark ? "text-white" : "text-slate-900"
+                      )}
+                    >
+                      {balance.label}
+                    </p>
+                  ) : null}
+                  <div
+                    className={cn(
+                      "flex items-center gap-5",
+                      balances.length === 1 && "mt-5"
+                    )}
+                  >
+                    <CreditDonut
+                      left={balance.credits_left}
+                      used={balance.credits_used}
+                      expired={balance.credits_expired}
+                      total={balance.credits_total}
+                      isDark={isDark}
+                    />
+                    <div className="min-w-0 flex-1">
+                      <ul className="space-y-3 text-sm">
+                        {[
+                          { ...CREDIT_SLICES[0], value: balance.credits_left },
+                          { ...CREDIT_SLICES[1], value: balance.credits_used },
+                          { ...CREDIT_SLICES[2], value: balance.credits_expired },
+                        ].map((item) => (
+                          <li key={item.key} className="flex items-center gap-2.5">
+                            <span
+                              className="size-2.5 shrink-0 rounded-full"
+                              style={{ backgroundColor: item.color }}
+                            />
+                            <span
+                              className={isDark ? "text-slate-300" : "text-slate-600"}
+                            >
+                              {item.label}
+                            </span>
+                            <span
+                              className={cn(
+                                "ml-auto font-semibold tabular-nums",
+                                isDark ? "text-white" : "text-slate-900"
+                              )}
+                            >
+                              {item.value}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                      <p
+                        className={cn(
+                          "mt-4 text-sm text-nowrap",
+                          isDark ? "text-slate-400" : "text-slate-500"
+                        )}
+                      >
+                        Expires on{" "}
+                        <span
+                          className={cn(
+                            "font-semibold",
+                            isDark ? "text-white" : "text-slate-900"
+                          )}
+                        >
+                          {formatDate(balance.expiry_date)}
+                        </span>
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           </article>
 
@@ -587,39 +617,87 @@ export default function Profile() {
                     Current Plan
                   </h3>
                 </div>
-                <span
+                {balances.length === 1 ? (
+                  <span
+                    className={cn(
+                      "rounded-full px-3 py-1 text-xs font-semibold capitalize",
+                      isDark
+                        ? "bg-sky-400/15 text-sky-200"
+                        : "bg-sky-100 text-sky-700"
+                    )}
+                  >
+                    {balances[0].plan_type || "Plan"}
+                  </span>
+                ) : null}
+              </div>
+              {balances.length === 0 ? (
+                <p
                   className={cn(
-                    "rounded-full px-3 py-1 text-xs font-semibold capitalize",
-                    isDark
-                      ? "bg-sky-400/15 text-sky-200"
-                      : "bg-sky-100 text-sky-700"
+                    "mt-5 pr-28 text-sm",
+                    isDark ? "text-slate-300" : "text-slate-600"
                   )}
                 >
-                  {planLabel} Plan
-                </span>
-              </div>
-              <ul className="mt-5 space-y-3.5 pr-28 text-sm pl-2">
-                {[
-                  "Create flipbooks",
-                  "Share with clients",
-                  "Basic analytics",
-                  "Email support",
-                ].map((line) => (
-                  <li key={line} className="flex items-center gap-3">
-                    <span
-                      className={cn(
-                        "grid size-6 shrink-0 place-items-center rounded-full",
-                        isDark ? "bg-white/10 text-emerald-400" : "bg-[#e8ebf0] text-emerald-500"
-                      )}
-                    >
-                      <Check className="size-3.5" strokeWidth={2.75} />
-                    </span>
-                    <span className={isDark ? "text-slate-200" : "text-slate-600"}>
-                      {line}
-                    </span>
-                  </li>
-                ))}
-              </ul>
+                  No active plan
+                </p>
+              ) : (
+                <div className="mt-5 space-y-5 pr-28">
+                  {balances.map((balance) => {
+                    const lines = balance.features.length
+                      ? balance.features
+                      : ["Free flipbook credits"];
+                    return (
+                      <div key={balance.product}>
+                        {balances.length > 1 ? (
+                          <p
+                            className={cn(
+                              "mb-3 text-sm font-semibold",
+                              isDark ? "text-white" : "text-slate-900"
+                            )}
+                          >
+                            {balance.plan_name || balance.label}
+                            <span
+                              className={cn(
+                                "ml-2 text-xs font-medium capitalize",
+                                isDark ? "text-sky-200" : "text-sky-700"
+                              )}
+                            >
+                              {balance.plan_type}
+                            </span>
+                          </p>
+                        ) : (
+                          <p
+                            className={cn(
+                              "mb-3 text-sm font-semibold",
+                              isDark ? "text-white" : "text-slate-900"
+                            )}
+                          >
+                            {balance.plan_name || balance.label}
+                          </p>
+                        )}
+                        <ul className="space-y-3.5 pl-2 text-sm">
+                          {lines.map((line) => (
+                            <li key={line} className="flex items-center gap-3">
+                              <span
+                                className={cn(
+                                  "grid size-6 shrink-0 place-items-center rounded-full",
+                                  isDark
+                                    ? "bg-white/10 text-emerald-400"
+                                    : "bg-[#e8ebf0] text-emerald-500"
+                                )}
+                              >
+                                <Check className="size-3.5" strokeWidth={2.75} />
+                              </span>
+                              <span className={isDark ? "text-slate-200" : "text-slate-600"}>
+                                {line}
+                              </span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           </article>
         </section>

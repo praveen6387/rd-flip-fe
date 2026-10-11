@@ -71,13 +71,13 @@ function tableClasses(isDark) {
     wrap: cn(
       "overflow-x-auto rounded-xl border",
       isDark
-        ? "border-white/10 bg-[#141b24]/96"
-        : "border-[#e4d9c8]/80 bg-[#fffcf8]/90"
+        ? "border-white/12 bg-[#121820]/68 backdrop-blur-2xl"
+        : "border-white/70 bg-white/62 backdrop-blur-2xl"
     ),
     head: cn(
       "border-b px-3 py-2.5 text-left text-[11px] font-semibold tracking-[0.14em] uppercase whitespace-nowrap",
       cellBorder,
-      isDark ? "bg-white/5 text-slate-400" : "bg-[#fffcf8]/90 text-slate-500"
+      isDark ? "bg-white/5 text-slate-400" : "bg-white/50 text-slate-500"
     ),
     cell: cn(
       "border-b px-3 py-3 text-sm align-top",
@@ -219,7 +219,10 @@ const ORDER_COLUMNS = [
   {
     key: "plan",
     label: "Plan",
-    render: (item) => item.plan_name || "—",
+    render: (item) =>
+      [item.plan_name, item.plan_product?.replaceAll("_", " ")]
+        .filter(Boolean)
+        .join(" · ") || "—",
   },
   {
     key: "amount",
@@ -259,7 +262,11 @@ const PLAN_COLUMNS = [
     key: "type",
     label: "Type",
     render: (item) => (
-      <span className="capitalize">{item.plan_type || "—"}</span>
+      <span className="capitalize">
+        {[item.plan_product?.replaceAll("_", " "), item.plan_type]
+          .filter(Boolean)
+          .join(" · ") || "—"}
+      </span>
     ),
   },
   {
@@ -272,8 +279,15 @@ const PLAN_COLUMNS = [
   {
     key: "credits",
     label: "Credits",
-    render: (item) =>
-      item.plan_credit != null ? String(item.plan_credit) : "—",
+    render: (item) => {
+      if (item.credits_total == null) {
+        return item.plan_credit != null ? String(item.plan_credit) : "—";
+      }
+      const total = Number(item.credits_total) || 0;
+      const used = Number(item.credits_used) || 0;
+      const left = Math.max(0, total - used);
+      return `${left} left · ${used} used`;
+    },
   },
   {
     key: "price",

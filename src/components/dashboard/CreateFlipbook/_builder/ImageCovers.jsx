@@ -183,8 +183,8 @@ export default function ImageCovers({ covers, onChange, isDark }) {
       className={cn(
         "relative space-y-5 rounded-[1.6rem] border p-5 sm:p-7",
         isDark
-          ? "border-white/10 bg-[#141b24]/96 shadow-[0_18px_50px_-28px_rgba(0,0,0,0.7)]"
-          : "border-[#e4d9c8]/80 bg-[#fffcf8]/92 shadow-[0_18px_40px_-28px_rgba(120,90,50,0.22)]"
+          ? "border-white/12 bg-[#121820]/68 backdrop-blur-2xl"
+          : "border-white/70 bg-white/62 shadow-[0_18px_40px_-24px_rgba(80,90,140,0.32)] backdrop-blur-2xl"
       )}
     >
       <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">

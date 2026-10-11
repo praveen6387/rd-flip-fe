@@ -81,9 +81,7 @@ export default function DashboardHeader() {
         </div>
 
         <div className="flex shrink-0 items-center gap-2 sm:gap-3">
-          {user?.left_credit != null ? (
-            <CreditsDropdown user={user} isDark={isDark} />
-          ) : null}
+          {user ? <CreditsDropdown user={user} isDark={isDark} /> : null}
           <ThemeToggle />
           {user ? (
             <UserMenu

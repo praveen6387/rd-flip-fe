@@ -11,18 +11,16 @@ import { ROUTES } from "@/lib/routes";
 import { cn } from "@/lib/cn";
 import {
   formatCreditExpireDate,
-  getLeftCredit,
-  hasUsableCredit,
+  formatCreditSummary,
+  getCreditBalances,
+  hasDisplayedCredit,
   isCreditExpired,
 } from "@/lib/credits";
 
 export default function CreditsDropdown({ user, isDark }) {
-  if (user?.left_credit == null) return null;
-
-  const left = getLeftCredit(user);
-  const expired = isCreditExpired(user.credit_expire_date);
-  const usable = hasUsableCredit(user);
-  const expireLabel = formatCreditExpireDate(user.credit_expire_date);
+  const balances = getCreditBalances(user);
+  const summary = formatCreditSummary(user);
+  const usable = hasDisplayedCredit(user);
 
   return (
     <DropdownMenu>
@@ -39,20 +37,10 @@ export default function CreditsDropdown({ user, isDark }) {
                 ? "border-rose-400/30 bg-rose-400/10 text-rose-200 hover:bg-rose-400/15"
                 : "border-rose-300/70 bg-rose-50/80 text-rose-900 hover:bg-rose-100"
           )}
-          title={
-            usable
-              ? "Credits left for new flipbooks"
-              : expired
-                ? "Credits expired"
-                : "No credits left"
-          }
+          title={summary}
         >
           <Sparkles className="size-3.5 shrink-0 opacity-80" />
-          <span className="whitespace-nowrap">
-            {expired
-              ? "Credits expired"
-              : `${left} ${left === 1 ? "credit" : "credits"} left`}
-          </span>
+          <span className="whitespace-nowrap">{summary}</span>
         </button>
       </DropdownMenuTrigger>
 
@@ -107,102 +95,97 @@ export default function CreditsDropdown({ user, isDark }) {
                   isDark ? "text-slate-400" : "text-slate-500"
                 )}
               >
-                Balance for new flipbooks
+                Each plan keeps its own credits
               </p>
             </div>
           </div>
         </div>
 
         <div className="space-y-2 px-3 py-3">
-          <div
-            className={cn(
-              "flex items-center gap-3 rounded-xl border px-3 py-2.5",
-              isDark
-                ? "border-white/10 bg-white/[0.04]"
-                : "border-white/70 bg-white/70"
-            )}
-          >
-            <span
-              className={cn(
-                "grid size-8 shrink-0 place-items-center rounded-lg",
-                isDark
-                  ? "bg-sky-400/15 text-sky-300"
-                  : "bg-sky-100 text-sky-700"
-              )}
-            >
-              <Coins className="size-3.5" />
-            </span>
-            <div className="min-w-0">
-              <p
-                className={cn(
-                  "text-[10px] font-medium tracking-[0.16em] uppercase",
-                  isDark ? "text-slate-400" : "text-slate-500"
-                )}
-              >
-                Available
-              </p>
-              <p
-                className={cn(
-                  "mt-0.5 text-sm font-semibold",
-                  isDark ? "text-white" : "text-slate-900"
-                )}
-              >
-                {usable
-                  ? `${left} ${left === 1 ? "credit" : "credits"}`
-                  : expired
-                    ? "0 usable (expired)"
-                    : `0 credits`}
-              </p>
-            </div>
-          </div>
+          {balances.map((balance) => {
+            const expired = isCreditExpired(balance.expiry_date);
+            const expireLabel = formatCreditExpireDate(balance.expiry_date);
+            const left = balance.credits_left;
+            const title =
+              balance.product === "signup" ? "Free credits" : balance.label;
 
-          <div
-            className={cn(
-              "flex items-center gap-3 rounded-xl border px-3 py-2.5",
-              isDark
-                ? "border-white/10 bg-white/[0.04]"
-                : "border-white/70 bg-white/70"
-            )}
-          >
-            <span
-              className={cn(
-                "grid size-8 shrink-0 place-items-center rounded-lg",
-                isDark
-                  ? "bg-rose-400/15 text-rose-300"
-                  : "bg-rose-100 text-rose-700"
-              )}
-            >
-              <CalendarDays className="size-3.5" />
-            </span>
-            <div className="min-w-0">
-              <p
+            return (
+              <div
+                key={balance.product}
                 className={cn(
-                  "text-[10px] font-medium tracking-[0.16em] uppercase",
-                  isDark ? "text-slate-400" : "text-slate-500"
+                  "rounded-xl border px-3 py-2.5",
+                  isDark
+                    ? "border-white/10 bg-white/[0.04]"
+                    : "border-white/70 bg-white/70"
                 )}
               >
-                Free credit
-              </p>
-              <p
-                className={cn(
-                  "mt-0.5 text-sm font-medium",
-                  expired
-                    ? isDark
-                      ? "text-rose-300"
-                      : "text-rose-700"
-                    : isDark
-                      ? "text-slate-200"
-                      : "text-slate-700"
-                )}
-              >
-                {expireLabel
-                  ? expired
-                    ? `Expired: ${expireLabel}`
-                    : `Expires: ${expireLabel}`
-                  : "No expiry date"}
-              </p>
-            </div>
-          </div>
+                <div className="flex items-center gap-3">
+                  <span
+                    className={cn(
+                      "grid size-8 shrink-0 place-items-center rounded-lg",
+                      isDark
+                        ? "bg-sky-400/15 text-sky-300"
+                        : "bg-sky-100 text-sky-700"
+                    )}
+                  >
+                    <Coins className="size-3.5" />
+                  </span>
+                  <div className="min-w-0">
+                    <p
+                      className={cn(
+                        "text-[10px] font-medium tracking-[0.16em] uppercase",
+                        isDark ? "text-slate-400" : "text-slate-500"
+                      )}
+                    >
+                      {title}
+                    </p>
+                    <p
+                      className={cn(
+                        "mt-0.5 text-sm font-semibold",
+                        isDark ? "text-white" : "text-slate-900"
+                      )}
+                    >
+                      {expired
+                        ? "0 usable (expired)"
+                        : `${left} ${left === 1 ? "credit" : "credits"}`}
+                    </p>
+                  </div>
+                </div>
+                <div className="mt-2 flex items-center gap-2 pl-11">
+                  <CalendarDays
+                    className={cn(
+                      "size-3.5 shrink-0",
+                      expired
+                        ? isDark
+                          ? "text-rose-300"
+                          : "text-rose-600"
+                        : isDark
+                          ? "text-slate-400"
+                          : "text-slate-500"
+                    )}
+                  />
+                  <p
+                    className={cn(
+                      "text-xs",
+                      expired
+                        ? isDark
+                          ? "text-rose-300"
+                          : "text-rose-700"
+                        : isDark
+                          ? "text-slate-300"
+                          : "text-slate-600"
+                    )}
+                  >
+                    {expireLabel
+                      ? expired
+                        ? `Expired: ${expireLabel}`
+                        : `Expires: ${expireLabel}`
+                      : "No expiry date"}
+                  </p>
+                </div>
+              </div>
+            );
+          })}
         </div>
 
         <div

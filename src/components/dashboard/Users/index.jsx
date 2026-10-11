@@ -18,7 +18,7 @@ export default function Users({ users = [], error }) {
         error
           ? "We couldn’t load users right now."
           : count
-            ? `${count} user${count === 1 ? "" : "s"} and their credits.`
+            ? `${count} user${count === 1 ? "" : "s"}. Open a row for plans, flipbooks, and activity.`
             : "No users yet."
       }
     >

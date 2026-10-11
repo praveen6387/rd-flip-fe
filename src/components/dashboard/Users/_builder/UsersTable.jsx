@@ -9,6 +9,7 @@ import {
   MoreHorizontal,
   Receipt,
   Search,
+  UserRound,
   WalletCards,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -20,8 +21,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useDashboardTheme } from "@/lib/dashboard/ThemeProvider";
-import { formatCreditExpireDate, isCreditExpired } from "@/lib/credits";
+import { formatCreditExpireDate } from "@/lib/credits";
 import { cn } from "@/lib/cn";
+import UserDetailSheet from "./UserDetailSheet";
 import UserHistorySheet from "./UserHistorySheet";
 
 function matchesQuery(user, query) {
@@ -47,6 +49,41 @@ function formatCount(value) {
 
 function userName(user) {
   return [user.first_name, user.last_name].filter(Boolean).join(" ") || "—";
+}
+
+function activeUserPlans(user) {
+  const now = Date.now();
+  return (user.user_plans || []).filter((plan) => {
+    if (plan.status !== "active") return false;
+    const expiry = new Date(plan.expiry_date).getTime();
+    return !Number.isNaN(expiry) && expiry > now;
+  });
+}
+
+function expiresCell(user) {
+  const plans = user.user_plans || [];
+  if (!plans.length) {
+    return { date: null, expired: false };
+  }
+
+  const active = activeUserPlans(user);
+  if (active.length) {
+    const earliest = active.reduce((soonest, plan) =>
+      new Date(plan.expiry_date) < new Date(soonest.expiry_date) ? plan : soonest
+    );
+    return { date: earliest.expiry_date, expired: false };
+  }
+
+  const latest = plans.reduce((last, plan) =>
+    new Date(plan.expiry_date) > new Date(last.expiry_date) ? plan : last
+  );
+  return { date: latest.expiry_date, expired: true };
+}
+
+function currentPlanNames(user) {
+  const active = activeUserPlans(user);
+  if (!active.length) return "—";
+  return active.map((plan) => plan.plan_name).filter(Boolean).join(", ");
 }
 
 const HISTORY_ACTIONS = [
@@ -104,7 +141,7 @@ export default function UsersTable({ users = [] }) {
     cellBorder,
     isDark
       ? "bg-white/[0.05] text-slate-400"
-      : "bg-[#fffcf8]/90 text-slate-500"
+      : "bg-white/50 text-slate-500"
   );
   const cellClass = cn("border-b px-4 py-3.5", cellBorder);
 
@@ -134,8 +171,8 @@ export default function UsersTable({ users = [] }) {
         className={cn(
           "overflow-x-auto rounded-xl border",
           isDark
-            ? "border-white/10 bg-[#141b24]/96 shadow-[0_18px_50px_-28px_rgba(0,0,0,0.7)]"
-            : "border-[#e4d9c8]/80 bg-[#fffcf8]/90 shadow-[0_18px_40px_-28px_rgba(120,90,50,0.22)]"
+            ? "border-white/12 bg-[#121820]/68 backdrop-blur-2xl"
+            : "border-white/70 bg-white/62 shadow-[0_18px_40px_-24px_rgba(80,90,140,0.32)] backdrop-blur-2xl"
         )}
       >
         <table className="min-w-[1080px] w-full border-collapse text-sm">
@@ -145,7 +182,6 @@ export default function UsersTable({ users = [] }) {
               <th className={cn(headClass, "border-r")}>Contact</th>
               <th className={cn(headClass, "border-r")}>Plan</th>
               <th className={cn(headClass, "border-r")}>Role</th>
-              <th className={cn(headClass, "border-r")}>Credits</th>
               <th className={cn(headClass, "border-r")}>Activity</th>
               <th className={cn(headClass, "border-r")}>Expires</th>
               <th className={cn(headClass, "w-14 text-right")}> </th>
@@ -155,7 +191,7 @@ export default function UsersTable({ users = [] }) {
             {filtered.length === 0 ? (
               <tr>
                 <td
-                  colSpan={8}
+                  colSpan={7}
                   className={cn(
                     "px-4 py-10 text-center",
                     isDark ? "text-slate-400" : "text-slate-500"
@@ -166,8 +202,9 @@ export default function UsersTable({ users = [] }) {
               </tr>
             ) : (
               filtered.map((item) => {
-                const expireLabel = formatCreditExpireDate(item.credit_expire_date);
-                const expired = isCreditExpired(item.credit_expire_date);
+                const expiry = expiresCell(item);
+                const expireLabel = formatCreditExpireDate(expiry.date);
+                const expired = expiry.expired;
                 return (
                   <tr
                     key={item.user_id}
@@ -207,25 +244,11 @@ export default function UsersTable({ users = [] }) {
                         {item.phone || "—"}
                       </p>
                     </td>
-                    <td className={cn(cellClass, "border-r capitalize")}>
-                      {item.plan || "—"}
+                    <td className={cn(cellClass, "border-r")}>
+                      {currentPlanNames(item)}
                     </td>
                     <td className={cn(cellClass, "border-r capitalize")}>
                       {item.role || "—"}
-                    </td>
-                    <td className={cn(cellClass, "border-r")}>
-                      <p className={isDark ? "text-white" : "text-slate-900"}>
-                        {item.left_credit ?? 0} left
-                      </p>
-                      <p
-                        className={cn(
-                          "mt-0.5 text-xs",
-                          isDark ? "text-slate-400" : "text-slate-500"
-                        )}
-                      >
-                        {item.used_credit ?? 0} used · {item.total_credit ?? 0}{" "}
-                        total
-                      </p>
                     </td>
                     <td className={cn(cellClass, "border-r whitespace-nowrap")}>
                       <div
@@ -295,6 +318,37 @@ export default function UsersTable({ users = [] }) {
                           >
                             View details
                           </p>
+                          <DropdownMenuItem
+                            className={cn(
+                              "cursor-pointer gap-2.5 rounded-xl px-2 py-2",
+                              isDark
+                                ? "focus:bg-white/10 focus:text-white"
+                                : "focus:bg-white/80"
+                            )}
+                            onSelect={() => setSheet({ user: item, type: "details" })}
+                          >
+                            <span
+                              className={cn(
+                                "grid size-8 shrink-0 place-items-center rounded-xl ring-1",
+                                isDark
+                                  ? "bg-amber-500/15 text-amber-300 ring-amber-400/20"
+                                  : "bg-amber-100 text-amber-700 ring-amber-200"
+                              )}
+                            >
+                              <UserRound className="size-3.5" />
+                            </span>
+                            <span className="min-w-0 flex-1 text-left">
+                              <span className="block text-sm font-medium">Details</span>
+                              <span
+                                className={cn(
+                                  "block text-[11px]",
+                                  isDark ? "text-slate-400" : "text-slate-500"
+                                )}
+                              >
+                                Profile, plans, and activity
+                              </span>
+                            </span>
+                          </DropdownMenuItem>
                           {HISTORY_ACTIONS.map((action) => {
                             const Icon = action.icon;
                             const count = Array.isArray(item[action.countKey])
@@ -350,9 +404,15 @@ export default function UsersTable({ users = [] }) {
         </table>
       </div>
 
-      <UserHistorySheet
+      <UserDetailSheet
         user={sheet?.user}
-        sheet={sheet?.type}
+        open={sheet?.type === "details"}
+        isDark={isDark}
+        onClose={() => setSheet(null)}
+      />
+      <UserHistorySheet
+        user={sheet?.type && sheet.type !== "details" ? sheet.user : null}
+        sheet={sheet?.type === "details" ? null : sheet?.type}
         isDark={isDark}
         onClose={() => setSheet(null)}
       />

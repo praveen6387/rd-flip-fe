@@ -26,6 +26,31 @@ function planTypeLabel(type) {
   return raw.charAt(0).toUpperCase() + raw.slice(1).toLowerCase();
 }
 
+const PRODUCT_SECTIONS = [
+  {
+    id: "flipbook",
+    title: "Flipbook",
+    description: "Credits for creating flipbooks.",
+  },
+  {
+    id: "photo_selection",
+    title: "Photo Selection",
+    description: "Credits for photo selection.",
+  },
+  {
+    id: "all",
+    title: "All",
+    description: "One balance for flipbooks and photo selection.",
+  },
+];
+
+function plansByProduct(plans) {
+  return PRODUCT_SECTIONS.map((section) => ({
+    ...section,
+    plans: plans.filter((plan) => (plan.product || "flipbook") === section.id),
+  })).filter((section) => section.plans.length > 0);
+}
+
 export default function Plans({ plans = [], error }) {
   const { isDark } = useDashboardTheme();
   const { user, refreshUser } = useAuth();
@@ -76,7 +101,7 @@ export default function Plans({ plans = [], error }) {
       description={
         error
           ? "We couldn’t load plans right now."
-          : "Pick a plan to top up credits for new flipbooks."
+          : "Flipbook and Photo Selection stay separate. All can be used for either."
       }
     >
       {error ? (
@@ -117,8 +142,27 @@ export default function Plans({ plans = [], error }) {
           </p>
         </div>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          {activePlans.map((plan) => {
+        <div className="space-y-8">
+          {plansByProduct(activePlans).map((section) => (
+            <section key={section.id}>
+              <h2
+                className={cn(
+                  "font-heading text-2xl tracking-tight",
+                  isDark ? "text-white" : "text-slate-900"
+                )}
+              >
+                {section.title}
+              </h2>
+              <p
+                className={cn(
+                  "mt-1 text-sm",
+                  isDark ? "text-slate-400" : "text-slate-500"
+                )}
+              >
+                {section.description}
+              </p>
+              <div className="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          {section.plans.map((plan) => {
             const credits = Number(plan.credit) || 0;
             const days = Number(plan.validity_days) || 0;
             const isBuying = buyingPlanId === plan.id;
@@ -129,8 +173,8 @@ export default function Plans({ plans = [], error }) {
                 className={cn(
                   "flex flex-col rounded-[1.6rem] border p-5 sm:p-6",
                   isDark
-                    ? "border-white/12 bg-[#141b24]/96 shadow-[0_18px_50px_-28px_rgba(0,0,0,0.7)]"
-                    : "border-[#e4d9c8]/80 bg-[#fffcf8]/88 shadow-[0_18px_40px_-28px_rgba(120,90,50,0.22)]"
+                    ? "border-white/12 bg-[#121820]/68 backdrop-blur-2xl"
+                    : "border-white/70 bg-white/62 shadow-[0_18px_40px_-24px_rgba(80,90,140,0.32)] backdrop-blur-2xl"
                 )}
               >
                 <p
@@ -243,6 +287,9 @@ export default function Plans({ plans = [], error }) {
               </article>
             );
           })}
+              </div>
+            </section>
+          ))}
         </div>
       )}
     </PagePanel>

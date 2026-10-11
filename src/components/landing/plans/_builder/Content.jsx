@@ -13,6 +13,12 @@ function formatPrice(value) {
   });
 }
 
+function productLabel(product) {
+  if (product === "photo_selection") return "Photo selection";
+  if (product === "all") return "All";
+  return "Flipbook";
+}
+
 function planTag(type) {
   const key = String(type || "").toLowerCase();
   if (key === "studio") return "Your studio";
@@ -103,7 +109,7 @@ export default function Content({ plans = [], isDark = false }) {
                   )}
                 >
                   <p className="text-xs font-medium tracking-[0.18em] text-slate-400 uppercase">
-                    {planTag(plan.plan_type)}
+                    {productLabel(plan.product)} · {planTag(plan.plan_type)}
                   </p>
                   <h3
                     className={cn(

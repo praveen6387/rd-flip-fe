@@ -58,7 +58,7 @@ export default function OrdersTable({ orders = [] }) {
     cellBorder,
     isDark
       ? "bg-white/[0.05] text-slate-400"
-      : "bg-[#fffcf8]/90 text-slate-500"
+      : "bg-white/50 text-slate-500"
   );
   const cellClass = cn("border-b px-4 py-3.5", cellBorder);
 
@@ -88,8 +88,8 @@ export default function OrdersTable({ orders = [] }) {
         className={cn(
           "overflow-x-auto rounded-xl border",
           isDark
-            ? "border-white/10 bg-[#141b24]/96 shadow-[0_18px_50px_-28px_rgba(0,0,0,0.7)]"
-            : "border-[#e4d9c8]/80 bg-[#fffcf8]/90 shadow-[0_18px_40px_-28px_rgba(120,90,50,0.22)]"
+            ? "border-white/12 bg-[#121820]/68 backdrop-blur-2xl"
+            : "border-white/70 bg-white/62 shadow-[0_18px_40px_-24px_rgba(80,90,140,0.32)] backdrop-blur-2xl"
         )}
       >
         <table className="min-w-[980px] w-full border-collapse text-sm">
