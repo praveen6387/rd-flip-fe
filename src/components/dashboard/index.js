@@ -4,3 +4,6 @@ export { default as CreateFlipbook } from "./CreateFlipbook";
 export { default as Plans } from "./Plans";
 export { default as Users } from "./Users";
 export { default as Orders } from "./Orders";
+export { default as PhotoSelection } from "./PhotoSelection";
+export { default as PhotoSelectionCreate } from "./PhotoSelection/Create";
+export { default as PhotoSelectionView } from "./PhotoSelection/View";

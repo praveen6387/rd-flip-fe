@@ -39,10 +39,9 @@ export const DASHBOARD_NAV_ITEMS = [
     locked: true,
   },
   {
-    id: "photo-selection",
     label: "Photo Selection",
+    href: ROUTES.dashboardPhotoSelection,
     icon: Images,
-    locked: true,
   },
   {
     label: "Users",

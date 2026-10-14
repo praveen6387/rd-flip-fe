@@ -640,7 +640,7 @@ export default function Profile() {
                   No active plan
                 </p>
               ) : (
-                <div className="mt-5 space-y-5 pr-28">
+                <div className="mt-5 space-y-5 pr-6">
                   {balances.map((balance) => {
                     const lines = balance.features.length
                       ? balance.features

@@ -113,3 +113,7 @@ export function formatCreditExpireDate(value) {
     year: "numeric",
   });
 }
+
+export function hasPhotoSelectionCredit(user) {
+  return getCreditBalances(user).some(balance => ["photo_selection", "all"].includes(balance.product) && balance.credits_left >= 1 && !isCreditExpired(balance.expiry_date));
+}
