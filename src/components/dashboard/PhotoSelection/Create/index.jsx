@@ -5,7 +5,7 @@ import { hasPhotoSelectionCredit } from "@/lib/credits";
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, ImagePlus, Loader2, X } from "lucide-react";
+import { ArrowLeft, ImagePlus, X } from "lucide-react";
 import { toast } from "sonner";
 import PagePanel from "@/components/dashboard/_builder/PagePanel";
 import { Button } from "@/components/ui/button";
@@ -18,6 +18,7 @@ import { ROUTES } from "@/lib/routes";
 import { cn } from "@/lib/cn";
 import { acceptedSelectionFiles, selectionPanel } from "../_builder/panel";
 import { prepareSelectionPhotos } from "../_builder/prepare";
+import SelectionProgress from "../_builder/SelectionProgress";
 
 export default function PhotoSelectionCreate() {
   const router = useRouter();
@@ -29,7 +30,7 @@ export default function PhotoSelectionCreate() {
   const [folderName, setFolderName] = useState("");
   const [files, setFiles] = useState([]);
   const [saving, setSaving] = useState(false);
-  const [preparing, setPreparing] = useState(0);
+  const [work, setWork] = useState(null);
   const [dragOver, setDragOver] = useState(false);
   const dragDepth = useRef(0);
   const fieldClass = cn(
@@ -61,9 +62,9 @@ export default function PhotoSelectionCreate() {
     });
     if (!accepted.length) return;
 
-    setPreparing((count) => count + 1);
+    setWork({ phase: "optimize", current: 0, total: accepted.length, name: accepted[0].name });
     try {
-      const prepared = await prepareSelectionPhotos(accepted);
+      const prepared = await prepareSelectionPhotos(accepted, (progress) => setWork({ phase: "optimize", ...progress }));
       prepared.forEach((file, index) => { file.selectionRelativePath = accepted[index].webkitRelativePath.split("/").slice(1).join("/"); });
       setOriginalFolderPath(upload.folder);
       setFolderName(current => current || upload.folder);
@@ -78,7 +79,7 @@ export default function PhotoSelectionCreate() {
     } catch (error) {
       toast.error(error.message || "Could not prepare those photos.");
     } finally {
-      setPreparing((count) => count - 1);
+      setWork(null);
     }
   }
 
@@ -106,6 +107,7 @@ export default function PhotoSelectionCreate() {
     }
 
     setSaving(true);
+    setWork({ phase: "upload", current: 0, total: files.length });
     try {
       const album = await createAlbum({
         clientName,
@@ -113,6 +115,7 @@ export default function PhotoSelectionCreate() {
         folderName,
         originalFolderPath,
         files: files.map((item) => item.file),
+        onProgress: setWork,
       });
       await refreshUser();
       toast.success("Selection folder uploaded");
@@ -120,6 +123,11 @@ export default function PhotoSelectionCreate() {
     } catch (error) {
       await refreshUser().catch(() => {});
       toast.error(error.message || "Could not save this folder.");
+      if (error.albumId) {
+        router.push(ROUTES.dashboardPhotoSelectionView(error.albumId));
+        return;
+      }
+      setWork(null);
       setSaving(false);
     }
   }
@@ -244,9 +252,7 @@ export default function PhotoSelectionCreate() {
                     isDark ? "text-slate-400" : "text-slate-500"
                   )}
                 >
-                  {preparing
-                    ? "Preparing photos…"
-                    : files.length
+                  {files.length
                       ? `${files.length} photos selected · click to browse`
                       : "Choose a folder of JPG, PNG, or WebP photos"}
                 </span>
@@ -256,7 +262,7 @@ export default function PhotoSelectionCreate() {
                 accept="image/jpeg,image/png,image/webp"
                 multiple
                 webkitdirectory=""
-                disabled={saving || preparing > 0}
+                disabled={saving || Boolean(work)}
                 className="sr-only"
                 onChange={(event) => {
                   addFiles(event.target.files);
@@ -299,18 +305,16 @@ export default function PhotoSelectionCreate() {
             <div className="mt-4 flex justify-end">
               <Button
                 type="submit"
-                disabled={saving || preparing > 0}
+                disabled={saving || Boolean(work)}
                 className="h-10 rounded-full bg-linear-to-r from-sky-500 to-rose-500 px-5 text-white shadow-none hover:brightness-110"
               >
-                {saving || preparing > 0 ? (
-                  <Loader2 className="size-4 animate-spin" />
-                ) : null}
-                {saving ? "Uploading…" : preparing > 0 ? "Preparing…" : "Upload"}
+                Upload
               </Button>
             </div>
           ) : null}
         </div>
       </form>
+      <SelectionProgress state={work} isDark={isDark} />
     </PagePanel>
   );
 }

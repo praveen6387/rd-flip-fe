@@ -8,7 +8,7 @@ import PagePanel from "@/components/dashboard/_builder/PagePanel";
 import { useDashboardTheme } from "@/lib/dashboard/ThemeProvider";
 import { ROUTES } from "@/lib/routes";
 import { cn } from "@/lib/cn";
-import { formatSelectionDate, selectionPanel } from "./_builder/panel";
+import { formatSelectionDate, selectionPanel, selectionStatus, selectionStatusClass } from "./_builder/panel";
 
 export default function PhotoSelection({ albums = [], error = null }) {
   const { isDark } = useDashboardTheme();
@@ -86,72 +86,57 @@ export default function PhotoSelection({ albums = [], error = null }) {
 
       {status === "ready" && count > 0 ? (
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          {albums.map((album) => (
+          {albums.map((album) => {
+            const folderStatus = selectionStatus(album);
+            return (
             <article
               key={album.id}
-              className={cn(
-                selectionPanel(isDark),
-                "block p-4 transition hover:-translate-y-0.5"
-              )}
+              className={cn(selectionPanel(isDark), "flex flex-col p-4")}
             >
-              <Link href={ROUTES.dashboardPhotoSelectionView(album.id)} prefetch={false} className="block">
-              <div className="flex items-start gap-3">
-                <span
-                  className={cn(
-                    "grid size-11 shrink-0 place-items-center rounded-2xl",
-                    isDark ? "bg-white/10 text-sky-200" : "bg-white/70 text-sky-600"
-                  )}
-                >
-                  <FolderOpen className="size-5" />
-                </span>
-                <div className="min-w-0">
-                  <p
+              <Link href={ROUTES.dashboardPhotoSelectionView(album.id)} prefetch={false} className="block rounded-2xl transition hover:opacity-90">
+                <div className="flex items-start gap-3">
+                  <span
                     className={cn(
-                      "truncate text-base font-semibold",
-                      isDark ? "text-white" : "text-slate-900"
+                      "grid size-11 shrink-0 place-items-center rounded-2xl",
+                      isDark ? "bg-white/10 text-sky-200" : "bg-white/70 text-sky-600"
                     )}
                   >
-                    {album.folderName}
-                  </p>
-                  <p
-                    className={cn(
-                      "mt-0.5 truncate text-sm",
-                      isDark ? "text-slate-300" : "text-slate-600"
-                    )}
-                  >
-                    {album.clientName}
-                  </p>
+                    <FolderOpen className="size-5" />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-start justify-between gap-2">
+                      <p className={cn("truncate text-base font-semibold", isDark ? "text-white" : "text-slate-900")}>
+                        {album.folderName}
+                      </p>
+                      <span className={cn("shrink-0 rounded-full px-2.5 py-1 text-[11px] font-semibold", selectionStatusClass(album.status, isDark))}>
+                        {folderStatus.label}
+                      </span>
+                    </div>
+                    <p className={cn("mt-0.5 truncate text-sm", isDark ? "text-slate-300" : "text-slate-600")}>
+                      {album.clientName}
+                    </p>
+                  </div>
                 </div>
-              </div>
-              <div
-                className={cn(
-                  "mt-4 flex items-center justify-between gap-3 text-xs",
-                  isDark ? "text-slate-400" : "text-slate-500"
-                )}
-              >
-                <span className="inline-flex min-w-0 items-center gap-1.5">
-                  <Phone className="size-3.5 shrink-0" />
-                  <span className="truncate">{album.phone || "No phone"}</span>
-                </span>
-                <span className="shrink-0">
-                  {album.photoCount} photo{album.photoCount === 1 ? "" : "s"}
-                </span>
-              </div>
-              <p
-                className={cn(
-                  "mt-2 text-xs",
-                  isDark ? "text-slate-500" : "text-slate-400"
-                )}
-              >
-                {album.status === "selected" ? `${album.selectedCount} selected` : album.status === "draft" ? "Draft — finish upload" : "Waiting for client"} · Uploaded {formatSelectionDate(album.createdAt)}
-              </p>
+                <div className={cn("mt-4 flex items-center justify-between gap-3 text-xs", isDark ? "text-slate-400" : "text-slate-500")}>
+                  <span className="inline-flex min-w-0 items-center gap-1.5">
+                    <Phone className="size-3.5 shrink-0" />
+                    <span className="truncate">{album.phone || "No phone"}</span>
+                  </span>
+                  <span className="shrink-0">{album.photoCount} photo{album.photoCount === 1 ? "" : "s"}</span>
+                </div>
+                <p className={cn("mt-2 text-xs", isDark ? "text-slate-400" : "text-slate-500")}>
+                  {folderStatus.hint} · Uploaded {formatSelectionDate(album.createdAt)}
+                </p>
               </Link>
-              <p className="mt-3 text-sm">Client code: <strong className="font-mono text-lg tracking-widest">{album.accessCode}</strong></p>
+              <div className={cn("mt-4 rounded-xl px-3 py-2", isDark ? "bg-white/5" : "bg-white/60")}>
+                <p className={cn("text-[11px] font-medium tracking-wide uppercase", isDark ? "text-slate-400" : "text-slate-500")}>Client code</p>
+                <p className={cn("mt-0.5 font-mono text-lg font-semibold tracking-[0.28em]", isDark ? "text-white" : "text-slate-900")}>{album.accessCode}</p>
+              </div>
               {album.status !== "draft" && album.shareToken ? (
-                <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-current/10 pt-3 text-sm">
+                <div className={cn("mt-3 flex flex-wrap gap-2 border-t pt-3", isDark ? "border-white/10" : "border-slate-200/80")}>
                   <button
                     type="button"
-                    className="font-semibold text-sky-600"
+                    className="rounded-full px-3 py-1.5 text-xs font-semibold text-sky-600 hover:bg-sky-500/10"
                     onClick={async () => {
                       try {
                         await navigator.clipboard.writeText(`${window.location.origin}/photo-selection/${album.shareToken}`);
@@ -159,17 +144,18 @@ export default function PhotoSelection({ albums = [], error = null }) {
                       } catch { toast.error("Could not copy the link. Open the client page to copy its address."); }
                     }}
                   >Copy client link</button>
-                  <button type="button" className="font-semibold text-sky-600" onClick={async () => {
+                  <button type="button" className="rounded-full px-3 py-1.5 text-xs font-semibold text-sky-600 hover:bg-sky-500/10" onClick={async () => {
                     try {
                       await navigator.clipboard.writeText(`Select your photos: ${window.location.origin}/photo-selection\nCode: ${album.accessCode}`);
                       toast.success("Client code and access link copied");
                     } catch { toast.error("Could not copy the code."); }
-                  }}>Copy code &amp; entry link</button>
-                  <Link href={`/photo-selection/${album.shareToken}`} target="_blank" rel="noopener noreferrer" className="font-semibold text-sky-600">Open client page</Link>
+                  }}>Copy code and entry link</button>
+                  <Link href={`/photo-selection/${album.shareToken}`} target="_blank" rel="noopener noreferrer" className="rounded-full px-3 py-1.5 text-xs font-semibold text-sky-600 hover:bg-sky-500/10">Open client page</Link>
                 </div>
-              ) : <p className="mt-3 text-xs">Finish uploading this folder to enable its client link.</p>}
+              ) : <p className={cn("mt-3 text-xs", isDark ? "text-slate-400" : "text-slate-500")}>Finish uploading this folder to enable its client link.</p>}
             </article>
-          ))}
+            );
+          })}
         </div>
       ) : null}
     </PagePanel>

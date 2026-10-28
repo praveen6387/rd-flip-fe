@@ -46,22 +46,23 @@ function directory(name, entries = new Map()) {
     },
   };
 }
-test("extract creates a sibling with selected original bytes only and preserves earlier exports", async () => {
+test("extract copies selected originals into a Selected folder inside the original folder", async () => {
   const original = new Blob(["full resolution original"]);
-  const source = directory("Wedding", new Map([["A.JPG", { async getFile() { return original; } }], ["B.JPG", {}]]));
-  const parent = directory("Photos", new Map([["Wedding", source], ["Wedding Selected", directory("Wedding Selected")]]));
+  const source = directory("Wedding", new Map([["A.JPG", { async getFile() { return original; } }], ["B.JPG", {}], ["Selected", directory("Selected")]]));
+  const parent = directory("Photos", new Map([["Wedding", source]]));
   globalThis.window = { async showDirectoryPicker() { return parent; } };
   const album = { status: "selected", originalFolderPath: "Wedding", photos: [{name: "A.JPG", selected: true}, {name: "B.JPG", selected: false}] };
   assert.equal(await copySelectedOriginals(album), 1);
-  assert.deepEqual([...parent.entries.get("Wedding Selected (2)").entries.keys()], ["A.JPG"]);
-  assert.equal(parent.entries.get("Wedding Selected (2)").entries.get("A.JPG").bytes, original);
-  assert.equal(source.entries.has("Selected"), false);
+  const created = source.entries.get("Selected (2)");
+  assert.deepEqual([...created.entries.keys()], ["A.JPG"]);
+  assert.equal(created.entries.get("A.JPG").bytes, original);
+  assert.equal(parent.entries.has("Wedding Selected"), false);
   delete globalThis.window;
 });
 test("missing originals prevent creating an output folder", async () => {
   const parent = directory("Photos", new Map([["Wedding", directory("Wedding")]]));
   globalThis.window = { async showDirectoryPicker() { return parent; } };
-  await assert.rejects(copySelectedOriginals({status: "selected", originalFolderPath: "Wedding", photos: [{name: "missing.JPG", selected: true}]}), /Move the original folder back/);
+  await assert.rejects(copySelectedOriginals({status: "selected", originalFolderPath: "Wedding", photos: [{name: "missing.JPG", selected: true}]}), /not in/);
   assert.deepEqual([...parent.entries.keys()], ["Wedding"]);
   delete globalThis.window;
 });

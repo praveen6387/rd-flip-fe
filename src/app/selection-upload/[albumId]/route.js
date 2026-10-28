@@ -1,22 +1,31 @@
 import { createHmac } from "node:crypto";
-import { Readable } from "node:stream";
 import { cookies } from "next/headers";
 import { ACCESS_COOKIE } from "@/lib/api/cookie-names";
-import { backendUrl } from "@/lib/api/endpoints";
-import { getOwnerDriveClient } from "@/lib/drive/upload";
+import { deleteSelectionImage, uploadSelectionImage } from "@/lib/s3/upload";
+
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
+async function sessionToken(request) {
+  const header = request.headers.get("authorization");
+  if (header) return header.replace(/^Bearer\s+/i, "");
+  return (await cookies()).get(ACCESS_COOKIE)?.value || "";
+}
+
+function ownedSelectionKey(albumId, key) {
+  const prefix = `photo-selection/${albumId}/`;
+  if (typeof key !== "string" || !key.startsWith(prefix)) return "";
+  const name = key.slice(prefix.length);
+  if (!name || name.includes("/") || name === "." || name === "..") return "";
+  return key;
+}
+
 export async function POST(request, { params }) {
   const { albumId } = await params;
-  const token = request.headers.get("authorization") || `Bearer ${(await cookies()).get(ACCESS_COOKIE)?.value || ""}`;
-  const headers = { Authorization: token };
-  const endpoint = backendUrl(`/api/photo-selection/${encodeURIComponent(albumId)}/`);
-  const check = await fetch(endpoint, { headers, cache: "no-store" });
-  const checked = await check.json().catch(() => null);
-  if (!check.ok) return Response.json(checked, { status: check.status });
-  if (checked?.data?.album?.status === "selected") return Response.json({ message: "Submitted folders cannot be changed." }, { status: 409 });
-  let drive, fileId;
+  if (!(await sessionToken(request))) {
+    return Response.json({ status: "fail", message: "Please sign in again." }, { status: 401 });
+  }
+  let objectKey = "";
   try {
     const body = await request.formData();
     const photo = body.get("photo");
@@ -26,19 +35,39 @@ export async function POST(request, { params }) {
     const secret = process.env.PHOTO_SELECTION_UPLOAD_SECRET;
     if (!secret) throw new Error("Photo selection upload signing is not configured.");
     if (originalRelativePath.length > 2048 || originalRelativePath.includes("\\") || originalRelativePath.split("/").some(part => !part || part === "." || part === "..") || originalRelativePath.split("/").at(-1) !== photo.name) throw new Error("Invalid original relative path.");
-    drive = getOwnerDriveClient();
-    const folderId = process.env.GOOGLE_DRIVE_PHOTO_SELECTION_FOLDER_ID || process.env.GOOGLE_DRIVE_FOLDER_ID;
-    if (!folderId) throw new Error("Connect Google Drive photo storage before uploading.");
-    const uploaded = await drive.files.create({ requestBody: { name: `${albumId}-${photo.name}`, parents: [folderId] }, media: { mimeType: photo.type, body: Readable.from(Buffer.from(await photo.arrayBuffer())) }, fields: "id" });
-    fileId = uploaded.data.id;
+    const uploaded = await uploadSelectionImage({
+      buffer: Buffer.from(await photo.arrayBuffer()),
+      contentType: photo.type,
+      albumId,
+    });
+    objectKey = uploaded.key;
     const uploadExpires = Math.floor(Date.now() / 1000) + 600;
-    const uploadProof = createHmac("sha256", secret).update(`${albumId}:${fileId}:${photo.name}:${originalRelativePath}:${uploadExpires}`).digest("hex");
-    const saved = await fetch(endpoint, { method: "POST", headers: { ...headers, "Content-Type": "application/json" }, body: JSON.stringify({ name: photo.name, originalRelativePath, uploadProof, uploadExpires, driveFileId: fileId, imageUrl: `/selection-media/${fileId}` }) });
-    const result = await saved.json();
-    if (!saved.ok) throw new Error(result.message || "Could not save uploaded photo.");
-    return Response.json(result);
+    const uploadProof = createHmac("sha256", secret).update(`${albumId}:${objectKey}:${photo.name}:${originalRelativePath}:${uploadExpires}`).digest("hex");
+    return Response.json({
+      status: "success",
+      data: {
+        name: photo.name,
+        originalRelativePath,
+        uploadProof,
+        uploadExpires,
+        objectKey,
+        imageUrl: uploaded.publicUrl,
+      },
+    });
   } catch (error) {
-    if (fileId && drive) await drive.files.delete({ fileId }).catch(() => {});
+    console.error("selection upload failed:", error.message);
+    if (objectKey) await deleteSelectionImage(objectKey).catch(() => {});
     return Response.json({ status: "fail", message: error.message || "Photo upload failed." }, { status: 400 });
   }
+}
+
+export async function DELETE(request, { params }) {
+  const { albumId } = await params;
+  if (!(await sessionToken(request))) {
+    return Response.json({ status: "fail", message: "Please sign in again." }, { status: 401 });
+  }
+  const body = await request.json().catch(() => null);
+  const keys = Array.isArray(body?.keys) ? body.keys : [];
+  await Promise.all(keys.map((key) => deleteSelectionImage(ownedSelectionKey(albumId, key)).catch(() => {})));
+  return Response.json({ status: "success", data: { removed: keys.length } });
 }

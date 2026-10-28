@@ -1,7 +1,6 @@
-const BACKEND_ORIGIN = (process.env.NEXT_PUBLIC_API_BASE_URL || "").replace(
-  /\/$/,
-  ""
-);
+function backendOrigin() {
+  return (process.env.NEXT_PUBLIC_API_BASE_URL || "").replace(/\/$/, "");
+}
 
 export const ENDPOINTS = {
   login: "/api/auth/login/",
@@ -29,5 +28,5 @@ export const ENDPOINTS = {
 };
 
 export function backendUrl(path) {
-  return `${BACKEND_ORIGIN}${path}`;
+  return `${backendOrigin()}${path}`;
 }

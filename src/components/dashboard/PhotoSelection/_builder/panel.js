@@ -10,6 +10,22 @@ export function selectionPanel(isDark, className) {
   );
 }
 
+export function selectionStatus(album) {
+  if (album.status === "selected") {
+    return { label: "Selected", hint: `${album.selectedCount} of ${album.photoCount} photos selected` };
+  }
+  if (album.status === "draft") {
+    return { label: "Draft", hint: "Finish the upload to share this folder" };
+  }
+  return { label: "Waiting for client", hint: "Shared with the client" };
+}
+
+export function selectionStatusClass(status, isDark) {
+  if (status === "selected") return isDark ? "bg-emerald-400/15 text-emerald-200" : "bg-emerald-50 text-emerald-700";
+  if (status === "draft") return isDark ? "bg-amber-400/15 text-amber-200" : "bg-amber-50 text-amber-800";
+  return isDark ? "bg-sky-400/15 text-sky-200" : "bg-sky-50 text-sky-700";
+}
+
 export function formatSelectionDate(value) {
   if (!value) return "—";
   return new Date(value).toLocaleDateString("en-IN", {

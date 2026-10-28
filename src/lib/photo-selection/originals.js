@@ -5,57 +5,102 @@ export function missingOriginals(album, available) {
   return names.filter(name => !available.has(name));
 }
 export function missingMessage(album, names) {
-  return `Original photos not found (${names.slice(0, 5).join(", ")}). Move the original folder back to "${album.originalFolderPath}" and choose that folder again.`;
+  const folder = folderBasename(album.originalFolderPath);
+  const shown = names.slice(0, 5).join(", ");
+  return `These selected photos are not in “${folder}”: ${shown}. Choose the original folder that still contains them.`;
 }
 
-export async function copySelectedOriginals(album) {
-  if (!window.showDirectoryPicker) throw new Error("Use Download originals to choose the original folder in this browser.");
-  if (album.status !== "selected") throw new Error("The client must submit their selection before extracting originals.");
-  const parent = await window.showDirectoryPicker({ mode: "readwrite" });
-  const sourceName = folderBasename(album.originalFolderPath);
-  let source;
-  try { source = await parent.getDirectoryHandle(sourceName); }
-  catch (error) {
-    if (error.name !== "NotFoundError" && error.name !== "TypeMismatchError") throw error;
-    throw new Error(`Original folder "${sourceName}" not found. Choose its parent folder, or move the original folder back to "${album.originalFolderPath}".`);
-  }
-  const originals = new Map();
-  for (const photo of album.photos.filter(p => p.selected)) {
-    const relative = photo.originalRelativePath || photo.name;
-    const parts = relative.split("/");
+async function openFile(directory, relative) {
+  const parts = String(relative || "").split("/").filter(Boolean);
+  if (!parts.length) throw Object.assign(new Error("Missing"), { name: "NotFoundError" });
+  let current = directory;
+  for (const part of parts.slice(0, -1)) current = await current.getDirectoryHandle(part);
+  return current.getFileHandle(parts.at(-1));
+}
+
+async function freshDirectory(parent, baseName) {
+  for (let index = 1; index <= 1000; index += 1) {
+    const name = index === 1 ? baseName : `${baseName} (${index})`;
     try {
-      let directory = source;
-      for (const part of parts.slice(0, -1)) directory = await directory.getDirectoryHandle(part);
-      originals.set(relative, await directory.getFileHandle(parts.at(-1)));
+      await parent.getDirectoryHandle(name);
+    } catch (error) {
+      if (error.name === "TypeMismatchError") continue;
+      if (error.name !== "NotFoundError") throw error;
+      return parent.getDirectoryHandle(name, { create: true });
+    }
+  }
+  throw new Error("Could not create a new selected folder. Rename an earlier Selected folder and try again.");
+}
+
+async function writeOriginal(output, relative, handle) {
+  const parts = relative.split("/").filter(Boolean);
+  let directory = output;
+  for (const part of parts.slice(0, -1)) directory = await directory.getDirectoryHandle(part, { create: true });
+  const target = await directory.getFileHandle(parts.at(-1), { create: true });
+  const writable = await target.createWritable();
+  await writable.write(await handle.getFile());
+  await writable.close();
+}
+
+async function sourceDirectory(album, directoryPromise) {
+  let picked;
+  try {
+    picked = await directoryPromise;
+  } catch (error) {
+    if (error.name === "AbortError") throw new Error("Folder selection was cancelled.");
+    throw error;
+  }
+  const sourceName = folderBasename(album.originalFolderPath);
+  if (picked.name && picked.name !== sourceName) {
+    try { return await picked.getDirectoryHandle(sourceName); }
+    catch (error) {
+      if (error.name !== "NotFoundError" && error.name !== "TypeMismatchError") throw error;
+      throw new Error(`Choose the original folder “${sourceName}”.`);
+    }
+  }
+  return picked;
+}
+
+async function selectedOriginals(album, source) {
+  const selected = album.photos.filter((photo) => photo.selected);
+  if (!selected.length) throw new Error("No photos have been selected.");
+  const originals = new Map();
+  for (const photo of selected) {
+    const relative = photo.originalRelativePath || photo.name;
+    try {
+      originals.set(relative, { handle: await openFile(source, relative), outputPath: relative });
     } catch (error) {
       if (error.name !== "NotFoundError" && error.name !== "TypeMismatchError") throw error;
+      if (relative !== photo.name) {
+        try {
+          originals.set(relative, { handle: await openFile(source, photo.name), outputPath: photo.name });
+        } catch (nameError) {
+          if (nameError.name !== "NotFoundError" && nameError.name !== "TypeMismatchError") throw nameError;
+        }
+      }
     }
   }
   const missing = missingOriginals(album, originals);
   if (missing.length) throw new Error(missingMessage(album, missing));
-  const selected = album.photos.filter(p => p.selected);
-  if (!selected.length) throw new Error("No photos have been selected.");
-  // Always use a new sibling so earlier exports are preserved and never mixed in.
-  let output;
-  for (let index = 1; index <= 1000; index++) {
-    const name = `${sourceName} Selected${index === 1 ? "" : ` (${index})`}`;
-    try { await parent.getDirectoryHandle(name); }
-    catch (error) {
-      if (error.name === "TypeMismatchError") continue;
-      if (error.name !== "NotFoundError") throw error;
-      output = await parent.getDirectoryHandle(name, { create: true });
-      break;
-    }
-  }
-  if (!output) throw new Error("Could not create a new selected folder. Rename an earlier export and try again.");
+  return originals;
+}
+
+export async function copySelectedOriginals(album, directoryPromise, onProgress) {
+  if (!directoryPromise && !window.showDirectoryPicker) throw new Error("Use Download originals to choose the original folder in this browser.");
+  if (album.status !== "selected") throw new Error("The client must submit their selection before extracting originals.");
+  const source = await sourceDirectory(album, directoryPromise || window.showDirectoryPicker({ mode: "readwrite", id: "rd-flip-selection-originals" }));
+  const originals = await selectedOriginals(album, source);
+  const selected = album.photos.filter((photo) => photo.selected);
+  const output = await freshDirectory(source, "Selected");
+  let copied = 0;
+  onProgress?.({ current: 0, total: selected.length });
   for (const photo of selected) {
-    const file = await originals.get(photo.originalRelativePath || photo.name).getFile();
-    const target = await output.getFileHandle(photo.name, { create: true });
-    const writable = await target.createWritable();
-    await writable.write(file);
-    await writable.close();
+    const found = originals.get(photo.originalRelativePath || photo.name);
+    await writeOriginal(output, found.outputPath, found.handle);
+    copied += 1;
+    onProgress?.({ current: copied, total: selected.length });
   }
-  return selected.length;
+  return copied;
 }
 
 function crc32(bytes) {
@@ -67,10 +112,10 @@ function crc32(bytes) {
   return (crc ^ 0xffffffff) >>> 0;
 }
 function header(size) { const bytes = new Uint8Array(size); return { bytes, view: new DataView(bytes.buffer) }; }
-export async function originalsZip(files) {
+export async function originalsZip(files, onProgress) {
   const chunks = [], central = [];
   let offset = 0, centralSize = 0;
-  for (const file of files) {
+  for (const [index, file] of files.entries()) {
     const name = new TextEncoder().encode(`Selected/Images/${file.name}`);
     const bytes = new Uint8Array(await file.arrayBuffer());
     if (bytes.length > 0xffffffff || offset + bytes.length > 0xffffffff) throw new Error("Export is too large for a ZIP. Use Extract selected originals instead.");
@@ -94,6 +139,7 @@ export async function originalsZip(files) {
     central.push(entry.bytes, name);
     centralSize += 46 + name.length;
     offset += 30 + name.length + bytes.length;
+    onProgress?.({ current: index + 1, total: files.length });
   }
   if (files.length > 65535 || offset + centralSize > 0xffffffff) throw new Error("Export is too large. Use Extract selected originals instead.");
   const end = header(22);
@@ -102,16 +148,19 @@ export async function originalsZip(files) {
   end.view.setUint32(12, centralSize, true); end.view.setUint32(16, offset, true);
   return new Blob([...chunks, ...central, end.bytes], { type: "application/zip" });
 }
-export async function downloadOriginals(album, fileList) {
-  const files = Array.from(fileList);
-  const folder = files[0]?.webkitRelativePath?.split("/")[0];
-  if (folder !== folderBasename(album.originalFolderPath)) throw new Error(`Choose the folder saved at "${album.originalFolderPath}". Move the folder back there if it has moved.`);
-  const available = new Map(files.map(f => [f.webkitRelativePath.split("/").slice(1).join("/"), f]));
-  const missing = missingOriginals(album, available);
-  if (missing.length) throw new Error(missingMessage(album, missing));
-  const selected = album.photos.filter(p => p.selected).map(p => available.get(p.originalRelativePath || p.name));
-  if (!selected.length) throw new Error("No photos have been selected.");
-  const url = URL.createObjectURL(await originalsZip(selected));
+export async function downloadOriginals(album, directoryPromise, onProgress) {
+  if (!directoryPromise && !window.showDirectoryPicker) throw new Error("This browser cannot choose a folder for the ZIP.");
+  if (album.status !== "selected") throw new Error("The client must submit their selection before downloading originals.");
+  const source = await sourceDirectory(album, directoryPromise || window.showDirectoryPicker({ mode: "read", id: "rd-flip-selection-originals" }));
+  const originals = await selectedOriginals(album, source);
+  const selected = album.photos.filter((photo) => photo.selected);
+  const files = [];
+  for (const photo of selected) {
+    const found = originals.get(photo.originalRelativePath || photo.name);
+    files.push(await found.handle.getFile());
+  }
+  onProgress?.({ current: 0, total: files.length });
+  const url = URL.createObjectURL(await originalsZip(files, onProgress));
   const link = document.createElement("a");
   link.href = url; link.download = `${album.folderName.replace(/[^a-z0-9_-]/gi, "_")}-selected.zip`; link.click();
   setTimeout(() => URL.revokeObjectURL(url), 60000);
