@@ -122,11 +122,7 @@ export default function PhotoSelectionCreate() {
       router.push(ROUTES.dashboardPhotoSelectionView(album.id));
     } catch (error) {
       await refreshUser().catch(() => {});
-      toast.error(error.message || "Could not save this folder.");
-      if (error.albumId) {
-        router.push(ROUTES.dashboardPhotoSelectionView(error.albumId));
-        return;
-      }
+      toast.error(error.message || "Could not save this folder. No folder was kept and no credit was used.");
       setWork(null);
       setSaving(false);
     }

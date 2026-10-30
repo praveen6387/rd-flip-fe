@@ -50,14 +50,29 @@ async function uploadSelectionFile(id, file) {
 export async function createAlbum({ files, onProgress, ...values }) {
   if (!files?.length) throw new Error("Upload at least one photo.");
   await request("/selection-storage", { cache: "no-store" });
-  const album = (await request(root, json(values))).album;
+  const albumId = crypto.randomUUID();
+  const uploaded = [];
+  let done = 0;
+  onProgress?.({ phase: "upload", current: 0, total: files.length });
   try {
-    await addPhotos(album.id, files, onProgress, true);
-    return album;
+    await runPool(files, async (file) => {
+      const saved = await uploadSelectionFile(albumId, file);
+      uploaded.push(saved);
+      done += 1;
+      onProgress?.({ phase: "upload", current: done, total: files.length });
+    });
+    onProgress?.({ phase: "save", current: files.length, total: files.length });
+    return (await request(root, json({ ...values, id: albumId, photos: uploaded }))).album;
   } catch (error) {
-    const failure = new Error(`${error.message} Your draft folder was saved. Retry there without using another credit.`);
-    failure.albumId = album.id;
-    throw failure;
+    const keys = uploaded.map((item) => item.objectKey).filter(Boolean);
+    if (keys.length) {
+      await request(`/selection-upload/${albumId}`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ keys }),
+      }).catch(() => {});
+    }
+    throw error;
   }
 }
 export async function addPhotos(id, files, onProgress, publish = false) {
