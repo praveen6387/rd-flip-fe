@@ -6,6 +6,7 @@ import { Menu } from "lucide-react";
 import { useAuth } from "@/components/auth";
 import UserMenu from "@/components/auth/_builder/UserMenu";
 import MobileSidebar from "@/lib/dashboard/Sidebar/MobileSidebar";
+import GoogleTranslate from "@/components/GoogleTranslate";
 import ThemeToggle from "@/lib/dashboard/_builder/ThemeToggle";
 import CreditsDropdown from "@/lib/dashboard/_builder/CreditsDropdown";
 import { useDashboardTheme } from "@/lib/dashboard/ThemeProvider";
@@ -83,6 +84,7 @@ export default function DashboardHeader() {
         <div className="flex shrink-0 items-center gap-2 sm:gap-3">
           {user ? <CreditsDropdown user={user} isDark={isDark} /> : null}
           <ThemeToggle />
+          <GoogleTranslate appearance={isDark ? "dark" : "light"} />
           {user ? (
             <UserMenu
               user={user}

@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Languages } from "lucide-react";
+import { cn } from "@/lib/cn";
 
 const SCRIPT_ID = "google-translate-script";
 
@@ -20,8 +21,10 @@ function protectReactFromTranslate() {
   Node.prototype.__rdFlipTranslateGuard = true;
 }
 
-export default function GoogleTranslate() {
+export default function GoogleTranslate({ appearance = "light" }) {
   const [open, setOpen] = useState(false);
+  const rootRef = useRef(null);
+  const dark = appearance === "dark";
 
   useEffect(() => {
     protectReactFromTranslate();
@@ -52,22 +55,46 @@ export default function GoogleTranslate() {
     return undefined;
   }, []);
 
+  useEffect(() => {
+    if (!open) return undefined;
+    function onPointer(event) {
+      if (!rootRef.current?.contains(event.target)) setOpen(false);
+    }
+    function onKey(event) {
+      if (event.key === "Escape") setOpen(false);
+    }
+    document.addEventListener("pointerdown", onPointer);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("pointerdown", onPointer);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+
   return (
-    <div className="notranslate pointer-events-none fixed top-3 right-3 z-[45]" translate="no">
-      <div className="pointer-events-auto flex flex-col items-end">
-        <button
-          type="button"
-          aria-expanded={open}
-          aria-controls="google_translate_element"
-          onClick={() => setOpen((current) => !current)}
-          className="inline-flex items-center gap-1.5 rounded-full border border-stone-200 bg-white/95 px-3 py-1.5 text-xs font-semibold text-stone-800 shadow-lg backdrop-blur"
-        >
-          <Languages className="size-3.5" />
-          Translate
-        </button>
-        <div className={`w-64 overflow-hidden rounded-2xl border border-stone-200 bg-white/95 text-stone-800 shadow-lg backdrop-blur ${open ? "mt-2 p-2.5" : "pointer-events-none h-0 border-0 p-0 opacity-0 shadow-none"}`}>
-          <div id="google_translate_element" />
-        </div>
+    <div ref={rootRef} className="notranslate relative" translate="no">
+      <button
+        type="button"
+        aria-expanded={open}
+        aria-controls="google_translate_element"
+        aria-label="Translate"
+        onClick={() => setOpen((current) => !current)}
+        className={cn(
+          "grid size-10 place-items-center rounded-full border transition",
+          dark
+            ? "border-white/25 bg-white/10 text-white hover:bg-white/16"
+            : "border-slate-200/80 bg-white/70 text-slate-700 hover:bg-white"
+        )}
+      >
+        <Languages className="size-4" strokeWidth={1.75} />
+      </button>
+      <div
+        className={cn(
+          "absolute top-full right-0 z-50 mt-2 w-64 rounded-2xl border border-stone-200 bg-white p-2.5 text-left text-stone-800 shadow-lg",
+          open ? "" : "pointer-events-none invisible h-0 overflow-hidden border-0 p-0"
+        )}
+      >
+        <div id="google_translate_element" />
       </div>
     </div>
   );

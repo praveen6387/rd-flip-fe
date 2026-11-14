@@ -9,6 +9,7 @@ import GalleryFilterBar from "../Gallery/FilterBar";
 import GalleryFloatingBar from "../Gallery/FloatingBar";
 import GalleryLightbox from "../Gallery/Lightbox";
 import NexpicCanvas from "../_builder/NexpicCanvas";
+import GoogleTranslate from "@/components/GoogleTranslate";
 
 function projectFrom(album) {
   const rules = album?.rules || {};
@@ -410,7 +411,10 @@ export default function ClientSelection({ token }) {
   if (phase === "check") return <NexpicCanvas className="grid min-h-screen place-items-center font-heading text-stone-500">Opening gallery…</NexpicCanvas>;
   if (phase === "code") {
     return (
-      <main className="grid min-h-screen place-items-center bg-stone-950/90 p-4">
+      <main className="relative grid min-h-screen place-items-center bg-stone-950/90 p-4">
+        <div className="absolute top-4 right-4 z-10">
+          <GoogleTranslate appearance="dark" />
+        </div>
         <form onSubmit={unlock} className="w-full max-w-md rounded-2xl border border-stone-200 bg-white p-8 text-center shadow-2xl">
           <div className="mx-auto mb-4 grid size-14 place-items-center rounded-2xl border border-amber-200 bg-amber-50 text-amber-700"><KeyRound className="size-7" /></div>
           <h1 className="font-heading text-2xl font-bold text-stone-900">Private photo gallery</h1>
@@ -429,7 +433,10 @@ export default function ClientSelection({ token }) {
       <header className="border-b border-stone-200 bg-gradient-to-b from-stone-100/80 to-transparent">
         <div className="flex items-center justify-between border-b border-stone-200/70 bg-white/70 px-4 py-2.5 text-xs sm:px-8">
           <span className="font-heading text-sm font-bold tracking-wide">RD Flip · Client selection</span>
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 font-semibold text-emerald-800"><span className="size-2 animate-ping rounded-full bg-emerald-400" /><Users className="size-3.5" />Live family sync</span>
+          <div className="flex items-center gap-2">
+            <GoogleTranslate />
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 font-semibold text-emerald-800"><span className="size-2 animate-ping rounded-full bg-emerald-400" /><Users className="size-3.5" />Live family sync</span>
+          </div>
         </div>
         <div className="mx-auto max-w-[1800px] px-4 py-6 sm:px-8">
           <p className="text-xs font-semibold tracking-[0.2em] text-amber-700 uppercase">{album.clientName}</p>

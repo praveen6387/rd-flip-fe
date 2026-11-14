@@ -1,6 +1,5 @@
 import { Cormorant_Garamond, Geist, Geist_Mono, Playfair_Display } from "next/font/google";
 import Script from "next/script";
-import GoogleTranslate from "@/components/GoogleTranslate";
 import Providers from "@/components/Providers";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -48,7 +47,6 @@ export default function RootLayout({ children }) {
           <Providers>
             {children}
             <Toaster />
-            <GoogleTranslate />
           </Providers>
         </TooltipProvider>
         <Script

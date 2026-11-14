@@ -5,6 +5,7 @@ import { useMobileFlipChrome } from "@/hooks/use-mobile-flip-chrome";
 import { isFlipbookExpired } from "@/lib/flipbook-active";
 import ClassicFlipEngine from "./_builder/ClassicFlipEngine";
 import ViewerBackdrop from "./_builder/ViewerBackdrop";
+import GoogleTranslate from "@/components/GoogleTranslate";
 import ViewerEngagement from "./_builder/ViewerEngagement";
 import ViewerShareMenu from "./_builder/ViewerShareMenu";
 import { FlipSoundProvider, useFlipSound } from "./_builder/useFlipSound";
@@ -91,6 +92,7 @@ function FlipbookViewInner({ flipbook }) {
             ) : null}
           </div>
           <div className="pointer-events-auto flex items-center justify-end gap-1.5 sm:gap-2">
+            <GoogleTranslate appearance="dark" />
             <ViewerEngagement flipId={flipbook.flip_id} />
             <ViewerShareMenu title={flipbook.title} />
           </div>

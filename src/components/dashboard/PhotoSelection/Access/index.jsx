@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { KeyRound, Loader2, Lock } from "lucide-react";
+import GoogleTranslate from "@/components/GoogleTranslate";
 import { grantedSelection, grantSelection } from "@/lib/photo-selection/grant";
 
 export default function SelectionAccess() {
@@ -38,7 +39,10 @@ export default function SelectionAccess() {
 
   if (!ready) return <main className="grid min-h-screen place-items-center bg-stone-950" />;
   return (
-    <main className="grid min-h-screen place-items-center bg-stone-950 p-4">
+    <main className="relative grid min-h-screen place-items-center bg-stone-950 p-4">
+      <div className="absolute top-4 right-4 z-10">
+        <GoogleTranslate appearance="dark" />
+      </div>
       <form onSubmit={submit} className="w-full max-w-md rounded-2xl border border-stone-200 bg-white p-8 text-center shadow-2xl">
         <div className="mx-auto mb-4 grid size-14 place-items-center rounded-2xl border border-amber-200 bg-amber-50 text-amber-700"><KeyRound className="size-7" /></div>
         <h1 className="font-heading text-2xl font-bold text-stone-900">Private photo gallery</h1>

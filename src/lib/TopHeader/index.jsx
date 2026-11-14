@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/cn";
 import { useLandingTheme } from "@/lib/landing/ThemeProvider";
+import GoogleTranslate from "@/components/GoogleTranslate";
 import AuthButtons from "./_builder/AuthButtons";
 import LandingThemeToggle from "./_builder/LandingThemeToggle";
 import Logo from "./_builder/Logo";
@@ -52,6 +53,7 @@ export default function TopHeader() {
         <NavLinks pathname={pathname} active={active} light={isDark} />
         <div className="flex items-center gap-2 sm:gap-3">
           <LandingThemeToggle light={isDark} />
+          <GoogleTranslate appearance={isDark ? "dark" : "light"} />
           <AuthButtons light={isDark} />
         </div>
       </div>
