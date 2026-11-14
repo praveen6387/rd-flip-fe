@@ -174,6 +174,9 @@ export default function ClientSelection({ token }) {
   const pending = useRef(new Set());
   const pendingMarks = useRef(new Map());
   const sawLock = useRef(false);
+  const zoomTrail = useRef([]);
+  const zoomAt = useRef(-1);
+  const [zoomTick, setZoomTick] = useState(0);
 
   function showAlbum(next, nextAccess) {
     sawLock.current = next?.status === "selected";
@@ -300,6 +303,49 @@ export default function ClientSelection({ token }) {
     }
   }
 
+  function rememberZoom(photo) {
+    if (!photo) return;
+    const trail = zoomTrail.current.slice(0, zoomAt.current + 1);
+    if (trail[trail.length - 1]?.id !== photo.id) {
+      trail.push(photo);
+      zoomTrail.current = trail;
+      zoomAt.current = trail.length - 1;
+    }
+    setOpenPhoto(photo);
+    setZoomTick((value) => value + 1);
+    if (!window.history.state?.selectionZoom) window.history.pushState({ selectionZoom: true }, "", window.location.href);
+  }
+
+  function moveZoom(step) {
+    const nextAt = zoomAt.current + step;
+    const photo = zoomTrail.current[nextAt];
+    if (!photo) return;
+    zoomAt.current = nextAt;
+    setOpenPhoto(photo);
+    setZoomTick((value) => value + 1);
+  }
+
+  function closeZoom() {
+    if (window.history.state?.selectionZoom) {
+      window.history.back();
+      return;
+    }
+    zoomTrail.current = [];
+    zoomAt.current = -1;
+    setOpenPhoto(null);
+  }
+
+  useEffect(() => {
+    function onPop() {
+      if (window.history.state?.selectionZoom) return;
+      zoomTrail.current = [];
+      zoomAt.current = -1;
+      setOpenPhoto(null);
+    }
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, []);
+
   function choose(photo, nextSelected) {
     if (album.status === "selected") { setError("This gallery has been confirmed and locked. Selections cannot be changed unless reopened by your photographer."); return; }
     if (nextSelected) {
@@ -395,10 +441,10 @@ export default function ClientSelection({ token }) {
       {error ? <p role="alert" className="mx-auto mt-4 max-w-[1800px] px-4 text-sm text-rose-600 sm:px-8">{error}</p> : null}
       <GalleryFilterBar categories={categories} category={category} onCategory={setCategory} subfolders={subfolders} subfolder={subfolder} onSubfolder={setSubfolder} status={status} onStatus={setStatus} selectedCount={album.selectedCount} totalCount={photos.length} starredCount={photos.filter((photo) => photo.rating > 0).length} coverCount={photos.filter((photo) => photo.coverType).length} query={query} onQuery={setQuery} />
       <main className="mx-auto max-w-[1800px] px-3 py-5 sm:px-6">
-        {visible.length ? <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">{visible.map((photo) => <GalleryPhotoCard key={photo.id} photo={photo} locked={locked} watermark={album.watermark} onToggle={choose} onOpen={setOpenPhoto} />)}</div> : <div className="py-20 text-center"><Camera className="mx-auto mb-3 size-12 text-stone-300" /><h2 className="font-heading text-xl font-bold text-stone-700">No photographs found</h2><p className="mt-1 text-xs text-stone-400">Try another filter or clear the search.</p></div>}
+        {visible.length ? <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">{visible.map((photo) => <GalleryPhotoCard key={photo.id} photo={photo} locked={locked} watermark={album.watermark} onToggle={choose} onOpen={rememberZoom} />)}</div> : <div className="py-20 text-center"><Camera className="mx-auto mb-3 size-12 text-stone-300" /><h2 className="font-heading text-xl font-bold text-stone-700">No photographs found</h2><p className="mt-1 text-xs text-stone-400">Try another filter or clear the search.</p></div>}
       </main>
       {photos.length ? <GalleryFloatingBar project={project} rules={album.rules} selectedCount={album.selectedCount} totalCount={photos.length} saving={saving} locked={locked} onReview={() => setReviewOpen(true)} onConfirm={() => setConfirmOpen(true)} onSummary={() => setSummaryOpen(true)} /> : null}
-      {openPhoto ? <GalleryLightbox photo={photos.find((item) => item.id === openPhoto.id) || openPhoto} photos={visible.length ? visible : photos} locked={locked} watermark={album.watermark} onClose={() => setOpenPhoto(null)} onNavigate={setOpenPhoto} onToggle={choose} onUpdate={update} /> : null}
+      {openPhoto ? <GalleryLightbox photo={photos.find((item) => item.id === openPhoto.id) || openPhoto} photos={visible.length ? visible : photos} locked={locked} watermark={album.watermark} canBack={zoomAt.current > 0} canForward={zoomAt.current < zoomTrail.current.length - 1} onBack={() => moveZoom(-1)} onForward={() => moveZoom(1)} onClose={closeZoom} onNavigate={rememberZoom} onToggle={choose} onUpdate={update} /> : null}
       {extraOpen ? <div className="fixed inset-0 z-40 grid place-items-center bg-stone-950/70 p-4"><div className="w-full max-w-md rounded-2xl bg-white p-6 text-stone-900"><h2 className="font-heading text-xl font-bold">Extra photo selection notice</h2><p className="mt-2 text-sm text-stone-600">Your package includes {album.rules?.includedPhotos} photos. Photos after that are extra{album.rules?.extraSheetPrice ? ` at ₹${album.rules.extraSheetPrice} per sheet` : ""}.</p><div className="mt-5 grid grid-cols-2 gap-2"><button type="button" onClick={() => { setExtraOpen(false); setPendingPhoto(null); }} className="rounded-xl border px-3 py-2.5 text-sm font-bold"><X className="mr-1 inline size-4 text-rose-500" />Cancel</button><button type="button" onClick={() => { setExtraAllowed(true); setExtraOpen(false); if (pendingPhoto) persist(pendingPhoto, true); setPendingPhoto(null); }} className="rounded-xl bg-amber-700 px-3 py-2.5 text-sm font-bold text-white">Continue</button></div></div></div> : null}
       {reviewOpen ? <div className="fixed inset-0 z-40 grid place-items-center bg-stone-950/70 p-4"><div className="max-h-[80vh] w-full max-w-lg overflow-auto rounded-2xl bg-white p-6"><div className="flex items-center justify-between"><h2 className="font-heading text-xl font-bold">Review selected photos</h2><button type="button" onClick={() => setReviewOpen(false)} aria-label="Close"><X /></button></div><p className="mt-1 text-xs text-stone-500">You have chosen {selectedPhotos.length} photograph{selectedPhotos.length === 1 ? "" : "s"} for your album.</p><ul className="mt-4 space-y-2 text-sm">{selectedPhotos.map((photo) => <li key={photo.id} className="flex items-center justify-between gap-3 border-b border-stone-100 py-2"><span className="truncate">{photo.originalFilename}</span><span className="shrink-0 text-xs text-stone-500">{photo.rating ? `${photo.rating}★ ` : ""}{photo.coverType || ""}</span></li>)}</ul><div className="mt-4 flex justify-end gap-2 border-t border-stone-100 pt-3"><button type="button" onClick={() => setReviewOpen(false)} className="rounded-xl border px-4 py-2 text-xs font-semibold">Back to gallery</button>{!locked && selectedPhotos.length ? <button type="button" onClick={() => { setReviewOpen(false); setConfirmOpen(true); }} className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-semibold text-white"><CheckCircle2 className="size-4" />Proceed to final confirmation</button> : null}</div></div></div> : null}
       {confirmOpen && !summaryOpen ? <ConfirmLock album={album} name={confirmName} notes={confirmNotes} error={confirmError} busy={busy} onName={(value) => { setConfirmName(value); setConfirmError(""); }} onNotes={setConfirmNotes} onClose={() => { setConfirmOpen(false); setConfirmError(""); }} onSubmit={confirmSelection} /> : null}

@@ -1,5 +1,6 @@
 import { Cormorant_Garamond, Geist, Geist_Mono, Playfair_Display } from "next/font/google";
 import Script from "next/script";
+import GoogleTranslate from "@/components/GoogleTranslate";
 import Providers from "@/components/Providers";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -39,13 +40,15 @@ export default function RootLayout({ children }) {
   return (
     <html
       lang="en"
+      suppressHydrationWarning
       className={`${geistSans.variable} ${geistMono.variable} ${playfair.variable} ${cormorant.variable} h-full scroll-smooth antialiased`}
     >
-      <body className="relative flex min-h-full flex-col bg-[#faf1fb] text-slate-900">
+      <body suppressHydrationWarning className="relative flex min-h-full flex-col bg-[#faf1fb] text-slate-900">
         <TooltipProvider>
           <Providers>
             {children}
             <Toaster />
+            <GoogleTranslate />
           </Providers>
         </TooltipProvider>
         <Script

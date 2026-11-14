@@ -8,11 +8,12 @@ import PagePanel from "@/components/dashboard/_builder/PagePanel";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { useDashboardTheme } from "@/lib/dashboard/ThemeProvider";
-import { getAlbum, deleteAlbum, removePhoto, reopenAlbum } from "@/lib/photo-selection/store";
+import { getAlbum, deleteAlbum, removePhoto, reopenAlbum, rotatePhoto } from "@/lib/photo-selection/store";
 import { copySelectedOriginals, downloadOriginals, folderBasename } from "@/lib/photo-selection/originals";
 import { ROUTES } from "@/lib/routes";
 import { cn } from "@/lib/cn";
 import { selectionStatus, selectionStatusClass } from "../_builder/panel";
+import { rotationClass } from "../Gallery/rotation";
 import { selectionRuleText } from "@/lib/photo-selection/rules";
 import SelectionProgress from "../_builder/SelectionProgress";
 import NexpicCanvas from "../_builder/NexpicCanvas";
@@ -180,9 +181,10 @@ export default function PhotoSelectionView({ albumId, initialAlbum = null, initi
     <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
       {album.photos.filter((photo) => (folder === "All" || photo.category === folder) && (nested === "All" || photo.subfolder === nested) && (picked === "selected" ? photo.selected : picked === "unselected" ? !photo.selected : true)).map(photo => <figure key={photo.id} className={`overflow-hidden rounded-2xl bg-stone-100 ${photo.selected ? "ring-4 ring-rose-500" : ""}`}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={photo.imageUrl} alt={photo.name} className="aspect-square w-full object-cover" />
+        <img src={photo.imageUrl} alt={photo.name} className={`aspect-square w-full object-cover ${rotationClass(photo.rotation)}`} />
         <figcaption className="truncate p-2 text-xs">{photo.selected ? "✓ Selected · " : ""}{photo.rating ? `${photo.rating}★ · ` : ""}{photo.coverType ? `${photo.coverType} cover · ` : ""}{photo.notes ? `${photo.notes} · ` : ""}{photo.name}</figcaption>
         {canEditPhotos && <button disabled={busy} className="px-2 pb-2 text-xs text-rose-500" onClick={() => action(() => removePhoto(albumId, photo.id))}>Remove</button>}
+        {!selected ? <button disabled={busy} className="px-2 pb-2 text-xs font-semibold text-stone-700" onClick={() => action(() => rotatePhoto(albumId, photo.id))}>Rotate</button> : null}
       </figure>)}
     </div>
     <SelectionProgress state={work} isDark={isDark} />

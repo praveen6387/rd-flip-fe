@@ -102,6 +102,7 @@ export async function addPhotos(id, files, onProgress, publish = false) {
     throw error;
   }
 }
+export async function rotatePhoto(albumId, id) { return (await request(`${root}${albumId}/photos/${id}/`, json({ action: "rotate" }))).photo; }
 export async function removePhoto(albumId, id) { await request(`${root}${albumId}/photos/${id}/`, { method: "DELETE" }); }
 export async function deleteAlbum(id) { await request(`${root}${id}/`, { method: "DELETE" }); }
 function withSelectionAccess(options, access = {}) {

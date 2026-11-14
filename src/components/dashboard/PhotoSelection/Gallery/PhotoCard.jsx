@@ -2,11 +2,13 @@
 import { useRef, useState } from "react";
 import { Check, FileText, Folder, Heart, Star, ZoomIn } from "lucide-react";
 import Watermark from "./Watermark";
+import { rotationClass } from "./rotation";
 
 export default function GalleryPhotoCard({ photo, onToggle, onOpen, locked, watermark }) {
   const [feedback, setFeedback] = useState(null);
   const clickTimer = useRef(null);
   const lastTouch = useRef(0);
+  const skipClick = useRef(false);
 
   function toggle() {
     if (locked) return;
@@ -16,33 +18,58 @@ export default function GalleryPhotoCard({ photo, onToggle, onOpen, locked, wate
     onToggle(photo, next);
   }
 
-  function click() {
-    if (clickTimer.current) {
-      clearTimeout(clickTimer.current);
-      clickTimer.current = null;
-      toggle();
-      return;
-    }
+  function openLater() {
+    if (clickTimer.current) clearTimeout(clickTimer.current);
     clickTimer.current = setTimeout(() => {
       clickTimer.current = null;
       onOpen(photo);
-    }, 240);
+    }, 280);
+  }
+
+  function click() {
+    if (skipClick.current) {
+      skipClick.current = false;
+      return;
+    }
+    if (clickTimer.current) return;
+    openLater();
+  }
+
+  function doubleClick(event) {
+    event.preventDefault();
+    event.stopPropagation();
+    if (clickTimer.current) {
+      clearTimeout(clickTimer.current);
+      clickTimer.current = null;
+    }
+    toggle();
+  }
+
+  function touchEnd() {
+    const now = Date.now();
+    if (now - lastTouch.current < 320) {
+      if (clickTimer.current) clearTimeout(clickTimer.current);
+      clickTimer.current = null;
+      skipClick.current = true;
+      lastTouch.current = 0;
+      toggle();
+      return;
+    }
+    lastTouch.current = now;
   }
 
   return (
     <div
       onClick={click}
-      onDoubleClick={(event) => { event.stopPropagation(); if (clickTimer.current) clearTimeout(clickTimer.current); clickTimer.current = null; toggle(); }}
-      onTouchEnd={() => {
-        const now = Date.now();
-        if (now - lastTouch.current < 320) { if (clickTimer.current) clearTimeout(clickTimer.current); clickTimer.current = null; toggle(); lastTouch.current = 0; }
-        else lastTouch.current = now;
-      }}
+      onDoubleClick={doubleClick}
+      onTouchEnd={touchEnd}
       className={`group relative cursor-pointer select-none overflow-hidden rounded-2xl bg-stone-100 shadow-sm transition duration-300 hover:shadow-xl ${photo.isSelected ? "ring-4 ring-rose-500 shadow-rose-500/15" : "hover:ring-2 hover:ring-stone-400"}`}
     >
       <div className="relative aspect-[4/3] overflow-hidden bg-stone-200">
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={photo.thumbnailUrl} alt={photo.originalFilename} draggable="false" className="pointer-events-none h-full w-full object-cover transition duration-500 group-hover:scale-105" />
+        <div className="size-full transition duration-500 group-hover:scale-105">
+          <img src={photo.thumbnailUrl} alt={photo.originalFilename} draggable="false" className={`pointer-events-none h-full w-full object-cover ${rotationClass(photo.rotation)}`} />
+        </div>
         <Watermark watermark={watermark} />
         {feedback ? <div className="pointer-events-none absolute inset-0 z-30 grid place-items-center">{feedback === "selected" ? <div className="selection-heart-pop grid size-20 place-items-center rounded-full bg-rose-600/95 text-white ring-4 ring-white/70"><Heart className="size-11 fill-white" /></div> : <div className="selection-heart-pop grid size-20 place-items-center rounded-full bg-stone-900/95 text-2xl font-black text-rose-400 ring-4 ring-white/40">✕</div>}</div> : null}
         <button type="button" disabled={locked} onClick={(event) => { event.stopPropagation(); toggle(); }} className={`absolute top-3 right-3 z-10 grid size-10 place-items-center rounded-full backdrop-blur ${photo.isSelected ? "bg-rose-500 text-white ring-2 ring-white/80" : "bg-black/45 text-white"}`} aria-label={photo.isSelected ? "Deselect photo" : "Select photo"}><Heart className={`size-5 ${photo.isSelected ? "fill-white" : ""}`} /></button>

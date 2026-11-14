@@ -1,7 +1,8 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { Check, Folder, FolderTree, Heart, Image as ImageIcon, Pencil, Plus, UploadCloud, X } from "lucide-react";
+import { Check, Folder, FolderTree, Heart, Image as ImageIcon, Pencil, Plus, RotateCw, UploadCloud, X } from "lucide-react";
+import { rotationClass } from "../Gallery/rotation";
 
 export const OCCASIONS = ["Pre-Wedding", "Engagement", "Tilak", "Haldi", "Mehndi", "Sangeet", "Wedding", "Reception", "Post-Wedding", "Anniversary", "Birthday", "Family & Guests", "Other Events"];
 
@@ -39,7 +40,7 @@ async function scanEntry(entry, path = "") {
   return nested.flat();
 }
 
-export default function OccasionUpload({ photos = [], disabled = false, onUpload }) {
+export default function OccasionUpload({ photos = [], disabled = false, onUpload, onRotate }) {
   const folderRef = useRef(null);
   const fileRef = useRef(null);
   const [active, setActive] = useState("Pre-Wedding");
@@ -241,7 +242,8 @@ export default function OccasionUpload({ photos = [], disabled = false, onUpload
               <figure key={photo.id} className="overflow-hidden rounded-xl border border-stone-200 bg-white shadow-sm">
                 <div className="relative aspect-[4/3] bg-stone-100">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={photo.imageUrl} alt={photo.name} className="size-full object-cover" />
+                  <img src={photo.imageUrl} alt={photo.name} className={`size-full object-cover ${rotationClass(photo.rotation)}`} />
+                  <button type="button" disabled={disabled} onClick={() => onRotate?.(photo)} className="absolute right-2 bottom-2 grid size-8 place-items-center rounded-full bg-stone-950/75 text-white disabled:opacity-40" aria-label={`Rotate ${photo.name}`}><RotateCw className="size-4" /></button>
                   {photo.selected ? <span className="absolute top-2 left-2 inline-flex items-center gap-1 rounded-full bg-rose-600 px-2 py-0.5 text-[10px] font-bold text-white"><Heart className="size-3 fill-white" />Selected</span> : null}
                 </div>
                 <figcaption className="flex items-center justify-between gap-2 border-t border-stone-100 p-2 text-[11px]">

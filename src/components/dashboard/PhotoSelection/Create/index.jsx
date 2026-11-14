@@ -10,7 +10,7 @@ import { useAuth } from "@/components/auth";
 import { hasPhotoSelectionCredit } from "@/lib/credits";
 import { updateSocialLinks, uploadStudioLogo } from "@/lib/api/client/auth";
 import { ROUTES } from "@/lib/routes";
-import { addPhotos, createDraft, getAlbum, publishAlbum, saveDraft } from "@/lib/photo-selection/store";
+import { addPhotos, createDraft, getAlbum, publishAlbum, rotatePhoto, saveDraft } from "@/lib/photo-selection/store";
 import { acceptedSelectionFiles, clientShareMessage } from "../_builder/panel";
 import { prepareSelectionPhotos } from "../_builder/prepare";
 import SelectionProgress from "../_builder/SelectionProgress";
@@ -257,6 +257,17 @@ export default function PhotoSelectionCreate() {
     return true;
   }
 
+  async function rotateChosen(photo) {
+    if (!albumId || !photo?.id) return;
+    setError("");
+    try {
+      const saved = await rotatePhoto(albumId, photo.id);
+      setPhotos((current) => current.map((item) => item.id === photo.id ? { ...item, rotation: saved.rotation } : item));
+    } catch (rotateError) {
+      setError(rotateError.message || "Could not rotate this photo.");
+    }
+  }
+
   async function chooseLogo(event) {
     const file = event.target.files?.[0];
     event.target.value = "";
@@ -383,7 +394,7 @@ export default function PhotoSelectionCreate() {
               </div>
             </div>
           ) : null}
-          {step === 2 ? <OccasionUpload photos={photos} disabled={Boolean(work) || !albumId} onUpload={uploadChosen} /> : null}
+          {step === 2 ? <OccasionUpload photos={photos} disabled={Boolean(work) || !albumId} onUpload={uploadChosen} onRotate={rotateChosen} /> : null}
           {step === 3 ? (
             <div>
               <div className="mb-4">
