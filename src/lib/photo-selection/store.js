@@ -16,6 +16,8 @@ export async function listAlbums() { return (await request(root)).albums; }
 export async function getAlbum(id) { return (await request(`${root}${id}/`)).album; }
 export async function listPhotos(id) { return (await getAlbum(id)).photos; }
 export async function publishAlbum(id) { return (await request(`${root}${id}/`, json({ action: "publish" }))).album; }
+export async function createDraft(values) { return (await request(root, json({ ...values, photos: [] }))).album; }
+export async function saveDraft(id, values) { return (await request(`${root}${id}/`, json({ action: "save", ...values }))).album; }
 const UPLOAD_CONCURRENCY = 6;
 
 async function runPool(items, worker) {
@@ -116,4 +118,19 @@ export async function getPublicAlbum(token, access = {}) {
 }
 export async function submitSelection(token, selectedIds, access = {}) {
   return (await request(`${root}public/${token}/`, withSelectionAccess(json({ selectedIds }), access), true)).album;
+}
+export async function togglePublicPhoto(token, photoId, selected, access = {}) {
+  return request(`${root}public/${token}/photos/${photoId}/`, withSelectionAccess(json({ selected }), access), true);
+}
+export async function updatePublicPhoto(token, photoId, details, access = {}) {
+  return request(`${root}public/${token}/photos/${photoId}/`, withSelectionAccess(json(details), access), true);
+}
+export async function confirmPublicSelection(token, details, access = {}) {
+  return (await request(`${root}public/${token}/confirm/`, withSelectionAccess(json(details), access), true)).album;
+}
+export async function syncPublicSelection(token, access = {}) {
+  return request(`${root}public/${token}/sync/`, withSelectionAccess({ cache: "no-store" }, access), true);
+}
+export async function reopenAlbum(id) {
+  return (await request(`${root}${id}/`, json({ action: "reopen" }))).album;
 }

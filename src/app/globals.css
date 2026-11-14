@@ -839,3 +839,14 @@
   display: block;
   background: transparent;
 }
+
+@keyframes selection-heart-pop {
+  0% { opacity: 0; transform: scale(0.3); }
+  40% { opacity: 1; transform: scale(1.25); }
+  70% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(0.85); }
+}
+
+.selection-heart-pop {
+  animation: selection-heart-pop 0.75s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}

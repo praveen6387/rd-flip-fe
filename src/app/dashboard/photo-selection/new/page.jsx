@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { PhotoSelectionCreate } from "@/components/dashboard";
 
 export const metadata = {
@@ -5,5 +6,9 @@ export const metadata = {
 };
 
 export default function PhotoSelectionCreatePage() {
-  return <PhotoSelectionCreate />;
+  return (
+    <Suspense fallback={null}>
+      <PhotoSelectionCreate />
+    </Suspense>
+  );
 }

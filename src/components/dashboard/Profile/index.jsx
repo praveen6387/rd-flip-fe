@@ -15,6 +15,7 @@ import {
 import { Area, AreaChart, Pie, PieChart } from "recharts";
 import PagePanel from "@/components/dashboard/_builder/PagePanel";
 import SocialLinks from "./_builder/SocialLinks";
+import WatermarkSettings from "./_builder/WatermarkSettings";
 import { ChartContainer } from "@/components/ui/chart";
 import {
   Tooltip,
@@ -703,6 +704,7 @@ export default function Profile() {
         </section>
 
         <SocialLinks user={user} isDark={isDark} />
+        <WatermarkSettings user={user} isDark={isDark} />
       </div>
     </PagePanel>
   );

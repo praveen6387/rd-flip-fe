@@ -10,14 +10,21 @@ export function selectionPanel(isDark, className) {
   );
 }
 
+export function selectionStage(album) {
+  if (album.status === "selected") return "Locked";
+  if (album.status === "pending" && album.rules?.confirmedByName) return "Unlocked";
+  if (album.status === "draft" || !album.photoCount) return "Draft";
+  if (album.selectedCount > 0) return "InProgress";
+  return "Uploaded";
+}
+
 export function selectionStatus(album) {
-  if (album.status === "selected") {
-    return { label: "Selected", hint: `${album.selectedCount} of ${album.photoCount} photos selected` };
-  }
-  if (album.status === "draft") {
-    return { label: "Draft", hint: "Finish the upload to share this folder" };
-  }
-  return { label: "Waiting for client", hint: "Shared with the client" };
+  const stage = selectionStage(album);
+  if (stage === "Locked") return { label: "Confirmed & Locked", hint: `${album.selectedCount} of ${album.photoCount} photos confirmed` };
+  if (stage === "Unlocked") return { label: "Reopened • Unlocked", hint: "Reopened so the client can change the selection" };
+  if (stage === "InProgress") return { label: "Selection In Progress", hint: `${album.selectedCount} of ${album.photoCount} photos selected` };
+  if (stage === "Uploaded") return { label: "Uploaded", hint: "Shared and waiting for the client" };
+  return { label: "Draft", hint: "Resume setup to finish this gallery" };
 }
 
 export function selectionStatusClass(status, isDark) {

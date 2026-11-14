@@ -1,21 +1,38 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { ArrowLeft, Download, FileText, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import PagePanel from "@/components/dashboard/_builder/PagePanel";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { useDashboardTheme } from "@/lib/dashboard/ThemeProvider";
-import { getAlbum, addPhotos, deleteAlbum, removePhoto, publishAlbum } from "@/lib/photo-selection/store";
+import { getAlbum, deleteAlbum, removePhoto, reopenAlbum } from "@/lib/photo-selection/store";
 import { copySelectedOriginals, downloadOriginals, folderBasename } from "@/lib/photo-selection/originals";
 import { ROUTES } from "@/lib/routes";
 import { cn } from "@/lib/cn";
-import { selectionPanel, selectionStatus, selectionStatusClass } from "../_builder/panel";
-import { acceptedSelectionFiles } from "../_builder/panel";
-import { prepareSelectionPhotos } from "../_builder/prepare";
+import { selectionStatus, selectionStatusClass } from "../_builder/panel";
+import { selectionRuleText } from "@/lib/photo-selection/rules";
 import SelectionProgress from "../_builder/SelectionProgress";
+
+function csvCell(value) {
+  return `"${String(value ?? "").replaceAll('"', '""')}"`;
+}
+
+function downloadSelectedNames(album) {
+  const rows = (album.photos || []).filter((photo) => photo.selected);
+  const lines = [
+    ["filename", "folder", "rating", "cover", "notes"].join(","),
+    ...rows.map((photo) => [photo.name, photo.originalRelativePath || "", photo.rating || "", photo.coverType || "", photo.notes || ""].map(csvCell).join(",")),
+  ];
+  const url = URL.createObjectURL(new Blob([lines.join("\n")], { type: "text/csv;charset=utf-8" }));
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `${(album.folderName || "selection").replace(/[^a-zA-Z0-9_-]/g, "_")}_Selected_Filenames.csv`;
+  link.click();
+  URL.revokeObjectURL(url);
+}
 
 export default function PhotoSelectionView({ albumId, initialAlbum = null, initialError = "" }) {
   const { isDark } = useDashboardTheme();
@@ -26,9 +43,16 @@ export default function PhotoSelectionView({ albumId, initialAlbum = null, initi
   const [work, setWork] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [exportJob, setExportJob] = useState(null);
+  const [folder, setFolder] = useState("All");
+  const [nested, setNested] = useState("All");
+  const [picked, setPicked] = useState(initialAlbum?.status === "selected" ? "selected" : "all");
+  const filterTouched = useRef(false);
+  const categories = useMemo(() => [...new Set((album?.photos || []).map((photo) => photo.category).filter(Boolean))], [album]);
+  const subfolders = useMemo(() => [...new Set((album?.photos || []).filter((photo) => folder === "All" || photo.category === folder).map((photo) => photo.subfolder).filter(Boolean))], [album, folder]);
   useEffect(() => {
     setAlbum(initialAlbum);
     setError(initialError || "");
+    if (!filterTouched.current && initialAlbum?.status === "selected") setPicked("selected");
   }, [albumId, initialAlbum, initialError]);
   async function action(fn, message) {
     setBusy(true);
@@ -114,7 +138,7 @@ export default function PhotoSelectionView({ albumId, initialAlbum = null, initi
   const canEditPhotos = album.status === "draft";
   const folderStatus = selectionStatus(album);
   return <PagePanel title={album.folderName} description={`${album.clientName} · ${album.photoCount} photos`} actions={backToFolders}>
-    <div className={`${selectionPanel(isDark)} mb-4 space-y-3 p-4`}>
+    <div className="mb-4 space-y-3 rounded-xl border border-stone-200 bg-white p-4 text-stone-900">
       <div className="flex flex-wrap items-center gap-2">
         <span className={cn("rounded-full px-2.5 py-1 text-xs font-semibold", selectionStatusClass(album.status, isDark))}>{folderStatus.label}</span>
         <span className={cn("text-sm", isDark ? "text-slate-300" : "text-slate-600")}>{folderStatus.hint}</span>
@@ -122,12 +146,13 @@ export default function PhotoSelectionView({ albumId, initialAlbum = null, initi
       <p>{album.phone || "No phone added"}</p>
       <p>Client code: <strong className="font-mono text-lg tracking-widest">{album.accessCode}</strong></p>
       <p className="break-all text-sm">Original folder: {album.originalFolderPath}</p>
+      <p className="text-sm">{selectionRuleText(album.rules)}{album.rules?.confirmedByName ? ` Confirmed by ${album.rules.confirmedByName}.` : ""}{album.status === "selected" && album.rules?.totalExtraCharge > 0 ? ` Extra quote ₹${album.rules.totalExtraCharge}.` : ""}</p>
       <div className="flex flex-wrap gap-2">
-        {album.status === "pending" && <Button disabled={busy} onClick={() => navigator.clipboard.writeText(`${window.location.origin}/photo-selection/${album.shareToken}`).then(() => toast.success("Client link copied")).catch(() => toast.error("Could not copy the link."))}>Copy client selection link</Button>}
-        {album.status === "pending" && <Link className="rounded-full border px-4 py-2 text-sm" href={`/photo-selection/${album.shareToken}`} target="_blank" rel="noopener noreferrer">Open client selection</Link>}
-        {canEditPhotos && album.photoCount > 0 && <label className="cursor-pointer rounded-full border px-4 py-2 text-sm">Add photos<input disabled={busy} type="file" webkitdirectory="" multiple accept="image/jpeg,image/png,image/webp" className="sr-only" onChange={event => { const files = Array.from(event.target.files); event.target.value = ""; action(async () => { if (files.some(file => file.webkitRelativePath.split("/")[0] !== album.originalFolderPath.replace(/[\\/]+$/, "").split(/[\\/]/).pop())) throw new Error("Choose the original photo folder for this selection."); const { accepted, rejected } = acceptedSelectionFiles(files); if (rejected.length) throw new Error("Choose only JPG, PNG, or WebP photos."); if (new Set(accepted.map(f => f.name)).size !== accepted.length) throw new Error("Original filenames must be unique."); if (!accepted.length) return; const prepared = await prepareSelectionPhotos(accepted, (progress) => setWork({ phase: "optimize", ...progress })); await addPhotos(albumId, prepared, setWork); }, "Photos uploaded"); }} /></label>}
-        {album.status === "draft" && album.photoCount > 0 && <Button disabled={busy} onClick={() => action(() => publishAlbum(albumId), "Folder ready for the client")}>Finish upload and enable client link</Button>}
+        {album.status !== "draft" && <Button disabled={busy} onClick={() => navigator.clipboard.writeText(`${window.location.origin}/photo-selection/${album.shareToken}`).then(() => toast.success("Client link copied")).catch(() => toast.error("Could not copy the link."))}>Copy gallery link</Button>}
+        {album.status !== "draft" && <Link className="rounded-full border px-4 py-2 text-sm" href={`/photo-selection/${album.shareToken}`} target="_blank" rel="noopener noreferrer">Open client gallery</Link>}
+        {album.status === "draft" ? <Link className="rounded-full bg-stone-900 px-4 py-2 text-sm font-semibold text-white" href={`${ROUTES.dashboardPhotoSelectionNew}?album=${album.id}&step=${album.photoCount ? Math.min(5, Math.max(1, album.wizardStep || 2)) : 2}`}>{album.photoCount ? "Resume setup" : "Upload photos"}</Link> : null}
         {selected && <>
+          <Button disabled={busy} onClick={() => action(() => reopenAlbum(albumId), "Selection reopened for the client")}>Reopen selection</Button>
           <Button disabled={Boolean(exportJob)} onClick={allowExtract}>Extract selected originals</Button>
           <Button disabled={Boolean(exportJob)} onClick={allowZip}>Download originals ZIP</Button>
         </>}
@@ -135,11 +160,27 @@ export default function PhotoSelectionView({ albumId, initialAlbum = null, initi
         <Button disabled={busy} variant="outline" onClick={() => action(async () => {})}>Refresh status</Button>
       </div>
     </div>
+    <div className="mb-4 flex flex-col gap-2">
+      <div className="flex gap-1.5 overflow-x-auto">
+        <button type="button" onClick={() => { setFolder("All"); setNested("All"); }} className={`rounded-full px-3 py-1.5 text-xs font-semibold ${folder === "All" ? "bg-stone-900 text-white" : "border bg-white"}`}>All folders</button>
+        {categories.map((name) => <button key={name} type="button" onClick={() => { setFolder(name); setNested("All"); }} className={`rounded-full px-3 py-1.5 text-xs font-semibold whitespace-nowrap ${folder === name ? "bg-stone-900 text-white" : "border bg-white"}`}>{name}</button>)}
+      </div>
+      {subfolders.length ? <div className="flex gap-1.5 overflow-x-auto">{["All", ...subfolders].map((name) => <button key={name} type="button" onClick={() => setNested(name)} className={`rounded-full px-3 py-1 text-[11px] font-medium ${nested === name ? "bg-amber-700 text-white" : "bg-white"}`}>{name === "All" ? "All subfolders" : name}</button>)}</div> : null}
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex gap-1">{[["all", "All"], ["selected", "Selected"], ["unselected", "Not selected"]].map(([value, label]) => <button key={value} type="button" onClick={() => { filterTouched.current = true; setPicked(value); }} className={`rounded-full px-3 py-1 text-xs font-semibold ${picked === value ? "bg-rose-600 text-white" : "bg-white"}`}>{label}{value === "selected" ? ` (${album.selectedCount})` : ""}</button>)}</div>
+        {selected && picked === "selected" ? (
+          <div className="flex flex-wrap gap-2">
+            <Button variant="outline" disabled={!album.selectedCount} onClick={() => downloadSelectedNames(album)}><FileText />Download filenames</Button>
+            <Button disabled={!album.selectedCount || Boolean(exportJob)} onClick={allowZip}><Download />Download photos</Button>
+          </div>
+        ) : null}
+      </div>
+    </div>
     <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-      {album.photos.map(photo => <figure key={photo.id} className={`${selectionPanel(isDark)} overflow-hidden ${photo.selected ? "ring-2 ring-sky-500" : ""}`}>
+      {album.photos.filter((photo) => (folder === "All" || photo.category === folder) && (nested === "All" || photo.subfolder === nested) && (picked === "selected" ? photo.selected : picked === "unselected" ? !photo.selected : true)).map(photo => <figure key={photo.id} className={`overflow-hidden rounded-2xl bg-stone-100 ${photo.selected ? "ring-4 ring-rose-500" : ""}`}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={photo.imageUrl} alt={photo.name} className="aspect-square w-full object-cover" />
-        <figcaption className="truncate p-2 text-xs">{photo.selected ? "✓ Selected · " : ""}{photo.name}</figcaption>
+        <figcaption className="truncate p-2 text-xs">{photo.selected ? "✓ Selected · " : ""}{photo.rating ? `${photo.rating}★ · ` : ""}{photo.coverType ? `${photo.coverType} cover · ` : ""}{photo.notes ? `${photo.notes} · ` : ""}{photo.name}</figcaption>
         {canEditPhotos && <button disabled={busy} className="px-2 pb-2 text-xs text-rose-500" onClick={() => action(() => removePhoto(albumId, photo.id))}>Remove</button>}
       </figure>)}
     </div>
