@@ -9,9 +9,11 @@ import PagePanel from "@/components/dashboard/_builder/PagePanel";
 import { useDashboardTheme } from "@/lib/dashboard/ThemeProvider";
 import { ROUTES } from "@/lib/routes";
 import { cn } from "@/lib/cn";
-import { formatSelectionDate, selectionPanel, selectionStage, selectionStatus } from "./_builder/panel";
+import { formatSelectionDate, selectionPanel, selectionStage, selectionStatus, clientShareMessage } from "./_builder/panel";
 import { deleteAlbum } from "@/lib/photo-selection/store";
 import { downloadOriginals } from "@/lib/photo-selection/originals";
+import { useAuth } from "@/components/auth";
+import NexpicCanvas from "./_builder/NexpicCanvas";
 
 const STAGES = ["All", "Draft", "Uploaded", "InProgress", "Locked", "Unlocked"];
 const STAGE_LABEL = { All: "All", Draft: "Draft", Uploaded: "Uploaded", InProgress: "In Progress", Locked: "Locked", Unlocked: "Unlocked" };
@@ -31,6 +33,7 @@ export default function PhotoSelection({ albums = [], error = null }) {
   const draft = albums.find((album) => album.status === "draft");
 
   return (
+    <NexpicCanvas bleed>
     <PagePanel
       title="Client Photo Galleries"
       description="Create, customize selection rules, upload photos, and share client proofing galleries"
@@ -94,6 +97,7 @@ export default function PhotoSelection({ albums = [], error = null }) {
         </div>
       ) : null}
     </PagePanel>
+    </NexpicCanvas>
   );
 }
 
@@ -117,6 +121,7 @@ function eventLabel(value) {
 }
 
 function GalleryCard({ album, onDeleted }) {
+  const { user } = useAuth();
   const [copied, setCopied] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -182,7 +187,7 @@ function GalleryCard({ album, onDeleted }) {
 
   function openWhatsApp() {
     const digits = String(album.whatsapp || album.phone || "").replace(/\D/g, "");
-    const text = encodeURIComponent(`Your photo selection gallery is ready.\n${galleryUrl}\nCode: ${album.accessCode}`);
+    const text = encodeURIComponent(clientShareMessage({ studioName: user?.studio_name, expiry: album.selectionDeadline, link: galleryUrl, pin: album.accessCode, welcome: album.welcomeMessage }));
     window.open(digits ? `https://api.whatsapp.com/send?phone=${digits}&text=${text}` : `https://api.whatsapp.com/send?text=${text}`, "_blank");
   }
 

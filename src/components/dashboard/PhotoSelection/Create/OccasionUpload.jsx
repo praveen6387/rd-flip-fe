@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { Check, Folder, FolderTree, Image as ImageIcon, Pencil, Plus, UploadCloud, X } from "lucide-react";
+import { Check, Folder, FolderTree, Heart, Image as ImageIcon, Pencil, Plus, UploadCloud, X } from "lucide-react";
 
 export const OCCASIONS = ["Pre-Wedding", "Engagement", "Tilak", "Haldi", "Mehndi", "Sangeet", "Wedding", "Reception", "Post-Wedding", "Anniversary", "Birthday", "Family & Guests", "Other Events"];
 
@@ -50,10 +50,21 @@ export default function OccasionUpload({ photos = [], disabled = false, onUpload
   const [editing, setEditing] = useState("");
   const [editName, setEditName] = useState("");
   const [dragOver, setDragOver] = useState(false);
+  const [queue, setQueue] = useState([]);
   const saved = [...new Set(photos.map((photo) => photo.category).filter(Boolean))];
   const categories = [...OCCASIONS.filter((name) => !hidden.includes(name)), ...custom, ...saved.filter((name) => !OCCASIONS.includes(name) && !custom.includes(name))];
   const countOf = (name) => photos.filter((photo) => photo.category === name).length;
   const uploadedCount = categories.filter((name) => countOf(name) > 0).length;
+  const folderPhotos = photos.filter((photo) => photo.category === active);
+  const shown = folderPhotos.length ? folderPhotos : photos;
+  const queueStructure = queue.reduce((structure, file) => {
+    const parts = String(file.selectionRelativePath || file.name).split("/").filter(Boolean);
+    const main = parts.length > 1 ? parts[0] : active;
+    const sub = parts.length > 2 ? parts.slice(1, -1).join(" / ") : "Direct Photos";
+    structure[main] = structure[main] || {};
+    structure[main][sub] = (structure[main][sub] || 0) + 1;
+    return structure;
+  }, {});
 
   function addCategory() {
     const name = draftName.trim();
@@ -88,10 +99,31 @@ export default function OccasionUpload({ photos = [], disabled = false, onUpload
     setEditing("");
   }
 
-  function send(fileList) {
-    const files = [...fileList];
+  function enqueue(fileList) {
+    const files = [...fileList].filter((file) => file.type?.startsWith("image/") || /\.(jpe?g|png|webp)$/i.test(file.name));
     if (!files.length || disabled) return;
-    onUpload(files, active);
+    setQueue((current) => {
+      const seen = new Set(current.map((file) => file.selectionRelativePath || file.name));
+      const next = [];
+      for (const file of files) {
+        const path = file.selectionRelativePath || occasionRelativePath(file, active);
+        if (seen.has(path)) continue;
+        file.selectionRelativePath = path;
+        seen.add(path);
+        next.push(file);
+      }
+      return [...current, ...next];
+    });
+  }
+
+  async function startUpload() {
+    if (!queue.length || disabled) return;
+    const started = await onUpload(queue, active);
+    if (started === true) setQueue([]);
+  }
+
+  function send(fileList) {
+    enqueue(fileList);
   }
 
   async function dropFiles(event) {
@@ -173,7 +205,60 @@ export default function OccasionUpload({ photos = [], disabled = false, onUpload
         <input ref={folderRef} className="hidden" type="file" multiple webkitdirectory="" directory="" disabled={disabled} onChange={(event) => { send(event.target.files); event.target.value = ""; }} />
         <input ref={fileRef} className="hidden" type="file" multiple accept="image/jpeg,image/png,image/webp" disabled={disabled} onChange={(event) => { send(event.target.files); event.target.value = ""; }} />
       </div>
-      <p className="mt-4 font-serif text-lg font-bold text-stone-900">Photo Gallery Manager ({photos.length})</p>
+      {queue.length ? (
+        <div className="mt-5 space-y-3 border-t border-stone-100 pt-4">
+          <div className="flex items-center justify-between text-xs">
+            <span className="flex items-center gap-2 font-semibold text-stone-800"><Folder className="size-4 text-amber-600" />Queue: <strong>{queue.length}</strong> {queue.length === 1 ? "photo" : "photos"} ready for upload</span>
+            <button type="button" disabled={disabled} onClick={() => setQueue([])} className="text-stone-400 hover:text-stone-600 disabled:opacity-40">Clear all</button>
+          </div>
+          <div className="rounded-xl border border-amber-100 bg-amber-50/60 p-3">
+            <span className="mb-2 block text-[11px] font-semibold tracking-wider text-stone-500 uppercase">Detected folder & subfolder structure:</span>
+            <div className="space-y-2">
+              {Object.entries(queueStructure).map(([folder, subs]) => (
+                <div key={folder} className="text-xs">
+                  <p className="flex items-center gap-1.5 font-semibold text-stone-800"><Folder className="size-3.5 text-amber-600" />{folder}</p>
+                  <div className="flex flex-wrap gap-1.5 pt-1 pl-5">
+                    {Object.entries(subs).map(([sub, count]) => (
+                      <span key={sub} className="inline-flex items-center gap-1 rounded-md border border-stone-200 bg-white px-2.5 py-0.5 font-mono text-[11px] text-stone-700"><span className="text-stone-400">↳</span><strong>{sub}</strong>: {count} {count === 1 ? "photo" : "photos"}</span>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="flex flex-col items-end justify-between gap-3 pt-1 sm:flex-row sm:items-center">
+            <p className="text-xs text-stone-500">Once upload finishes, continue to Selection Rules so you can share the link with the client.</p>
+            <button type="button" disabled={disabled} onClick={startUpload} className="inline-flex items-center gap-2 rounded-xl bg-amber-700 px-6 py-3 text-sm font-bold text-white shadow-md disabled:opacity-50"><UploadCloud className="size-4" />{disabled ? "Uploading…" : `Start Upload (${queue.length} ${queue.length === 1 ? "Photo" : "Photos"})`}</button>
+          </div>
+        </div>
+      ) : null}
+      <div className="mt-4">
+        <h3 className="font-serif text-lg font-bold text-stone-900">Photo Gallery Manager ({shown.length})</h3>
+        <p className="text-xs text-stone-500">{folderPhotos.length ? `Photos in ${active}` : "Uploaded photos from every folder"}</p>
+        {shown.length ? (
+          <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+            {shown.map((photo) => (
+              <figure key={photo.id} className="overflow-hidden rounded-xl border border-stone-200 bg-white shadow-sm">
+                <div className="relative aspect-[4/3] bg-stone-100">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={photo.imageUrl} alt={photo.name} className="size-full object-cover" />
+                  {photo.selected ? <span className="absolute top-2 left-2 inline-flex items-center gap-1 rounded-full bg-rose-600 px-2 py-0.5 text-[10px] font-bold text-white"><Heart className="size-3 fill-white" />Selected</span> : null}
+                </div>
+                <figcaption className="flex items-center justify-between gap-2 border-t border-stone-100 p-2 text-[11px]">
+                  <span className="truncate font-mono text-stone-700" title={photo.name}>{photo.name}</span>
+                  {photo.category ? <span className="shrink-0 rounded bg-stone-100 px-1.5 py-0.5 text-[10px] font-medium text-stone-500">{photo.category}</span> : null}
+                </figcaption>
+              </figure>
+            ))}
+          </div>
+        ) : (
+          <div className="mt-3 rounded-2xl border border-stone-200 bg-white px-6 py-10 text-center">
+            <ImageIcon className="mx-auto mb-2 size-10 text-stone-300" />
+            <p className="text-sm font-semibold text-stone-700">No photos in this view</p>
+            <p className="mt-0.5 text-xs text-stone-500">Upload photos above and they will appear here.</p>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

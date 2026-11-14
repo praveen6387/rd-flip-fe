@@ -208,6 +208,17 @@ export async function updateSocialLinks(payload) {
   return result;
 }
 
+export async function uploadStudioLogo(file) {
+  const body = new FormData();
+  body.append("logo", file, file.name);
+  const response = await authenticatedFetch("/studio-logo", { method: "POST", body });
+  const result = await response.json().catch(() => null);
+  if (!response.ok || result?.status === "fail") {
+    throw new Error(result?.message || "Could not upload the studio logo.");
+  }
+  return result.data;
+}
+
 export async function changePassword({ current_password, new_password }) {
   const response = await authenticatedFetch(ENDPOINTS.changePassword, {
     method: "POST",

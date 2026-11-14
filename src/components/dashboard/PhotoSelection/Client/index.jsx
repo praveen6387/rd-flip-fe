@@ -8,6 +8,7 @@ import GalleryPhotoCard from "../Gallery/PhotoCard";
 import GalleryFilterBar from "../Gallery/FilterBar";
 import GalleryFloatingBar from "../Gallery/FloatingBar";
 import GalleryLightbox from "../Gallery/Lightbox";
+import NexpicCanvas from "../_builder/NexpicCanvas";
 
 function projectFrom(album) {
   const rules = album?.rules || {};
@@ -185,8 +186,23 @@ export default function ClientSelection({ token }) {
   useEffect(() => {
     let active = true;
     (async () => {
+      const linked = new URLSearchParams(window.location.search).get("code")?.replace(/\D/g, "").slice(0, 6) || "";
+      if (linked.length === 6) {
+        try {
+          const response = await fetch("/api/photo-selection/access/", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ code: linked }) });
+          const result = await response.json().catch(() => null);
+          if (!response.ok || result?.data?.shareToken !== token) throw new Error("This code does not match this gallery.");
+          grantSelection(token, linked);
+          window.history.replaceState(null, "", window.location.pathname);
+          const next = await getPublicAlbum(token, { code: linked });
+          if (active) showAlbum(next, { code: linked });
+          return;
+        } catch {
+          window.history.replaceState(null, "", window.location.pathname);
+        }
+      }
       const grant = grantedSelection();
-      if (grant?.token === token) {
+      if (grant?.token === token && grant.code) {
         try {
           const next = await getPublicAlbum(token, { code: grant.code });
           if (active) showAlbum(next, { code: grant.code });
@@ -345,7 +361,7 @@ export default function ClientSelection({ token }) {
   });
   const selectedPhotos = photos.filter((photo) => photo.isSelected);
 
-  if (phase === "check") return <main className="grid min-h-screen place-items-center bg-stone-50 font-heading text-stone-500">Opening gallery…</main>;
+  if (phase === "check") return <NexpicCanvas className="grid min-h-screen place-items-center font-heading text-stone-500">Opening gallery…</NexpicCanvas>;
   if (phase === "code") {
     return (
       <main className="grid min-h-screen place-items-center bg-stone-950/90 p-4">
@@ -363,7 +379,7 @@ export default function ClientSelection({ token }) {
 
   const locked = album.status === "selected";
   return (
-    <div className="min-h-screen bg-stone-50 pb-28 text-stone-900">
+    <NexpicCanvas className="min-h-screen pb-28 text-stone-900">
       <header className="border-b border-stone-200 bg-gradient-to-b from-stone-100/80 to-transparent">
         <div className="flex items-center justify-between border-b border-stone-200/70 bg-white/70 px-4 py-2.5 text-xs sm:px-8">
           <span className="font-heading text-sm font-bold tracking-wide">RD Flip · Client selection</span>
@@ -387,6 +403,6 @@ export default function ClientSelection({ token }) {
       {reviewOpen ? <div className="fixed inset-0 z-40 grid place-items-center bg-stone-950/70 p-4"><div className="max-h-[80vh] w-full max-w-lg overflow-auto rounded-2xl bg-white p-6"><div className="flex items-center justify-between"><h2 className="font-heading text-xl font-bold">Review selected photos</h2><button type="button" onClick={() => setReviewOpen(false)} aria-label="Close"><X /></button></div><p className="mt-1 text-xs text-stone-500">You have chosen {selectedPhotos.length} photograph{selectedPhotos.length === 1 ? "" : "s"} for your album.</p><ul className="mt-4 space-y-2 text-sm">{selectedPhotos.map((photo) => <li key={photo.id} className="flex items-center justify-between gap-3 border-b border-stone-100 py-2"><span className="truncate">{photo.originalFilename}</span><span className="shrink-0 text-xs text-stone-500">{photo.rating ? `${photo.rating}★ ` : ""}{photo.coverType || ""}</span></li>)}</ul><div className="mt-4 flex justify-end gap-2 border-t border-stone-100 pt-3"><button type="button" onClick={() => setReviewOpen(false)} className="rounded-xl border px-4 py-2 text-xs font-semibold">Back to gallery</button>{!locked && selectedPhotos.length ? <button type="button" onClick={() => { setReviewOpen(false); setConfirmOpen(true); }} className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-semibold text-white"><CheckCircle2 className="size-4" />Proceed to final confirmation</button> : null}</div></div></div> : null}
       {confirmOpen && !summaryOpen ? <ConfirmLock album={album} name={confirmName} notes={confirmNotes} error={confirmError} busy={busy} onName={(value) => { setConfirmName(value); setConfirmError(""); }} onNotes={setConfirmNotes} onClose={() => { setConfirmOpen(false); setConfirmError(""); }} onSubmit={confirmSelection} /> : null}
       {summaryOpen ? <SelectionConfirmed album={album} onClose={() => setSummaryOpen(false)} /> : null}
-    </div>
+    </NexpicCanvas>
   );
 }

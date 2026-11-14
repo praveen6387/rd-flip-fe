@@ -66,6 +66,30 @@ export async function uploadSelectionImage({ buffer, contentType, albumId }) {
   return { key, publicUrl: publicObjectUrl(config, key) };
 }
 
+export async function uploadStudioLogo({ buffer, contentType, userId }) {
+  const config = getS3Config();
+  if (!config) {
+    throw new Error(
+      "S3 is not configured. Add AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_REGION, and AWS_S3_BUCKET."
+    );
+  }
+  const extension = SELECTION_TYPES[contentType];
+  if (!extension) throw new Error("Upload a JPG, PNG, or WebP logo.");
+  if (!/^[0-9a-fA-F-]{36}$/.test(userId)) throw new Error("Invalid studio account.");
+  const key = `studio-logo/${userId}/${crypto.randomUUID()}.${extension}`;
+  const s3 = getS3Client(config);
+  await s3.send(
+    new PutObjectCommand({
+      Bucket: config.bucket,
+      Key: key,
+      Body: buffer,
+      ContentType: contentType,
+      CacheControl: "private, max-age=31536000",
+    })
+  );
+  return { key, publicUrl: publicObjectUrl(config, key) };
+}
+
 export async function deleteSelectionImage(key) {
   const config = getS3Config();
   if (!config || !key) return;

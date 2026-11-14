@@ -15,6 +15,7 @@ import { cn } from "@/lib/cn";
 import { selectionStatus, selectionStatusClass } from "../_builder/panel";
 import { selectionRuleText } from "@/lib/photo-selection/rules";
 import SelectionProgress from "../_builder/SelectionProgress";
+import NexpicCanvas from "../_builder/NexpicCanvas";
 
 function csvCell(value) {
   return `"${String(value ?? "").replaceAll('"', '""')}"`;
@@ -133,11 +134,11 @@ export default function PhotoSelectionView({ albumId, initialAlbum = null, initi
       Back to folders
     </Link>
   );
-  if (!album) return <PagePanel title="Photo Selection" actions={backToFolders}>{error ? <p>{error}</p> : null}</PagePanel>;
+  if (!album) return <NexpicCanvas bleed><PagePanel title="Photo Selection" actions={backToFolders}>{error ? <p>{error}</p> : null}</PagePanel></NexpicCanvas>;
   const selected = album.status === "selected";
   const canEditPhotos = album.status === "draft";
   const folderStatus = selectionStatus(album);
-  return <PagePanel title={album.folderName} description={`${album.clientName} · ${album.photoCount} photos`} actions={backToFolders}>
+  return <NexpicCanvas bleed><PagePanel title={album.folderName} description={`${album.clientName} · ${album.photoCount} photos`} actions={backToFolders}>
     <div className="mb-4 space-y-3 rounded-xl border border-stone-200 bg-white p-4 text-stone-900">
       <div className="flex flex-wrap items-center gap-2">
         <span className={cn("rounded-full px-2.5 py-1 text-xs font-semibold", selectionStatusClass(album.status, isDark))}>{folderStatus.label}</span>
@@ -219,5 +220,5 @@ export default function PhotoSelectionView({ albumId, initialAlbum = null, initi
         ) : null}
       </DialogContent>
     </Dialog>
-  </PagePanel>;
+  </PagePanel></NexpicCanvas>;
 }

@@ -54,3 +54,14 @@ export function acceptedSelectionFiles(fileList) {
   });
   return { accepted, rejected };
 }
+
+export function clientShareMessage({ studioName, expiry, link, pin, welcome }) {
+  const [year, month, day] = String(expiry || "").split("-").map(Number);
+  const expiryLabel = year && month && day
+    ? new Date(year, month - 1, day).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })
+    : "No expiry date";
+  const lines = [studioName || "Studio", "", `Expiry date: ${expiryLabel}`, "", link, `PIN: ${pin || ""}`];
+  const note = String(welcome || "").trim();
+  if (note) lines.push("", note);
+  return lines.join("\n");
+}

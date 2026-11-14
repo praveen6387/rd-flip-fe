@@ -1,26 +1,29 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ArrowRight, Calendar, Check, ChevronLeft, Clock, Eye, FileText, Heart, Loader2, Mail, Phone, Send, Shield, Sparkles, Target, UploadCloud, User, X } from "lucide-react";
+import { ArrowRight, Calendar, Check, ChevronLeft, Clock, Eye, FileText, Heart, ImageIcon, Loader2, Mail, Phone, Send, Shield, Sparkles, Target, Type, UploadCloud, User, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import PagePanel from "@/components/dashboard/_builder/PagePanel";
 import { useAuth } from "@/components/auth";
 import { hasPhotoSelectionCredit } from "@/lib/credits";
+import { updateSocialLinks, uploadStudioLogo } from "@/lib/api/client/auth";
 import { ROUTES } from "@/lib/routes";
 import { addPhotos, createDraft, getAlbum, publishAlbum, saveDraft } from "@/lib/photo-selection/store";
-import { acceptedSelectionFiles } from "../_builder/panel";
+import { acceptedSelectionFiles, clientShareMessage } from "../_builder/panel";
 import { prepareSelectionPhotos } from "../_builder/prepare";
 import SelectionProgress from "../_builder/SelectionProgress";
 import OccasionUpload, { occasionRelativePath } from "./OccasionUpload";
 import SelectionRules from "./SelectionRules";
+import GalleryAccess from "./GalleryAccess";
+import NexpicCanvas from "../_builder/NexpicCanvas";
 
 const STEPS = [
   { id: 1, name: "Client Details", subtitle: "Couple & event", icon: User },
   { id: 2, name: "Upload Photos", subtitle: "Folder & files", icon: UploadCloud },
   { id: 3, name: "Selection Rules", subtitle: "Limits & sheets", icon: Target },
-  { id: 4, name: "Gallery Access", subtitle: "Code & welcome", icon: Shield },
+  { id: 4, name: "Gallery Access", subtitle: "Share & code", icon: Shield },
   { id: 5, name: "Review & Publish", subtitle: "Final check", icon: Eye },
 ];
 
@@ -80,19 +83,44 @@ export default function PhotoSelectionCreate() {
   const searchParams = useSearchParams();
   const resumeId = searchParams.get("album");
   const requestedStep = Number(searchParams.get("step") || 0);
-  const { user, ready } = useAuth();
+  const { user, ready, applyUser } = useAuth();
   const [step, setStep] = useState(1);
   const [albumId, setAlbumId] = useState(resumeId);
   const [form, setForm] = useState(emptyForm);
   const [photoCount, setPhotoCount] = useState(0);
   const [photos, setPhotos] = useState([]);
   const [accessCode, setAccessCode] = useState("");
+  const [shareToken, setShareToken] = useState("");
   const [folderName, setFolderName] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [work, setWork] = useState(null);
   const [error, setError] = useState("");
   const [published, setPublished] = useState(null);
+  const [rulesPane, setRulesPane] = useState("rules");
+  const [markOn, setMarkOn] = useState(true);
+  const [markText, setMarkText] = useState("");
+  const [markLogo, setMarkLogo] = useState(false);
+  const [logoUrl, setLogoUrl] = useState("");
+  const [logoPreview, setLogoPreview] = useState("");
+  const [logoBusy, setLogoBusy] = useState(false);
+  const markLoaded = useRef(false);
+  const logoTouched = useRef(false);
+
+  useEffect(() => {
+    if (!user || markLoaded.current) return;
+    markLoaded.current = true;
+    setMarkOn(user.watermark_enabled !== false);
+    setMarkText(user.watermark_text || "");
+  }, [user]);
+
+  useEffect(() => {
+    if (!user || logoTouched.current) return;
+    const url = user.watermark_logo_url || "";
+    setLogoUrl(url);
+    setLogoPreview(user.watermark_logo_preview || "");
+    setMarkLogo(Boolean(url) && user.watermark_include_logo !== false);
+  }, [user]);
 
   useEffect(() => {
     if (!ready) return undefined;
@@ -115,6 +143,7 @@ export default function PhotoSelectionCreate() {
         }
         setAlbumId(album.id);
         setAccessCode(album.accessCode || "");
+        setShareToken(album.shareToken || "");
         setPhotoCount(album.photoCount || album.photos?.length || 0);
         setPhotos(album.photos || []);
         setFolderName(album.originalFolderPath || "");
@@ -143,13 +172,31 @@ export default function PhotoSelectionCreate() {
 
   async function persist(nextStep) {
     const body = payload(nextStep);
+    if (/^\d{6}$/.test(accessCode)) body.accessCode = accessCode;
     if (body.phone && !/^[6-9]\d{9}$/.test(body.phone)) throw new Error("Enter a 10-digit mobile number starting with 6, 7, 8, or 9.");
     if (body.whatsapp && !/^[6-9]\d{9}$/.test(body.whatsapp)) throw new Error("Enter a 10-digit WhatsApp number starting with 6, 7, 8, or 9.");
     if (!body.folderName.trim() || !body.clientName.trim()) throw new Error("Couple name and client name are required.");
     const album = albumId ? await saveDraft(albumId, body) : await createDraft(body);
     setAlbumId(album.id);
     setAccessCode(album.accessCode || "");
+    setShareToken(album.shareToken || "");
     return album;
+  }
+
+  async function updateShare() {
+    if (!/^\d{6}$/.test(accessCode)) {
+      setError("The access code must be 6 digits.");
+      return;
+    }
+    setSaving(true);
+    setError("");
+    try {
+      await persist(4);
+    } catch (saveError) {
+      setError(saveError.message || "Could not update gallery access.");
+    } finally {
+      setSaving(false);
+    }
   }
 
   async function go(nextStep) {
@@ -172,17 +219,19 @@ export default function PhotoSelectionCreate() {
   }
 
   async function uploadChosen(chosen, category) {
-    if (!chosen.length || !albumId) return;
+    if (!chosen.length || !albumId) return false;
     const filtered = acceptedSelectionFiles(chosen);
     const accepted = [...filtered.accepted, ...chosen.filter((file) => !filtered.accepted.includes(file) && /\.(jpe?g|png|webp)$/i.test(file.name))];
     if (!accepted.length) {
       setError("Choose JPG, PNG, or WebP photos.");
-      return;
+      return false;
     }
-    accepted.forEach((file) => { file.selectionRelativePath = occasionRelativePath(file, category); });
+    accepted.forEach((file) => {
+      if (!file.selectionRelativePath) file.selectionRelativePath = occasionRelativePath(file, category);
+    });
     if (new Set(accepted.map((file) => file.selectionRelativePath)).size !== accepted.length) {
       setError("Two photos in this folder share the same name and subfolder.");
-      return;
+      return false;
     }
     setError("");
     try {
@@ -201,8 +250,49 @@ export default function PhotoSelectionCreate() {
       }
     } catch (uploadError) {
       setError(uploadError.message);
+      return false;
     } finally {
       setWork(null);
+    }
+    return true;
+  }
+
+  async function chooseLogo(event) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+    logoTouched.current = true;
+    setLogoBusy(true);
+    setError("");
+    try {
+      const saved = await uploadStudioLogo(file);
+      setLogoUrl(saved.imageUrl || "");
+      setLogoPreview(URL.createObjectURL(file));
+      setMarkLogo(true);
+    } catch (uploadError) {
+      setError(uploadError.message || "Could not upload the studio logo.");
+    } finally {
+      setLogoBusy(false);
+    }
+  }
+
+  async function saveWatermark() {
+    setSaving(true);
+    setError("");
+    try {
+      const result = await updateSocialLinks({
+        watermark_enabled: markOn,
+        watermark_text: markText.trim().slice(0, 120),
+        watermark_position: user?.watermark_position || "bottom-right",
+        watermark_opacity: Number(user?.watermark_opacity) || 0.45,
+        watermark_include_logo: Boolean(markOn && markLogo && logoUrl),
+        watermark_logo_url: logoUrl,
+      });
+      if (result.data?.user) applyUser(result.data.user);
+      await go(4);
+    } catch (saveError) {
+      setError(saveError.message || "Could not save the watermark.");
+      setSaving(false);
     }
   }
 
@@ -220,10 +310,11 @@ export default function PhotoSelectionCreate() {
   }
 
   if (!ready || loading) {
-    return <PagePanel><div className="grid min-h-80 place-items-center"><Loader2 className="animate-spin text-stone-400" size={28} /></div></PagePanel>;
+    return <NexpicCanvas bleed><PagePanel><div className="grid min-h-80 place-items-center"><Loader2 className="animate-spin text-stone-400" size={28} /></div></PagePanel></NexpicCanvas>;
   }
 
   return (
+    <NexpicCanvas bleed>
     <PagePanel>
       <div className="mx-auto max-w-5xl">
         <div className="mb-4 flex items-center justify-between gap-3 border-b border-stone-200 pb-4">
@@ -242,7 +333,7 @@ export default function PhotoSelectionCreate() {
             const done = item.id < step;
             const active = item.id === step;
             return (
-              <button key={item.id} type="button" onClick={() => item.id < step && setStep(item.id)} className={`rounded-2xl border p-3 text-left ${active ? "border-stone-900 bg-stone-900 text-white" : done ? "border-emerald-200 bg-emerald-50 text-emerald-800" : "border-stone-200 bg-white text-stone-400"}`}>
+              <button key={item.id} type="button" onClick={() => item.id < step && setStep(item.id)} className={`rounded-2xl border p-3 text-left ${active ? "border-amber-700 bg-amber-700 text-white" : done ? "border-emerald-200 bg-emerald-50 text-emerald-800" : "border-stone-200 bg-white text-stone-400"}`}>
                 <Icon size={16} />
                 <p className="mt-2 text-xs font-bold">{item.name}</p>
                 <p className="text-[10px] opacity-70">{item.subtitle}</p>
@@ -296,29 +387,61 @@ export default function PhotoSelectionCreate() {
           {step === 3 ? (
             <div>
               <div className="mb-4">
-                <h2 className="font-serif text-xl font-bold text-stone-900">Configure Photo Selection Mode</h2>
-                <p className="text-xs text-stone-500">Choose how your client selects photos from their gallery</p>
+                <h2 className="font-serif text-xl font-bold text-stone-900">{rulesPane === "watermark" ? "Watermark & Security Settings" : "Configure Photo Selection Mode"}</h2>
+                <p className="text-xs text-stone-500">{rulesPane === "watermark" ? "Control the studio watermark on client photos." : "Choose how your client selects photos from their gallery"}</p>
               </div>
               <div className="mb-4 flex items-center justify-between border-b border-stone-200 pb-3">
                 <div className="flex items-center gap-2">
-                  <span className="inline-flex items-center gap-2 rounded-xl border border-amber-500/40 bg-amber-500/20 px-3 py-1.5 text-xs font-bold text-amber-800"><Target className="size-3.5 text-amber-600" />1. Selection Rules</span>
+                  <button type="button" onClick={() => setRulesPane("rules")} className={`inline-flex items-center gap-2 rounded-xl px-3 py-1.5 text-xs font-bold ${rulesPane === "rules" ? "border border-amber-500/40 bg-amber-500/20 text-amber-800" : "bg-stone-100 text-stone-600"}`}><Target className="size-3.5 text-amber-600" />1. Selection Rules</button>
                   <span className="font-bold text-stone-300">➔</span>
-                  <button type="button" onClick={() => go(4)} className="inline-flex items-center gap-2 rounded-xl bg-stone-100 px-3 py-1.5 text-xs font-bold text-stone-600"><Shield className="size-3.5 text-amber-600" />2. Gallery Access</button>
+                  <button type="button" onClick={() => setRulesPane("watermark")} className={`inline-flex items-center gap-2 rounded-xl px-3 py-1.5 text-xs font-bold ${rulesPane === "watermark" ? "border border-amber-500/40 bg-amber-500/20 text-amber-800" : "bg-stone-100 text-stone-600"}`}><Shield className="size-3.5 text-amber-600" />2. Watermark & Security</button>
                 </div>
-                <span className="hidden font-mono text-[11px] text-stone-400 sm:inline">Step 1 of 2</span>
+                <span className="hidden font-mono text-[11px] text-stone-400 sm:inline">Step {rulesPane === "watermark" ? "2" : "1"} of 2</span>
               </div>
-              <SelectionRules form={form} photoCount={photoCount} onChange={patchForm} />
+              {rulesPane === "rules" ? <SelectionRules form={form} photoCount={photoCount} onChange={patchForm} /> : (
+                <div className="space-y-3 rounded-2xl border border-amber-200/80 bg-amber-50/60 p-4">
+                  <div className="flex items-center gap-2 text-xs font-semibold tracking-wider text-stone-900 uppercase"><Shield className="size-4 text-amber-600" />Client gallery watermark</div>
+                  <p className="text-[11px] text-stone-500">This watermark is saved on your studio profile and drawn over client photos. It is not burned into the files.</p>
+                  <label className="flex items-start gap-2.5 text-xs">
+                    <input type="checkbox" checked={markOn} onChange={(event) => setMarkOn(event.target.checked)} className="mt-0.5 size-4 accent-amber-600" />
+                    <span><span className="flex items-center gap-1.5 font-medium text-stone-800"><Type className="size-3.5 text-stone-500" />Show text watermark</span><span className="block text-[11px] text-stone-500">Show copyright or studio text across client photos</span></span>
+                  </label>
+                  {markOn ? <input value={markText} maxLength={120} onChange={(event) => setMarkText(event.target.value)} placeholder={user?.studio_name ? `© ${user.studio_name}` : "© Studio"} className="w-full rounded-lg border border-stone-200 bg-white px-3 py-2 text-xs outline-none focus:ring-2 focus:ring-amber-500" /> : null}
+                  <div className="flex flex-wrap items-center gap-3 rounded-xl border border-stone-200 bg-white p-3">
+                    <div className="grid size-16 shrink-0 place-items-center overflow-hidden rounded-xl bg-stone-900">{logoPreview ? <img src={logoPreview} alt="Studio logo" className="h-full w-full object-contain p-1" /> : <ImageIcon className="size-5 text-stone-500" />}</div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs font-bold text-stone-800">Studio logo watermark</p>
+                      <p className="text-[11px] text-stone-500">{logoUrl ? "Using the logo from your profile. It is drawn over client photos with the text." : "Upload a logo on your profile. PNG, JPG, or WebP up to 2 MB."}</p>
+                      <div className="mt-2 flex flex-wrap items-center gap-2">
+                        <label className={`inline-flex cursor-pointer items-center gap-1 rounded-lg bg-amber-700 px-3 py-1.5 text-[11px] font-bold text-white ${logoBusy ? "opacity-50" : ""}`}>
+                          <UploadCloud className="size-3.5" />{logoBusy ? "Uploading…" : "Upload logo"}
+                          <input type="file" accept="image/png,image/jpeg,image/webp" disabled={logoBusy} onChange={chooseLogo} className="hidden" />
+                        </label>
+                        {logoUrl ? <button type="button" onClick={() => { logoTouched.current = true; setLogoUrl(""); setLogoPreview(""); setMarkLogo(false); }} className="text-[11px] font-semibold text-rose-700">Remove</button> : null}
+                      </div>
+                    </div>
+                    <label className={`flex items-center gap-2 text-xs font-medium ${logoUrl && markOn ? "text-stone-800" : "text-stone-400"}`}>
+                      <input type="checkbox" checked={markLogo && Boolean(logoUrl)} disabled={!logoUrl || !markOn} onChange={(event) => setMarkLogo(event.target.checked)} className="size-4 accent-amber-600" />
+                      Show logo
+                    </label>
+                  </div>
+                </div>
+              )}
             </div>
           ) : null}
           {step === 4 ? (
-            <div className="space-y-4">
-              <div className="rounded-2xl bg-stone-50 p-5">
-                <p className="text-xs uppercase tracking-wide text-stone-500">Client code</p>
-                <p className="mt-1 font-mono text-3xl tracking-[0.3em] text-stone-900">{accessCode}</p>
-                <p className="mt-2 text-sm text-stone-500">The client uses this code on the private gallery link. It is asked once in each browser.</p>
-              </div>
-              <Field label="Welcome message" value={form.welcomeMessage} onChange={(value) => change("welcomeMessage", value)} />
-            </div>
+            <GalleryAccess
+              form={form}
+              accessCode={accessCode}
+              shareToken={shareToken}
+              studioName={user?.studio_name}
+              saving={saving}
+              onCode={setAccessCode}
+              onDeadline={(value) => change("selectionDeadline", value)}
+              onWhatsapp={(value) => change("whatsapp", value)}
+              onWelcome={(value) => change("welcomeMessage", value)}
+              onUpdate={updateShare}
+            />
           ) : null}
           {step === 5 ? (
             <div className="space-y-3 text-sm text-stone-700">
@@ -330,10 +453,11 @@ export default function PhotoSelectionCreate() {
             </div>
           ) : null}
           <div className="mt-6 flex items-center justify-between gap-3 border-t border-stone-200 pt-4">
-            {step === 1 ? <Button variant="secondary" asChild><Link href={ROUTES.dashboardPhotoSelection}><ChevronLeft className="size-4" />Back</Link></Button> : step === 3 ? <button type="button" disabled={saving} onClick={() => setStep(2)} className="rounded-xl border border-stone-200 bg-white px-4 py-2 text-xs font-semibold text-stone-700">Cancel</button> : <Button variant="secondary" disabled={saving || Boolean(work)} onClick={() => setStep((value) => value - 1)}><ChevronLeft className="size-4" />Back</Button>}
+            {step === 1 ? <Button variant="secondary" asChild><Link href={ROUTES.dashboardPhotoSelection}><ChevronLeft className="size-4" />Back</Link></Button> : step === 3 && rulesPane === "watermark" ? <button type="button" disabled={saving} onClick={() => setRulesPane("rules")} className="rounded-xl border border-stone-200 bg-white px-4 py-2 text-xs font-semibold text-stone-700">Back (Selection Rules)</button> : step === 3 ? <button type="button" disabled={saving} onClick={() => setStep(2)} className="rounded-xl border border-stone-200 bg-white px-4 py-2 text-xs font-semibold text-stone-700">Cancel</button> : <Button variant="secondary" disabled={saving || Boolean(work)} onClick={() => setStep((value) => value - 1)}><ChevronLeft className="size-4" />Back</Button>}
             <div className="flex gap-2">
               {step === 1 ? <button type="button" disabled={saving} onClick={() => go("done")} className="inline-flex items-center gap-2 rounded-xl bg-amber-600 px-6 py-2.5 text-xs font-bold text-white shadow-md shadow-amber-600/30 hover:bg-amber-500 disabled:opacity-50"><Check className="size-4" />{saving ? "Saving…" : "Done"}</button> : null}
-              {step === 3 ? <button type="button" disabled={saving} onClick={() => go(4)} className="inline-flex items-center gap-2 rounded-xl bg-amber-700 px-5 py-2.5 text-xs font-bold text-white shadow-md shadow-amber-700/30 hover:bg-amber-600 disabled:opacity-50">{saving ? "Saving…" : "Next: Gallery Access"} <ArrowRight className="size-3.5" /></button> : null}
+              {step === 3 && rulesPane === "rules" ? <button type="button" disabled={saving} onClick={() => setRulesPane("watermark")} className="inline-flex items-center gap-2 rounded-xl bg-amber-700 px-5 py-2.5 text-xs font-bold text-white shadow-md shadow-amber-700/30 hover:bg-amber-600 disabled:opacity-50">Next: Watermark & Security <ArrowRight className="size-3.5" /></button> : null}
+              {step === 3 && rulesPane === "watermark" ? <button type="button" disabled={saving} onClick={saveWatermark} className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-xs font-bold text-white disabled:opacity-50">{saving ? "Saving…" : "Save watermark & continue"}</button> : null}
               {step > 1 && step < 5 && step !== 3 ? <Button disabled={saving || Boolean(work) || (step === 2 && !albumId)} onClick={() => go(step + 1)}>{saving ? "Saving…" : "Save & continue"}</Button> : null}
               {step === 5 ? <Button disabled={saving || !photoCount} onClick={publish}>{saving ? "Publishing…" : "Publish gallery"}</Button> : null}
             </div>
@@ -350,13 +474,14 @@ export default function PhotoSelectionCreate() {
             <p className="mt-2 font-mono text-2xl tracking-[0.3em]">{published.accessCode}</p>
             <div className="mt-5 flex flex-wrap justify-center gap-2">
               <Button onClick={() => navigator.clipboard.writeText(`${window.location.origin}/photo-selection/${published.shareToken}`)}>Copy link</Button>
-              <Button variant="secondary" onClick={() => { const phone = phoneDigits(form.phone); const text = encodeURIComponent(`Your photo selection gallery is ready.\n${window.location.origin}/photo-selection/${published.shareToken}\nCode: ${published.accessCode}`); window.open(phone ? `https://api.whatsapp.com/send?phone=91${phone}&text=${text}` : `https://api.whatsapp.com/send?text=${text}`, "_blank"); }}>WhatsApp</Button>
+              <Button variant="secondary" onClick={() => { const phone = phoneDigits(form.whatsapp || form.phone); const link = `${window.location.origin}/photo-selection/${published.shareToken}`; const text = encodeURIComponent(clientShareMessage({ studioName: user?.studio_name, expiry: form.selectionDeadline, link, pin: published.accessCode, welcome: form.welcomeMessage })); window.open(phone ? `https://api.whatsapp.com/send?phone=91${phone}&text=${text}` : `https://api.whatsapp.com/send?text=${text}`, "_blank"); }}>WhatsApp</Button>
               <Button variant="secondary" asChild><Link href={ROUTES.dashboardPhotoSelectionView(published.id)}>Open gallery</Link></Button>
             </div>
           </div>
         </div>
       ) : null}
     </PagePanel>
+    </NexpicCanvas>
   );
 }
 

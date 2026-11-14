@@ -850,3 +850,58 @@
 .selection-heart-pop {
   animation: selection-heart-pop 0.75s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
 }
+
+.nexpic-canvas {
+  background-color: #fdf7f4;
+  background-image:
+    radial-gradient(at 10% 6%, rgba(251, 207, 232, 0.42) 0px, transparent 48%),
+    radial-gradient(at 88% 12%, rgba(253, 230, 138, 0.42) 0px, transparent 52%),
+    radial-gradient(at 50% 88%, rgba(254, 205, 211, 0.3) 0px, transparent 56%);
+  background-attachment: fixed;
+  color: #1c1917;
+}
+
+.nexpic-canvas-bleed {
+  margin: -1rem -1.5rem;
+  padding: 1rem 1.5rem;
+  min-height: calc(100% + 2rem);
+}
+
+@media (min-width: 640px) {
+  .nexpic-canvas-bleed {
+    margin: -1.25rem -2rem;
+    padding: 1.25rem 2rem;
+    min-height: calc(100% + 2.5rem);
+  }
+}
+
+@media (min-width: 1024px) {
+  .nexpic-canvas-bleed {
+    margin-left: -3rem;
+    margin-right: -3rem;
+    padding-left: 3rem;
+    padding-right: 3rem;
+  }
+}
+
+.nexpic-canvas :is(article, section, div)[class*="bg-white"][class*="rounded-"][class*="border"] {
+  background-color: rgba(255, 252, 248, 0.78);
+  border-color: rgba(212, 165, 138, 0.42);
+  box-shadow: 0 10px 30px -8px rgba(136, 75, 88, 0.1), 0 4px 12px -3px rgba(176, 135, 68, 0.1);
+  backdrop-filter: blur(16px);
+}
+
+.nexpic-canvas :is(button, a)[class*="bg-amber-600"],
+.nexpic-canvas :is(button, a)[class*="bg-amber-700"],
+.nexpic-canvas :is(button, a)[class*="bg-primary"] {
+  background-image: linear-gradient(135deg, #8f6834 0%, #b08744 55%, #c5a059 100%);
+  background-color: #b08744;
+  color: #fff;
+  border-color: transparent;
+}
+
+.nexpic-canvas :is(button, a)[class*="bg-amber-600"]:hover,
+.nexpic-canvas :is(button, a)[class*="bg-amber-700"]:hover,
+.nexpic-canvas :is(button, a)[class*="bg-primary"]:hover {
+  background-image: linear-gradient(135deg, #75532f 0%, #8f6834 55%, #b08744 100%);
+}
