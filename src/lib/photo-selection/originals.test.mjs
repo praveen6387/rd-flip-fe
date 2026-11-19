@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 const source = await readFile(new URL("./originals.js", import.meta.url), "utf8");
-const { folderBasename, missingOriginals, originalsZip, copySelectedOriginals } = await import(`data:text/javascript;base64,${Buffer.from(source).toString("base64")}`);
+const { folderBasename, missingOriginals, exportRelativePath, originalsZip, copySelectedOriginals } = await import(`data:text/javascript;base64,${Buffer.from(source).toString("base64")}`);
 test("saved Windows and macOS paths resolve folder name", () => {
   assert.equal(folderBasename("D:\\Wedding\\Originals\\"), "Originals");
   assert.equal(folderBasename("/Users/studio/Originals/"), "Originals");
@@ -46,17 +46,49 @@ function directory(name, entries = new Map()) {
     },
   };
 }
-test("extract copies selected originals into a Selected folder inside the original folder", async () => {
+test("extract copies selected originals into a Selected folder inside the picked folder", async () => {
   const original = new Blob(["full resolution original"]);
   const source = directory("Wedding", new Map([["A.JPG", { async getFile() { return original; } }], ["B.JPG", {}], ["Selected", directory("Selected")]]));
-  const parent = directory("Photos", new Map([["Wedding", source]]));
-  globalThis.window = { async showDirectoryPicker() { return parent; } };
+  globalThis.window = { async showDirectoryPicker() { return source; } };
   const album = { status: "selected", originalFolderPath: "Wedding", photos: [{name: "A.JPG", selected: true}, {name: "B.JPG", selected: false}] };
   assert.equal(await copySelectedOriginals(album), 1);
   const created = source.entries.get("Selected (2)");
   assert.deepEqual([...created.entries.keys()], ["A.JPG"]);
   assert.equal(created.entries.get("A.JPG").bytes, original);
-  assert.equal(parent.entries.has("Wedding Selected"), false);
+  delete globalThis.window;
+});
+test("extract copies the uploaded folder names and leaves the chip off", async () => {
+  const first = new Blob(["camera first"]);
+  const second = new Blob(["camera second"]);
+  const loose = new Blob(["loose"]);
+  const root = directory("RD Shaadi", new Map([
+    ["0-A.jpg", { async getFile() { return loose; } }],
+    ["camera first", directory("camera first", new Map([["IMG.jpg", { async getFile() { return first; } }]]))],
+    ["camera second", directory("camera second", new Map([["IMG.jpg", { async getFile() { return second; } }]]))],
+  ]));
+  globalThis.window = { async showDirectoryPicker() { return root; } };
+  const album = { status: "selected", folderName: "RD Test", photos: [
+    { name: "IMG.jpg", originalRelativePath: "camera first/IMG.jpg", category: "Haldi", selected: true },
+    { name: "IMG.jpg", originalRelativePath: "camera second/IMG.jpg", category: "Haldi", selected: true },
+    { name: "0-A.jpg", originalRelativePath: "0-A.jpg", category: "Haldi", selected: true },
+  ] };
+  assert.equal(exportRelativePath(album.photos[0]), "camera first/IMG.jpg");
+  assert.equal(await copySelectedOriginals(album), 3);
+  const selected = root.entries.get("Selected");
+  assert.equal(selected.entries.has("Haldi"), false);
+  assert.equal(selected.entries.get("camera first").entries.get("IMG.jpg").bytes, first);
+  assert.equal(selected.entries.get("camera second").entries.get("IMG.jpg").bytes, second);
+  assert.equal(selected.entries.get("0-A.jpg").bytes, loose);
+  delete globalThis.window;
+});
+test("the same file name in two folders is not guessed", async () => {
+  const root = directory("RD Shaadi", new Map([
+    ["H (26).jpg", { async getFile() { return new Blob(["root"]); } }],
+    ["barat", directory("barat", new Map([["H (26).jpg", { async getFile() { return new Blob(["barat"]); } }]]))],
+  ]));
+  globalThis.window = { async showDirectoryPicker() { return root; } };
+  await assert.rejects(copySelectedOriginals({ status: "selected", photos: [{ name: "H (26).jpg", originalRelativePath: "Mehndi/H (26).jpg", selected: true }] }), /more than one folder/);
+  assert.equal(root.entries.has("Selected"), false);
   delete globalThis.window;
 });
 test("missing originals prevent creating an output folder", async () => {

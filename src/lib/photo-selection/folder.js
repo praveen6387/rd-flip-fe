@@ -1,3 +1,10 @@
+export function sourceRelativePath(file) {
+  const raw = String(file?.webkitRelativePath || file?.relativePath || "").replace(/\\/g, "/");
+  const parts = raw.split("/").filter((part) => part && part !== "." && part !== "..");
+  if (parts.length > 1 && parts.at(-1) === file?.name) return parts.join("/");
+  return file?.name || "";
+}
+
 export function uploadedFolder(files) {
   const paths = Array.from(files).map(file => file.webkitRelativePath || file.selectionRelativePath || "");
   if (!paths.length || paths.some(path => !path.includes("/"))) {

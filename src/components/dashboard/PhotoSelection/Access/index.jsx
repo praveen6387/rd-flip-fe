@@ -45,7 +45,7 @@ export default function SelectionAccess() {
       </div>
       <form onSubmit={submit} className="w-full max-w-md rounded-2xl border border-stone-200 bg-white p-8 text-center shadow-2xl">
         <div className="mx-auto mb-4 grid size-14 place-items-center rounded-2xl border border-amber-200 bg-amber-50 text-amber-700"><KeyRound className="size-7" /></div>
-        <h1 className="font-heading text-2xl font-bold text-stone-900">Private photo gallery</h1>
+        <h1 className="font-sans text-2xl font-bold text-stone-900">Private photo gallery</h1>
         <p className="mt-1 mb-6 text-xs text-stone-500">Enter the six-digit code shared by your studio. You will only be asked once in this tab.</p>
         <input id="selection-code" inputMode="numeric" autoComplete="off" pattern="[0-9]{6}" minLength={6} maxLength={6} required value={code} onChange={(event) => setCode(event.target.value.replace(/[^0-9]/g, "").slice(0, 6))} placeholder="Enter access code" className="w-full rounded-xl border border-stone-200 bg-stone-50 px-4 py-3 text-center font-mono text-lg tracking-[0.4em] outline-none focus:ring-2 focus:ring-amber-500" />
         {error ? <p role="alert" className="mt-3 text-sm text-rose-600">{error}</p> : null}

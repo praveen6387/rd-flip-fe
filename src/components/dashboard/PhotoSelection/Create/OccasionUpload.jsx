@@ -1,17 +1,15 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { Check, Folder, FolderTree, Heart, Image as ImageIcon, Pencil, Plus, RotateCw, UploadCloud, X } from "lucide-react";
+import { Check, Folder, FolderTree, Heart, Image as ImageIcon, Loader2, Pencil, Plus, RotateCw, UploadCloud, X } from "lucide-react";
+import { sourceRelativePath } from "@/lib/photo-selection/folder";
 import { rotationClass } from "../Gallery/rotation";
+import SelectionProgress from "../_builder/SelectionProgress";
 
 export const OCCASIONS = ["Pre-Wedding", "Engagement", "Tilak", "Haldi", "Mehndi", "Sangeet", "Wedding", "Reception", "Post-Wedding", "Anniversary", "Birthday", "Family & Guests", "Other Events"];
 
-export function occasionRelativePath(file, category) {
-  const raw = String(file.webkitRelativePath || file.relativePath || "").replace(/\\/g, "/");
-  const parts = raw.split("/").filter((part) => part && part !== "." && part !== "..");
-  const inner = parts.length > 1 ? parts.slice(1, -1) : [];
-  const safeCategory = String(category || "Other Events").replace(/[\\/]/g, " ").trim() || "Other Events";
-  return [safeCategory, ...inner, file.name].join("/");
+export function occasionRelativePath(file) {
+  return sourceRelativePath(file);
 }
 
 async function scanEntry(entry, path = "") {
@@ -40,7 +38,7 @@ async function scanEntry(entry, path = "") {
   return nested.flat();
 }
 
-export default function OccasionUpload({ photos = [], disabled = false, onUpload, onRotate }) {
+export default function OccasionUpload({ photos = [], disabled = false, onUpload, onRotate, work = null }) {
   const folderRef = useRef(null);
   const fileRef = useRef(null);
   const [active, setActive] = useState("Pre-Wedding");
@@ -52,6 +50,7 @@ export default function OccasionUpload({ photos = [], disabled = false, onUpload
   const [editName, setEditName] = useState("");
   const [dragOver, setDragOver] = useState(false);
   const [queue, setQueue] = useState([]);
+  const [openQueue, setOpenQueue] = useState("");
   const saved = [...new Set(photos.map((photo) => photo.category).filter(Boolean))];
   const categories = [...OCCASIONS.filter((name) => !hidden.includes(name)), ...custom, ...saved.filter((name) => !OCCASIONS.includes(name) && !custom.includes(name))];
   const countOf = (name) => photos.filter((photo) => photo.category === name).length;
@@ -60,12 +59,17 @@ export default function OccasionUpload({ photos = [], disabled = false, onUpload
   const shown = folderPhotos.length ? folderPhotos : photos;
   const queueStructure = queue.reduce((structure, file) => {
     const parts = String(file.selectionRelativePath || file.name).split("/").filter(Boolean);
-    const main = parts.length > 1 ? parts[0] : active;
-    const sub = parts.length > 2 ? parts.slice(1, -1).join(" / ") : "Direct Photos";
+    const main = file.selectionCategory || active;
+    const sub = parts.length > 1 ? parts.slice(0, -1).join(" / ") : "Photos";
     structure[main] = structure[main] || {};
-    structure[main][sub] = (structure[main][sub] || 0) + 1;
+    structure[main][sub] = structure[main][sub] || [];
+    structure[main][sub].push(file);
     return structure;
   }, {});
+
+  function dropQueued(match) {
+    setQueue((current) => current.filter((file) => !match(file)));
+  }
 
   function addCategory() {
     const name = draftName.trim();
@@ -107,9 +111,10 @@ export default function OccasionUpload({ photos = [], disabled = false, onUpload
       const seen = new Set(current.map((file) => file.selectionRelativePath || file.name));
       const next = [];
       for (const file of files) {
-        const path = file.selectionRelativePath || occasionRelativePath(file, active);
+        const path = file.selectionRelativePath || occasionRelativePath(file);
         if (seen.has(path)) continue;
         file.selectionRelativePath = path;
+        file.selectionCategory = active;
         seen.add(path);
         next.push(file);
       }
@@ -144,10 +149,6 @@ export default function OccasionUpload({ photos = [], disabled = false, onUpload
 
   return (
     <div>
-      <div className="mb-3">
-        <h3 className="flex items-center gap-2 font-serif text-base font-bold text-stone-900"><UploadCloud className="size-4 text-amber-500" />Upload Photographs & Folders</h3>
-        <p className="mt-0.5 text-xs text-stone-500">Upload photos or select entire folders with ceremonies (Pre-Wedding, Tilak, Haldi, Mehndi, Wedding, Reception). Subfolders are preserved automatically.</p>
-      </div>
       <div className="mb-3 space-y-2 rounded-xl border border-stone-200/80 bg-stone-50 p-2.5">
         <div className="flex flex-wrap items-center justify-between gap-1.5">
           <span className="flex items-center gap-1.5 text-xs font-bold text-stone-800"><Folder className="size-3.5 text-amber-500" />Target Folder:{uploadedCount ? <span className="rounded-full border border-emerald-300 bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-800">{uploadedCount} uploaded ({photos.length} photos)</span> : null}</span>
@@ -198,7 +199,7 @@ export default function OccasionUpload({ photos = [], disabled = false, onUpload
       >
         <div className="mx-auto mb-1.5 grid size-8 place-items-center rounded-xl bg-amber-50 text-amber-600"><UploadCloud className="size-4" /></div>
         <p className="text-sm font-semibold text-stone-800">Drag & drop photos or entire ceremony folders here</p>
-        <p className="mb-2.5 text-[11px] text-stone-500">Folder structure & subfolders are recognized and organized automatically into {active}.</p>
+        <p className="mb-2.5 text-[11px] text-stone-500">Photos are filed under {active}. Each folder you add stays separate.</p>
         <div className="flex flex-wrap items-center justify-center gap-2.5">
           <button type="button" disabled={disabled} onClick={() => folderRef.current?.click()} className="inline-flex items-center gap-2 rounded-xl bg-amber-500 px-4 py-2 text-xs font-bold text-white shadow-sm"><FolderTree className="size-4" />Browse Ceremony Folders</button>
           <button type="button" disabled={disabled} onClick={() => fileRef.current?.click()} className="inline-flex items-center gap-2 rounded-xl border border-stone-200 bg-white px-3.5 py-2 text-xs font-semibold text-stone-800"><ImageIcon className="size-3.5 text-amber-600" />Select Photos</button>
@@ -217,11 +218,34 @@ export default function OccasionUpload({ photos = [], disabled = false, onUpload
             <div className="space-y-2">
               {Object.entries(queueStructure).map(([folder, subs]) => (
                 <div key={folder} className="text-xs">
-                  <p className="flex items-center gap-1.5 font-semibold text-stone-800"><Folder className="size-3.5 text-amber-600" />{folder}</p>
+                  <p className="flex items-center gap-1.5 font-semibold text-stone-800">
+                    <Folder className="size-3.5 text-amber-600" />
+                    {folder}
+                    <button type="button" disabled={disabled} onClick={() => dropQueued((file) => (file.selectionCategory || active) === folder)} className="grid size-4 place-items-center rounded-full text-stone-400 hover:bg-rose-50 hover:text-rose-600 disabled:opacity-40" aria-label={`Remove ${folder}`}><X className="size-3" /></button>
+                  </p>
                   <div className="flex flex-wrap gap-1.5 pt-1 pl-5">
-                    {Object.entries(subs).map(([sub, count]) => (
-                      <span key={sub} className="inline-flex items-center gap-1 rounded-md border border-stone-200 bg-white px-2.5 py-0.5 font-mono text-[11px] text-stone-700"><span className="text-stone-400">↳</span><strong>{sub}</strong>: {count} {count === 1 ? "photo" : "photos"}</span>
-                    ))}
+                    {Object.entries(subs).map(([sub, files]) => {
+                      const groupKey = `${folder}/${sub}`;
+                      const open = openQueue === groupKey;
+                      return (
+                        <div key={sub} className="max-w-full">
+                          <span className="inline-flex items-center gap-1 rounded-md border border-stone-200 bg-white px-2 py-0.5 font-mono text-[11px] text-stone-700">
+                            <button type="button" disabled={disabled} onClick={() => setOpenQueue(open ? "" : groupKey)} className="inline-flex items-center gap-1"><span className="text-stone-400">↳</span><strong>{sub}</strong>: {files.length} {files.length === 1 ? "photo" : "photos"}</button>
+                            <button type="button" disabled={disabled} onClick={() => dropQueued((file) => files.includes(file))} className="grid size-4 place-items-center rounded-full text-stone-400 hover:bg-rose-50 hover:text-rose-600 disabled:opacity-40" aria-label={`Remove ${sub}`}><X className="size-3" /></button>
+                          </span>
+                          {open ? (
+                            <span className="mt-1 flex flex-wrap gap-1">
+                              {files.map((file) => (
+                                <span key={file.selectionRelativePath || file.name} className="inline-flex max-w-full items-center gap-1 rounded-md border border-stone-200 bg-white px-1.5 py-0.5 text-[11px] text-stone-600">
+                                  <span className="truncate">{file.name}</span>
+                                  <button type="button" disabled={disabled} onClick={() => dropQueued((item) => item === file)} className="grid size-4 shrink-0 place-items-center rounded-full text-stone-400 hover:bg-rose-50 hover:text-rose-600 disabled:opacity-40" aria-label={`Remove ${file.name}`}><X className="size-3" /></button>
+                                </span>
+                              ))}
+                            </span>
+                          ) : null}
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               ))}
@@ -229,12 +253,13 @@ export default function OccasionUpload({ photos = [], disabled = false, onUpload
           </div>
           <div className="flex flex-col items-end justify-between gap-3 pt-1 sm:flex-row sm:items-center">
             <p className="text-xs text-stone-500">Once upload finishes, continue to Selection Rules so you can share the link with the client.</p>
-            <button type="button" disabled={disabled} onClick={startUpload} className="inline-flex items-center gap-2 rounded-xl bg-amber-700 px-6 py-3 text-sm font-bold text-white shadow-md disabled:opacity-50"><UploadCloud className="size-4" />{disabled ? "Uploading…" : `Start Upload (${queue.length} ${queue.length === 1 ? "Photo" : "Photos"})`}</button>
+            <button type="button" disabled={disabled} onClick={startUpload} className="inline-flex items-center gap-2 rounded-xl bg-amber-700 px-6 py-2.5 text-xs font-bold text-white shadow-md shadow-amber-700/30 hover:bg-amber-600 disabled:opacity-50">{work ? <Loader2 className="size-4 animate-spin" /> : <UploadCloud className="size-4" />}{work ? "Uploading…" : `Start Upload (${queue.length} ${queue.length === 1 ? "Photo" : "Photos"})`}</button>
           </div>
+          <SelectionProgress state={work} />
         </div>
       ) : null}
       <div className="mt-4">
-        <h3 className="font-serif text-lg font-bold text-stone-900">Photo Gallery Manager ({shown.length})</h3>
+        <h3 className="font-sans text-lg font-bold text-stone-900">Photo Gallery Manager ({shown.length})</h3>
         <p className="text-xs text-stone-500">{folderPhotos.length ? `Photos in ${active}` : "Uploaded photos from every folder"}</p>
         {shown.length ? (
           <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
@@ -248,7 +273,7 @@ export default function OccasionUpload({ photos = [], disabled = false, onUpload
                 </div>
                 <figcaption className="flex items-center justify-between gap-2 border-t border-stone-100 p-2 text-[11px]">
                   <span className="truncate font-mono text-stone-700" title={photo.name}>{photo.name}</span>
-                  {photo.category ? <span className="shrink-0 rounded bg-stone-100 px-1.5 py-0.5 text-[10px] font-medium text-stone-500">{photo.category}</span> : null}
+                  {photo.category || photo.subfolder ? <span className="shrink-0 rounded bg-stone-100 px-1.5 py-0.5 text-[10px] font-medium text-stone-500">{[photo.category, photo.subfolder].filter(Boolean).join(" / ")}</span> : null}
                 </figcaption>
               </figure>
             ))}

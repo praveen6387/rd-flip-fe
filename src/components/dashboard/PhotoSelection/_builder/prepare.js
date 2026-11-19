@@ -1,13 +1,15 @@
 import {
   optimizeImage,
 } from "@/components/dashboard/CreateFlipbook/_builder/optimizeImage";
+import { sourceRelativePath } from "@/lib/photo-selection/folder";
 
 const CONCURRENCY = 3;
 
 export async function prepareSelectionPhoto(file) {
   const optimized = await optimizeImage(file);
   const prepared = new File([optimized.blob], file.name, { type: optimized.blob.type || file.type, lastModified: file.lastModified });
-  prepared.selectionRelativePath = file.selectionRelativePath || file.webkitRelativePath?.split("/").slice(1).join("/") || file.name;
+  prepared.selectionRelativePath = file.selectionRelativePath || sourceRelativePath(file);
+  prepared.selectionCategory = file.selectionCategory || "";
   return prepared;
 }
 

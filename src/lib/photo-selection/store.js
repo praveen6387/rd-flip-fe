@@ -59,6 +59,7 @@ export async function createAlbum({ files, onProgress, ...values }) {
   try {
     await runPool(files, async (file) => {
       const saved = await uploadSelectionFile(albumId, file);
+      saved.category = file.selectionCategory || "";
       uploaded.push(saved);
       done += 1;
       onProgress?.({ phase: "upload", current: done, total: files.length });
@@ -84,6 +85,7 @@ export async function addPhotos(id, files, onProgress, publish = false) {
   try {
     await runPool(files, async (file) => {
       const saved = await uploadSelectionFile(id, file);
+      saved.category = file.selectionCategory || "";
       uploaded.push(saved);
       done += 1;
       onProgress?.({ phase: "upload", current: done, total: files.length });

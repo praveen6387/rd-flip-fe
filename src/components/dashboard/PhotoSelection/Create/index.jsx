@@ -3,21 +3,37 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ArrowRight, Calendar, Check, ChevronLeft, Clock, Eye, FileText, Heart, ImageIcon, Loader2, Mail, Phone, Send, Shield, Sparkles, Target, Type, UploadCloud, User, X } from "lucide-react";
+import { toast } from "sonner";
+import { ArrowRight, Calendar, Check, ChevronLeft, Clock, Eye, FileText, Heart, ImageIcon, Loader2, Mail, Pencil, Phone, Send, Shield, Sparkles, Target, Type, UploadCloud, User, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import PagePanel from "@/components/dashboard/_builder/PagePanel";
 import { useAuth } from "@/components/auth";
 import { hasPhotoSelectionCredit } from "@/lib/credits";
 import { updateSocialLinks, uploadStudioLogo } from "@/lib/api/client/auth";
 import { ROUTES } from "@/lib/routes";
+import { sourceRelativePath } from "@/lib/photo-selection/folder";
 import { addPhotos, createDraft, getAlbum, publishAlbum, rotatePhoto, saveDraft } from "@/lib/photo-selection/store";
 import { acceptedSelectionFiles, clientShareMessage } from "../_builder/panel";
 import { prepareSelectionPhotos } from "../_builder/prepare";
-import SelectionProgress from "../_builder/SelectionProgress";
-import OccasionUpload, { occasionRelativePath } from "./OccasionUpload";
+import OccasionUpload from "./OccasionUpload";
 import SelectionRules from "./SelectionRules";
 import GalleryAccess from "./GalleryAccess";
 import NexpicCanvas from "../_builder/NexpicCanvas";
+
+const forwardButtonClass = "inline-flex items-center gap-2 rounded-xl bg-amber-700 px-6 py-2.5 text-xs font-bold text-white shadow-md shadow-amber-700/30 hover:bg-amber-600 disabled:opacity-50";
+
+function StepIntro({ icon: Icon, title, step, children }) {
+  return (
+    <div className="-mx-6 -mt-6 mb-4 flex items-center gap-2.5 border-b border-[#ead8c8] bg-gradient-to-r from-[#fff8f3] to-[#fbf6f1] px-6 py-2.5">
+      <div className="grid size-8 shrink-0 place-items-center rounded-full bg-[#f6e4cf] text-[#8f6834]"><Icon className="size-3.5" /></div>
+      <div className="min-w-0 flex-1">
+        <h2 className="truncate text-sm font-bold text-stone-900">{title}</h2>
+        <p className="truncate text-[11px] leading-4 text-stone-500">{children}</p>
+      </div>
+      <span className="shrink-0 text-[10px] font-semibold tracking-[0.14em] text-[#b08968] uppercase">Step {step} of 5</span>
+    </div>
+  );
+}
 
 const STEPS = [
   { id: 1, name: "Client Details", subtitle: "Couple & event", icon: User },
@@ -48,6 +64,34 @@ function phoneDigits(value) {
   else if (digits.length > 10 && digits.startsWith("0")) digits = digits.slice(1);
   while (digits && !/^[6-9]/.test(digits)) digits = digits.slice(1);
   return digits.slice(0, 10);
+}
+
+function comparableForm(source) {
+  return {
+    folderName: String(source.folderName || "").trim(),
+    clientName: String(source.clientName || "").trim(),
+    phone: phoneDigits(source.phone),
+    whatsapp: phoneDigits(source.whatsapp),
+    clientEmail: String(source.clientEmail || "").trim(),
+    eventDate: source.eventDate || "",
+    selectionDeadline: source.selectionDeadline || "",
+    photographerNotes: String(source.photographerNotes || ""),
+    welcomeMessage: String(source.welcomeMessage || ""),
+    originalFolderPath: String(source.originalFolderPath || ""),
+    selectionMode: source.selectionMode || "UNLIMITED",
+    requiredPhotos: Number(source.requiredPhotos) || 0,
+    includedPhotos: Number(source.includedPhotos) || 0,
+    allowExtraPhotos: source.allowExtraPhotos !== false,
+    strictLimit: Boolean(source.strictLimit),
+    maxSelectionLimit: Number(source.maxSelectionLimit) || 0,
+    photosPerSheet: Number(source.photosPerSheet) || 0,
+    includedSheets: Number(source.includedSheets) || 0,
+    enableExtraPhotoPricing: Boolean(source.enableExtraPhotoPricing),
+    extraPhotoPrice: Number(source.extraPhotoPrice) || 0,
+    enableExtraSheetPricing: Boolean(source.enableExtraSheetPricing),
+    extraSheetPrice: Number(source.extraSheetPrice) || 0,
+    accessCode: String(source.accessCode || ""),
+  };
 }
 
 function formFromAlbum(album) {
@@ -106,6 +150,8 @@ export default function PhotoSelectionCreate() {
   const [logoBusy, setLogoBusy] = useState(false);
   const markLoaded = useRef(false);
   const logoTouched = useRef(false);
+  const savedForm = useRef(null);
+  const savedMark = useRef(null);
 
   useEffect(() => {
     if (!user || markLoaded.current) return;
@@ -117,9 +163,19 @@ export default function PhotoSelectionCreate() {
   useEffect(() => {
     if (!user || logoTouched.current) return;
     const url = user.watermark_logo_url || "";
+    const enabled = user.watermark_enabled !== false;
+    const text = user.watermark_text || "";
     setLogoUrl(url);
     setLogoPreview(user.watermark_logo_preview || "");
     setMarkLogo(Boolean(url) && user.watermark_include_logo !== false);
+    if (!savedMark.current) {
+      savedMark.current = {
+        enabled,
+        text: text.trim().slice(0, 120),
+        include: Boolean(enabled && url && user.watermark_include_logo !== false),
+        logo: url,
+      };
+    }
   }, [user]);
 
   useEffect(() => {
@@ -146,9 +202,11 @@ export default function PhotoSelectionCreate() {
         setShareToken(album.shareToken || "");
         setPhotoCount(album.photoCount || album.photos?.length || 0);
         setPhotos(album.photos || []);
+        const nextForm = formFromAlbum(album);
         setFolderName(album.originalFolderPath || "");
         setStep(requestedStep >= 1 && requestedStep <= 5 ? requestedStep : Math.min(5, Math.max(1, album.wizardStep || 1)));
-        setForm(formFromAlbum(album));
+        setForm(nextForm);
+        savedForm.current = comparableForm({ ...nextForm, accessCode: album.accessCode || "" });
       } catch (loadError) {
         if (!ignore) setError(loadError.message || "Could not open this gallery.");
       } finally {
@@ -170,17 +228,50 @@ export default function PhotoSelectionCreate() {
     return { ...form, id: albumId || crypto.randomUUID(), wizardStep: nextStep, phone: phoneDigits(form.phone), whatsapp: phoneDigits(form.whatsapp), eventDate: form.eventDate || null, selectionDeadline: form.selectionDeadline || null };
   }
 
+  function currentMark() {
+    return {
+      enabled: markOn,
+      text: markText.trim().slice(0, 120),
+      include: Boolean(markOn && markLogo && logoUrl),
+      logo: logoUrl,
+    };
+  }
+
+  function formUnchanged() {
+    if (!albumId || !savedForm.current) return false;
+    return JSON.stringify(comparableForm({ ...form, accessCode })) === JSON.stringify(savedForm.current);
+  }
+
+  function rememberForm(nextForm = form, code = accessCode) {
+    savedForm.current = comparableForm({ ...nextForm, accessCode: code });
+  }
+
+  function assertSavable(nextStep) {
+    const body = payload(nextStep);
+    if (body.phone && !/^[6-9]\d{9}$/.test(body.phone)) throw new Error("Enter a 10-digit mobile number starting with 6, 7, 8, or 9.");
+    if (body.whatsapp && !/^[6-9]\d{9}$/.test(body.whatsapp)) throw new Error("Enter a 10-digit WhatsApp number starting with 6, 7, 8, or 9.");
+    if (!String(body.folderName || "").trim() || !String(body.clientName || "").trim()) throw new Error("Couple name and client name are required.");
+    if (nextStep === 4) {
+      if (form.selectionMode === "FIXED" && Number(form.requiredPhotos) > photoCount) throw new Error(`Required photos (${form.requiredPhotos}) cannot exceed the ${photoCount} uploaded photos.`);
+      if (form.selectionMode === "MIN_EXTRA" && Number(form.includedPhotos) > photoCount) throw new Error(`Included photos (${form.includedPhotos}) cannot exceed the ${photoCount} uploaded photos.`);
+    }
+  }
+
   async function persist(nextStep) {
     const body = payload(nextStep);
     if (/^\d{6}$/.test(accessCode)) body.accessCode = accessCode;
-    if (body.phone && !/^[6-9]\d{9}$/.test(body.phone)) throw new Error("Enter a 10-digit mobile number starting with 6, 7, 8, or 9.");
-    if (body.whatsapp && !/^[6-9]\d{9}$/.test(body.whatsapp)) throw new Error("Enter a 10-digit WhatsApp number starting with 6, 7, 8, or 9.");
-    if (!body.folderName.trim() || !body.clientName.trim()) throw new Error("Couple name and client name are required.");
+    assertSavable(nextStep);
     const album = albumId ? await saveDraft(albumId, body) : await createDraft(body);
     setAlbumId(album.id);
     setAccessCode(album.accessCode || "");
     setShareToken(album.shareToken || "");
+    rememberForm(form, album.accessCode || accessCode);
     return album;
+  }
+
+  function advance(savedStep) {
+    setStep(savedStep);
+    if (albumId) router.replace(`${ROUTES.dashboardPhotoSelectionNew}?album=${albumId}&step=${savedStep}`);
   }
 
   async function updateShare() {
@@ -188,10 +279,15 @@ export default function PhotoSelectionCreate() {
       setError("The access code must be 6 digits.");
       return;
     }
-    setSaving(true);
     setError("");
+    if (formUnchanged()) {
+      toast.success("Access code is already saved");
+      return;
+    }
+    setSaving(true);
     try {
       await persist(4);
+      toast.success("Access code updated");
     } catch (saveError) {
       setError(saveError.message || "Could not update gallery access.");
     } finally {
@@ -201,13 +297,14 @@ export default function PhotoSelectionCreate() {
 
   async function go(nextStep) {
     const savedStep = nextStep === "done" ? 2 : nextStep;
-    setSaving(true);
     setError("");
     try {
-      if (savedStep === 4) {
-        if (form.selectionMode === "FIXED" && Number(form.requiredPhotos) > photoCount) throw new Error(`Required photos (${form.requiredPhotos}) cannot exceed the ${photoCount} uploaded photos.`);
-        if (form.selectionMode === "MIN_EXTRA" && Number(form.includedPhotos) > photoCount) throw new Error(`Included photos (${form.includedPhotos}) cannot exceed the ${photoCount} uploaded photos.`);
+      assertSavable(savedStep);
+      if (formUnchanged()) {
+        advance(savedStep);
+        return;
       }
+      setSaving(true);
       const album = await persist(savedStep);
       setStep(savedStep);
       router.replace(`${ROUTES.dashboardPhotoSelectionNew}?album=${album.id}&step=${savedStep}`);
@@ -227,7 +324,8 @@ export default function PhotoSelectionCreate() {
       return false;
     }
     accepted.forEach((file) => {
-      if (!file.selectionRelativePath) file.selectionRelativePath = occasionRelativePath(file, category);
+      if (!file.selectionRelativePath) file.selectionRelativePath = sourceRelativePath(file);
+      file.selectionCategory = file.selectionCategory || category;
     });
     if (new Set(accepted.map((file) => file.selectionRelativePath)).size !== accepted.length) {
       setError("Two photos in this folder share the same name and subfolder.");
@@ -242,12 +340,8 @@ export default function PhotoSelectionCreate() {
       const album = await getAlbum(albumId);
       setPhotoCount(album.photoCount || album.photos?.length || 0);
       setPhotos(album.photos || []);
-      const browsed = accepted.find((file) => file.webkitRelativePath)?.webkitRelativePath?.split("/")?.[0] || "";
-      if (browsed) {
-        setFolderName(browsed);
-        change("originalFolderPath", browsed);
-        await saveDraft(albumId, { originalFolderPath: browsed, wizardStep: 2 });
-      }
+      setWork({ phase: "done", current: 1, total: 1 });
+      await new Promise((resolve) => setTimeout(resolve, 400));
     } catch (uploadError) {
       setError(uploadError.message);
       return false;
@@ -288,18 +382,27 @@ export default function PhotoSelectionCreate() {
   }
 
   async function saveWatermark() {
-    setSaving(true);
     setError("");
+    const mark = currentMark();
+    const markSame = savedMark.current && JSON.stringify(mark) === JSON.stringify(savedMark.current);
+    if (markSame && formUnchanged()) {
+      advance(4);
+      return;
+    }
+    setSaving(true);
     try {
-      const result = await updateSocialLinks({
-        watermark_enabled: markOn,
-        watermark_text: markText.trim().slice(0, 120),
-        watermark_position: user?.watermark_position || "bottom-right",
-        watermark_opacity: Number(user?.watermark_opacity) || 0.45,
-        watermark_include_logo: Boolean(markOn && markLogo && logoUrl),
-        watermark_logo_url: logoUrl,
-      });
-      if (result.data?.user) applyUser(result.data.user);
+      if (!markSame) {
+        const result = await updateSocialLinks({
+          watermark_enabled: markOn,
+          watermark_text: markText.trim().slice(0, 120),
+          watermark_position: user?.watermark_position || "bottom-right",
+          watermark_opacity: Number(user?.watermark_opacity) || 0.45,
+          watermark_include_logo: Boolean(markOn && markLogo && logoUrl),
+          watermark_logo_url: logoUrl,
+        });
+        if (result.data?.user) applyUser(result.data.user);
+        savedMark.current = mark;
+      }
       await go(4);
     } catch (saveError) {
       setError(saveError.message || "Could not save the watermark.");
@@ -311,7 +414,7 @@ export default function PhotoSelectionCreate() {
     setSaving(true);
     setError("");
     try {
-      await persist(5);
+      if (!formUnchanged()) await persist(5);
       setPublished(await publishAlbum(albumId));
     } catch (publishError) {
       setError(publishError.message);
@@ -327,42 +430,43 @@ export default function PhotoSelectionCreate() {
   return (
     <NexpicCanvas bleed>
     <PagePanel>
-      <div className="mx-auto max-w-5xl">
-        <div className="mb-4 flex items-center justify-between gap-3 border-b border-stone-200 pb-4">
+      <div>
+        <div className="mb-3 flex items-center justify-between gap-3 border-b border-stone-200 pb-3">
           <div className="flex items-center gap-3">
             <div className="grid size-10 place-items-center rounded-2xl bg-gradient-to-tr from-amber-600 to-amber-400 text-white shadow-lg shadow-amber-600/30"><Sparkles className="size-5" /></div>
             <div>
-              <h1 className="font-serif text-xl font-bold text-stone-900">{resumeId ? "Resume client gallery" : "Create New Client Gallery"}</h1>
+              <h1 className="font-sans text-xl font-bold text-stone-900">{resumeId ? "Resume client gallery" : "Create New Client Gallery"}</h1>
               <p className="text-xs text-stone-500">Fill client & couple details and click Done. You can upload photos & set rules right after.</p>
             </div>
           </div>
           <Link href={ROUTES.dashboardPhotoSelection} className="rounded-xl p-2 text-stone-400 hover:bg-stone-100 hover:text-stone-700" aria-label="Close"><X className="size-5" /></Link>
         </div>
-        {resumeId || step > 1 ? <div className="mb-6 grid grid-cols-2 gap-2 md:grid-cols-5">
+        {resumeId || step > 1 ? <div className="mb-3 grid grid-cols-2 gap-3 md:grid-cols-5">
           {STEPS.map((item) => {
             const Icon = item.icon;
             const done = item.id < step;
             const active = item.id === step;
             return (
-              <button key={item.id} type="button" onClick={() => item.id < step && setStep(item.id)} className={`rounded-2xl border p-3 text-left ${active ? "border-amber-700 bg-amber-700 text-white" : done ? "border-emerald-200 bg-emerald-50 text-emerald-800" : "border-stone-200 bg-white text-stone-400"}`}>
-                <Icon size={16} />
-                <p className="mt-2 text-xs font-bold">{item.name}</p>
-                <p className="text-[10px] opacity-70">{item.subtitle}</p>
+              <button key={item.id} type="button" disabled={item.id > step} onClick={() => done && setStep(item.id)} aria-label={done ? `Edit ${item.name}` : item.name} className={`flex items-center gap-2.5 rounded-2xl border px-3 py-2.5 text-left disabled:cursor-default ${active ? "border-amber-700 bg-amber-700 text-white" : done ? "cursor-pointer border-emerald-200 bg-emerald-50 text-emerald-800 hover:border-emerald-400" : "cursor-default border-stone-200 bg-white text-stone-400"}`}>
+                <span className={`grid size-9 shrink-0 place-items-center rounded-full ${active ? "bg-white/20 text-white" : done ? "bg-white text-emerald-700" : "bg-stone-100 text-stone-400"}`}><Icon size={18} /></span>
+                <span className="min-w-0 flex-1">
+                  <span className="block text-[13px] leading-4 font-semibold">{item.name}</span>
+                  <span className="mt-0.5 block text-[11px] leading-4 opacity-75">{item.subtitle}</span>
+                </span>
+                {done ? <span className="grid size-7 shrink-0 place-items-center rounded-full bg-white text-emerald-700 ring-1 ring-emerald-200"><Pencil className="size-3.5" /></span> : null}
               </button>
             );
           })}
         </div> : null}
         {error ? <p className="mb-4 rounded-xl bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</p> : null}
-        <div className="rounded-[28px] border border-stone-200 bg-white p-6 shadow-sm">
+        <div className="overflow-hidden rounded-[28px] border border-stone-200 bg-white p-6 shadow-sm">
+          {step === 1 ? <StepIntro icon={User} title="Couple & Client Details" step={1}>Fill client and couple contact details and click <strong>Done</strong>. You can upload photos and set selection rules right after.</StepIntro> : null}
+          {step === 2 ? <StepIntro icon={UploadCloud} title="Upload Photographs & Folders" step={2}>Upload photos or select entire ceremony folders. Subfolders are kept and filed under the active folder.</StepIntro> : null}
+          {step === 3 ? <StepIntro icon={rulesPane === "watermark" ? Shield : Target} title={rulesPane === "watermark" ? "Watermark & Security Settings" : "Configure Photo Selection Mode"} step={3}>{rulesPane === "watermark" ? "Save the studio watermark that is drawn over client photos. It is not burned into the files." : "Choose how your client selects photos from their gallery."}</StepIntro> : null}
+          {step === 4 ? <StepIntro icon={Shield} title="Share Client Photo Gallery" step={4}>Send the private gallery link, access code, and deadline to {form.clientName || "your client"}{form.folderName ? ` · ${form.folderName}` : ""}.</StepIntro> : null}
+          {step === 5 ? <StepIntro icon={Eye} title="Review & Publish" step={5}>Check the gallery, then publish. Publishing uses one photo-selection credit and opens the gallery.</StepIntro> : null}
           {step === 1 ? (
-            <div className="mx-auto max-w-4xl space-y-5">
-              <div className="flex items-start gap-3.5 rounded-2xl border-2 border-amber-400/40 bg-gradient-to-r from-amber-500/15 via-amber-400/10 to-transparent p-4 text-xs text-amber-950">
-                <div className="grid size-10 shrink-0 place-items-center rounded-2xl bg-amber-500/20 text-amber-700"><User className="size-5" /></div>
-                <div>
-                  <div className="flex flex-wrap items-center gap-2 text-sm font-bold text-stone-900">Couple & Client Details <span className="rounded-full border border-amber-500/40 bg-amber-500/25 px-2 py-0.5 font-mono text-[10px] font-bold text-amber-900">STEP 1 OF SETUP</span></div>
-                  <p className="mt-1 leading-relaxed text-stone-600">Fill client & couple contact details and click <strong>Done</strong>. You can configure photo upload and selection rules right after.</p>
-                </div>
-              </div>
+            <div className="space-y-5">
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <IconField icon={<Heart className="size-3.5 fill-rose-500/30 text-rose-500" />} label="Couple Name" required value={form.folderName} onChange={(value) => change("folderName", value)} placeholder="e.g. Rahul & Priya (Bride & Groom)" />
                 <IconField icon={<User className="size-3.5 text-amber-600" />} label="Client / Booked By" required value={form.clientName} onChange={(value) => change("clientName", value)} placeholder="e.g. Rahul Sharma or Sharma Family" />
@@ -394,13 +498,9 @@ export default function PhotoSelectionCreate() {
               </div>
             </div>
           ) : null}
-          {step === 2 ? <OccasionUpload photos={photos} disabled={Boolean(work) || !albumId} onUpload={uploadChosen} onRotate={rotateChosen} /> : null}
+          {step === 2 ? <OccasionUpload photos={photos} disabled={Boolean(work) || !albumId} work={work} onUpload={uploadChosen} onRotate={rotateChosen} /> : null}
           {step === 3 ? (
             <div>
-              <div className="mb-4">
-                <h2 className="font-serif text-xl font-bold text-stone-900">{rulesPane === "watermark" ? "Watermark & Security Settings" : "Configure Photo Selection Mode"}</h2>
-                <p className="text-xs text-stone-500">{rulesPane === "watermark" ? "Control the studio watermark on client photos." : "Choose how your client selects photos from their gallery"}</p>
-              </div>
               <div className="mb-4 flex items-center justify-between border-b border-stone-200 pb-3">
                 <div className="flex items-center gap-2">
                   <button type="button" onClick={() => setRulesPane("rules")} className={`inline-flex items-center gap-2 rounded-xl px-3 py-1.5 text-xs font-bold ${rulesPane === "rules" ? "border border-amber-500/40 bg-amber-500/20 text-amber-800" : "bg-stone-100 text-stone-600"}`}><Target className="size-3.5 text-amber-600" />1. Selection Rules</button>
@@ -425,7 +525,7 @@ export default function PhotoSelectionCreate() {
                       <p className="text-[11px] text-stone-500">{logoUrl ? "Using the logo from your profile. It is drawn over client photos with the text." : "Upload a logo on your profile. PNG, JPG, or WebP up to 2 MB."}</p>
                       <div className="mt-2 flex flex-wrap items-center gap-2">
                         <label className={`inline-flex cursor-pointer items-center gap-1 rounded-lg bg-amber-700 px-3 py-1.5 text-[11px] font-bold text-white ${logoBusy ? "opacity-50" : ""}`}>
-                          <UploadCloud className="size-3.5" />{logoBusy ? "Uploading…" : "Upload logo"}
+                          {logoBusy ? <Loader2 className="size-3.5 animate-spin" /> : <UploadCloud className="size-3.5" />}{logoBusy ? "Uploading…" : "Upload logo"}
                           <input type="file" accept="image/png,image/jpeg,image/webp" disabled={logoBusy} onChange={chooseLogo} className="hidden" />
                         </label>
                         {logoUrl ? <button type="button" onClick={() => { logoTouched.current = true; setLogoUrl(""); setLogoPreview(""); setMarkLogo(false); }} className="text-[11px] font-semibold text-rose-700">Remove</button> : null}
@@ -455,38 +555,63 @@ export default function PhotoSelectionCreate() {
             />
           ) : null}
           {step === 5 ? (
-            <div className="space-y-3 text-sm text-stone-700">
-              <p className="font-serif text-2xl text-stone-900">{form.folderName}</p>
-              <p>{form.clientName} · +91 {phoneDigits(form.phone)}</p>
-              <p>{photoCount} photos · {form.selectionMode === "FIXED" ? `${form.requiredPhotos} required` : form.selectionMode === "MIN_EXTRA" ? `${form.includedPhotos} included, extras ${form.allowExtraPhotos ? "allowed" : "off"}` : "Unlimited until you save a target"}</p>
-              <p>Client code {accessCode || "is created with the draft"}. Publishing uses one photo-selection credit and opens the gallery.</p>
-              <div className="flex flex-wrap gap-2">{[1, 2, 3, 4].map((item) => <button key={item} type="button" onClick={() => setStep(item)} className="rounded-full border px-3 py-1 text-xs font-semibold">Edit step {item}</button>)}</div>
+            <div className="space-y-3">
+              <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+                {[
+                  { icon: Heart, label: "Couple", value: form.folderName || "Not set" },
+                  { icon: User, label: "Client", value: form.clientName || "Not set" },
+                  { icon: Phone, label: "Mobile", value: phoneDigits(form.phone).length === 10 ? `+91 ${phoneDigits(form.phone).slice(0, 5)} ${phoneDigits(form.phone).slice(5)}` : "Not set" },
+                  { icon: ImageIcon, label: "Photos", value: String(photoCount) },
+                  { icon: Target, label: "Selection", value: form.selectionMode === "FIXED" ? `Fixed · ${form.requiredPhotos}` : form.selectionMode === "MIN_EXTRA" ? `Included ${form.includedPhotos}` : "Unlimited" },
+                  { icon: Shield, label: "Access code", value: accessCode || "Created with the draft" },
+                  { icon: Calendar, label: "Deadline", value: form.selectionDeadline || "Not set" },
+                ].map((item) => (
+                  <div key={item.label} className="flex items-center gap-2.5 rounded-xl bg-[#fbf6f1] px-3 py-2">
+                    <span className="grid size-8 shrink-0 place-items-center rounded-full bg-white text-[#8f6834]"><item.icon className="size-3.5" /></span>
+                    <span className="min-w-0">
+                      <span className="block text-[10px] font-semibold tracking-[0.12em] text-[#b08968] uppercase">{item.label}</span>
+                      <span className="block truncate text-sm font-semibold text-stone-800">{item.value}</span>
+                    </span>
+                  </div>
+                ))}
+              </div>
+              <p className="text-[11px] text-stone-500">Publishing uses one photo-selection credit and opens this gallery for the client.</p>
+              <div className="flex flex-wrap gap-1.5">
+                {STEPS.filter((item) => item.id < 5).map((item) => (
+                  <button key={item.id} type="button" onClick={() => setStep(item.id)} className="inline-flex items-center gap-1.5 rounded-full border border-[#ead8c8] bg-white px-2.5 py-1 text-[11px] font-semibold text-[#6b5344] hover:border-[#c5a059]">
+                    <Pencil className="size-3 text-[#b08968]" />{item.name}
+                  </button>
+                ))}
+              </div>
             </div>
           ) : null}
           <div className="mt-6 flex items-center justify-between gap-3 border-t border-stone-200 pt-4">
             {step === 1 ? <Button variant="secondary" asChild><Link href={ROUTES.dashboardPhotoSelection}><ChevronLeft className="size-4" />Back</Link></Button> : step === 3 && rulesPane === "watermark" ? <button type="button" disabled={saving} onClick={() => setRulesPane("rules")} className="rounded-xl border border-stone-200 bg-white px-4 py-2 text-xs font-semibold text-stone-700">Back (Selection Rules)</button> : step === 3 ? <button type="button" disabled={saving} onClick={() => setStep(2)} className="rounded-xl border border-stone-200 bg-white px-4 py-2 text-xs font-semibold text-stone-700">Cancel</button> : <Button variant="secondary" disabled={saving || Boolean(work)} onClick={() => setStep((value) => value - 1)}><ChevronLeft className="size-4" />Back</Button>}
             <div className="flex gap-2">
-              {step === 1 ? <button type="button" disabled={saving} onClick={() => go("done")} className="inline-flex items-center gap-2 rounded-xl bg-amber-600 px-6 py-2.5 text-xs font-bold text-white shadow-md shadow-amber-600/30 hover:bg-amber-500 disabled:opacity-50"><Check className="size-4" />{saving ? "Saving…" : "Done"}</button> : null}
-              {step === 3 && rulesPane === "rules" ? <button type="button" disabled={saving} onClick={() => setRulesPane("watermark")} className="inline-flex items-center gap-2 rounded-xl bg-amber-700 px-5 py-2.5 text-xs font-bold text-white shadow-md shadow-amber-700/30 hover:bg-amber-600 disabled:opacity-50">Next: Watermark & Security <ArrowRight className="size-3.5" /></button> : null}
-              {step === 3 && rulesPane === "watermark" ? <button type="button" disabled={saving} onClick={saveWatermark} className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-xs font-bold text-white disabled:opacity-50">{saving ? "Saving…" : "Save watermark & continue"}</button> : null}
-              {step > 1 && step < 5 && step !== 3 ? <Button disabled={saving || Boolean(work) || (step === 2 && !albumId)} onClick={() => go(step + 1)}>{saving ? "Saving…" : "Save & continue"}</Button> : null}
-              {step === 5 ? <Button disabled={saving || !photoCount} onClick={publish}>{saving ? "Publishing…" : "Publish gallery"}</Button> : null}
+              {step === 1 ? <button type="button" disabled={saving} onClick={() => go("done")} className={forwardButtonClass}>{saving ? <Loader2 className="size-4 animate-spin" /> : <Check className="size-4" />}{saving ? "Saving…" : "Done"}</button> : null}
+              {step === 3 && rulesPane === "rules" ? <button type="button" disabled={saving} onClick={() => setRulesPane("watermark")} className={forwardButtonClass}>{saving ? <Loader2 className="size-4 animate-spin" /> : null}Next: Watermark & Security <ArrowRight className="size-3.5" /></button> : null}
+              {step === 3 && rulesPane === "watermark" ? <button type="button" disabled={saving} onClick={saveWatermark} className={forwardButtonClass}>{saving ? <Loader2 className="size-4 animate-spin" /> : null}{saving ? "Saving…" : "Save watermark & continue"}</button> : null}
+              {step > 1 && step < 5 && step !== 3 ? <button type="button" disabled={saving || Boolean(work) || (step === 2 && !albumId)} onClick={() => go(step + 1)} className={forwardButtonClass}>{(saving || work) ? <Loader2 className="size-4 animate-spin" /> : null}{saving || work ? "Saving…" : "Save & continue"}</button> : null}
+              {step === 5 ? <button type="button" disabled={saving || !photoCount} onClick={publish} className={forwardButtonClass}>{saving ? <Loader2 className="size-4 animate-spin" /> : null}{saving ? "Publishing…" : "Publish gallery"}</button> : null}
             </div>
           </div>
         </div>
       </div>
-      <SelectionProgress state={work} />
       {published ? (
-        <div className="fixed inset-0 z-50 grid place-items-center bg-stone-950/50 p-4">
-          <div className="w-full max-w-md rounded-3xl bg-white p-6 text-center">
-            <Check className="mx-auto text-emerald-600" />
-            <h2 className="mt-3 font-serif text-3xl text-stone-900">Gallery published</h2>
-            <p className="mt-2 break-all text-sm text-stone-500">{typeof window === "undefined" ? "" : `${window.location.origin}/photo-selection/${published.shareToken}`}</p>
-            <p className="mt-2 font-mono text-2xl tracking-[0.3em]">{published.accessCode}</p>
-            <div className="mt-5 flex flex-wrap justify-center gap-2">
-              <Button onClick={() => navigator.clipboard.writeText(`${window.location.origin}/photo-selection/${published.shareToken}`)}>Copy link</Button>
-              <Button variant="secondary" onClick={() => { const phone = phoneDigits(form.whatsapp || form.phone); const link = `${window.location.origin}/photo-selection/${published.shareToken}`; const text = encodeURIComponent(clientShareMessage({ studioName: user?.studio_name, expiry: form.selectionDeadline, link, pin: published.accessCode, welcome: form.welcomeMessage })); window.open(phone ? `https://api.whatsapp.com/send?phone=91${phone}&text=${text}` : `https://api.whatsapp.com/send?text=${text}`, "_blank"); }}>WhatsApp</Button>
-              <Button variant="secondary" asChild><Link href={ROUTES.dashboardPhotoSelectionView(published.id)}>Open gallery</Link></Button>
+        <div className="fixed inset-0 z-50 grid place-items-center bg-[#fdf7f4]/60 p-4 backdrop-blur-[2px]">
+          <div className="w-full max-w-md overflow-hidden rounded-3xl border border-[#ead8c8] bg-white text-center shadow-[0_20px_50px_-24px_rgba(120,72,48,0.45)]">
+            <div className="bg-gradient-to-r from-[#fff8f3] to-[#fbf6f1] px-6 py-4">
+              <span className="mx-auto grid size-9 place-items-center rounded-full bg-emerald-100 text-emerald-700"><Check className="size-4" /></span>
+              <h2 className="mt-2 font-sans text-lg font-bold text-stone-900">Gallery published</h2>
+            </div>
+            <div className="px-6 py-4">
+              <p className="break-all text-xs text-stone-500">{typeof window === "undefined" ? "" : `${window.location.origin}/photo-selection/${published.shareToken}`}</p>
+              <p className="mt-2 font-mono text-xl tracking-[0.28em] text-stone-800">{published.accessCode}</p>
+              <div className="mt-4 flex flex-wrap justify-center gap-2">
+                <button type="button" onClick={() => navigator.clipboard.writeText(`${window.location.origin}/photo-selection/${published.shareToken}`)} className={forwardButtonClass}>Copy link</button>
+                <button type="button" onClick={() => { const phone = phoneDigits(form.whatsapp || form.phone); const link = `${window.location.origin}/photo-selection/${published.shareToken}`; const text = encodeURIComponent(clientShareMessage({ studioName: user?.studio_name, expiry: form.selectionDeadline, link, pin: published.accessCode, welcome: form.welcomeMessage })); window.open(phone ? `https://api.whatsapp.com/send?phone=91${phone}&text=${text}` : `https://api.whatsapp.com/send?text=${text}`, "_blank"); }} className="inline-flex items-center gap-1.5 rounded-xl border border-[#ead8c8] bg-white px-4 py-2.5 text-xs font-bold text-stone-700">WhatsApp</button>
+                <Link href={ROUTES.dashboardPhotoSelectionView(published.id)} className="inline-flex items-center gap-1.5 rounded-xl border border-[#ead8c8] bg-white px-4 py-2.5 text-xs font-bold text-stone-700">Open gallery</Link>
+              </div>
             </div>
           </div>
         </div>
