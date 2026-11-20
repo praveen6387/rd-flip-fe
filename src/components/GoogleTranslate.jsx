@@ -1,10 +1,13 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { usePathname } from "next/navigation";
 import { Languages } from "lucide-react";
 import { cn } from "@/lib/cn";
 
 const SCRIPT_ID = "google-translate-script";
+const HOST_ID = "google_translate_element";
+const SHELL_ID = "rd-translate-shell";
 
 function protectReactFromTranslate() {
   if (typeof Node !== "function" || Node.prototype.__rdFlipTranslateGuard) return;
@@ -21,62 +24,150 @@ function protectReactFromTranslate() {
   Node.prototype.__rdFlipTranslateGuard = true;
 }
 
+function widgetHost(shell) {
+  const nodes = [...document.querySelectorAll(`#${HOST_ID}`)];
+  const host = nodes[0] || document.createElement("div");
+  host.id = HOST_ID;
+  host.className = "notranslate";
+  host.setAttribute("translate", "no");
+  nodes.slice(1).forEach((node) => node.remove());
+  if (host.parentElement !== shell) shell.appendChild(host);
+  return host;
+}
+
+function comboReady(host) {
+  const combo = host.querySelector("select.goog-te-combo");
+  return Boolean(combo && combo.options.length > 1);
+}
+
+function translateShell() {
+  let shell = document.getElementById(SHELL_ID);
+  if (!shell) {
+    shell = document.createElement("div");
+    shell.id = SHELL_ID;
+    shell.className = "notranslate";
+    shell.setAttribute("translate", "no");
+    shell.dataset.open = "0";
+    const status = document.createElement("p");
+    status.className = "rd-translate-status";
+    status.textContent = "Loading languages…";
+    shell.appendChild(status);
+    document.body.appendChild(shell);
+  }
+  return shell;
+}
+
+function placeShell(shell, button, open) {
+  shell.dataset.open = open ? "1" : "0";
+  if (!open || !button) return;
+  const rect = button.getBoundingClientRect();
+  const width = 256;
+  const left = Math.min(Math.max(8, rect.right - width), window.innerWidth - width - 8);
+  shell.style.top = `${rect.bottom + 8}px`;
+  shell.style.left = `${left}px`;
+}
+
+function loadTranslateScript() {
+  if (document.getElementById(SCRIPT_ID)) return;
+  const script = document.createElement("script");
+  script.id = SCRIPT_ID;
+  script.src = "https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit";
+  script.async = true;
+  document.body.appendChild(script);
+}
+
 export default function GoogleTranslate({ appearance = "light" }) {
+  const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const rootRef = useRef(null);
+  const buttonRef = useRef(null);
   const dark = appearance === "dark";
 
   useEffect(() => {
     protectReactFromTranslate();
+    const shell = translateShell();
+    const host = widgetHost(shell);
+    const status = shell.querySelector(".rd-translate-status");
+    let cancelled = false;
+    let attempts = 0;
+    let timer = 0;
 
-    window.googleTranslateElementInit = () => {
-      const host = document.getElementById("google_translate_element");
-      if (!host || host.dataset.ready === "1" || !window.google?.translate?.TranslateElement) return;
-      host.dataset.ready = "1";
-      new window.google.translate.TranslateElement(
-        { pageLanguage: "en", autoDisplay: false },
-        "google_translate_element"
-      );
+    function paint() {
+      if (status) status.hidden = comboReady(host);
+    }
+
+    function mount() {
+      if (cancelled || !window.google?.translate?.TranslateElement || comboReady(host)) {
+        paint();
+        return;
+      }
+      if (!host.querySelector("select.goog-te-combo")) {
+        new window.google.translate.TranslateElement({ pageLanguage: "en", autoDisplay: false }, HOST_ID);
+      }
+      paint();
+    }
+
+    window.googleTranslateElementInit = () => mount();
+
+    function tick() {
+      if (cancelled) return;
+      attempts += 1;
+      mount();
+      if (comboReady(host) || attempts >= 16) return;
+      if (attempts === 8) {
+        host.replaceChildren();
+        document.getElementById(SCRIPT_ID)?.remove();
+        loadTranslateScript();
+      }
+      timer = window.setTimeout(tick, 250);
+    }
+
+    if (window.google?.translate?.TranslateElement) tick();
+    else loadTranslateScript();
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
     };
-
-    if (window.google?.translate?.TranslateElement) {
-      window.googleTranslateElementInit();
-      return undefined;
-    }
-
-    if (!document.getElementById(SCRIPT_ID)) {
-      const script = document.createElement("script");
-      script.id = SCRIPT_ID;
-      script.src = "https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit";
-      script.async = true;
-      document.body.appendChild(script);
-    }
-
-    return undefined;
-  }, []);
+  }, [pathname]);
 
   useEffect(() => {
-    if (!open) return undefined;
+    const shell = document.getElementById(SHELL_ID);
+    if (!open) {
+      if (shell) shell.dataset.open = "0";
+      return undefined;
+    }
+    function place() {
+      if (shell) placeShell(shell, buttonRef.current, true);
+    }
     function onPointer(event) {
-      if (!rootRef.current?.contains(event.target)) setOpen(false);
+      const target = event.target;
+      if (rootRef.current?.contains(target) || shell?.contains(target)) return;
+      setOpen(false);
     }
     function onKey(event) {
       if (event.key === "Escape") setOpen(false);
     }
+    place();
+    window.addEventListener("resize", place);
+    window.addEventListener("scroll", place, true);
     document.addEventListener("pointerdown", onPointer);
     document.addEventListener("keydown", onKey);
     return () => {
+      window.removeEventListener("resize", place);
+      window.removeEventListener("scroll", place, true);
       document.removeEventListener("pointerdown", onPointer);
       document.removeEventListener("keydown", onKey);
     };
-  }, [open]);
+  }, [open, pathname]);
 
   return (
     <div ref={rootRef} className="notranslate relative" translate="no">
       <button
+        ref={buttonRef}
         type="button"
         aria-expanded={open}
-        aria-controls="google_translate_element"
+        aria-controls={HOST_ID}
         aria-label="Translate"
         onClick={() => setOpen((current) => !current)}
         className={cn(
@@ -88,14 +179,6 @@ export default function GoogleTranslate({ appearance = "light" }) {
       >
         <Languages className="size-4" strokeWidth={1.75} />
       </button>
-      <div
-        className={cn(
-          "absolute top-full right-0 z-50 mt-2 w-64 rounded-2xl border border-stone-200 bg-white p-2.5 text-left text-stone-800 shadow-lg",
-          open ? "" : "pointer-events-none invisible h-0 overflow-hidden border-0 p-0"
-        )}
-      >
-        <div id="google_translate_element" />
-      </div>
     </div>
   );
 }

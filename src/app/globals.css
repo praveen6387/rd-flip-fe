@@ -944,6 +944,38 @@ iframe.skiptranslate,
   box-shadow: none !important;
 }
 
+#rd-translate-shell {
+  position: fixed;
+  z-index: 80;
+  width: 16rem;
+  border-radius: 1rem;
+  border: 1px solid #e7e5e4;
+  background: #fff;
+  padding: 0.625rem;
+  text-align: left;
+  color: #292524;
+  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+}
+
+#rd-translate-shell[data-open="0"] {
+  visibility: hidden;
+  pointer-events: none;
+  height: 0;
+  overflow: hidden;
+  border: 0;
+  padding: 0;
+}
+
+#rd-translate-shell .rd-translate-status {
+  margin: 0;
+  color: #78716c;
+  font-size: 12px;
+}
+
+#rd-translate-shell:has(select.goog-te-combo option:nth-child(2)) .rd-translate-status {
+  display: none;
+}
+
 #google_translate_element .goog-te-gadget {
   font-family: inherit !important;
   font-size: 11px !important;

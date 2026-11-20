@@ -115,8 +115,8 @@ export default function WatermarkSettings({ user, isDark }) {
         <div className="mb-1.5 flex items-center justify-between text-xs font-semibold uppercase tracking-wider text-stone-500"><span>Opacity</span><span className="font-mono text-amber-700">{Math.round(opacity * 100)}%</span></div>
         <div className="flex gap-1.5">{OPACITIES.map((value) => <button key={value} type="button" disabled={!enabled} onClick={() => setOpacity(value)} className={`flex-1 rounded-lg py-1.5 text-[11px] font-bold ${Math.round(opacity * 100) === Math.round(value * 100) ? "bg-amber-600 text-white" : "border border-stone-200 bg-stone-100 text-stone-700"} disabled:opacity-40`}>{Math.round(value * 100)}%</button>)}</div>
       </div>
-      <div className="relative grid aspect-[4/3] place-items-center overflow-hidden rounded-2xl bg-gradient-to-tr from-amber-950 via-stone-900 to-rose-950 text-center text-white">
-        <div><p className="font-serif text-lg font-bold">Wedding couple portrait</p><p className="font-mono text-[11px] tracking-widest text-amber-200/70">DSC_0411.JPG</p></div>
+      <div className="relative grid h-40 place-items-center overflow-hidden rounded-2xl bg-gradient-to-tr from-amber-950 via-stone-900 to-rose-950 text-center text-white sm:h-48">
+        <div><p className="font-serif text-sm font-bold sm:text-base">Wedding couple portrait</p><p className="font-mono text-[10px] tracking-widest text-amber-200/70">DSC_0411.JPG</p></div>
         {enabled ? <Preview text={preview} logo={includeLogo ? logoPreview : ""} position={position} opacity={opacity} /> : null}
       </div>
       <button type="submit" disabled={saving} className="rounded-xl bg-amber-700 px-4 py-2.5 text-xs font-bold text-white disabled:opacity-50">{saving ? "Saving…" : "Save watermark"}</button>
