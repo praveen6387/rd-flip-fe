@@ -45,8 +45,8 @@ const STEPS = [
 
 const emptyForm = {
   folderName: "", clientName: "", phone: "", whatsapp: "", clientEmail: "", eventDate: "", selectionDeadline: "", photographerNotes: "", welcomeMessage: "", originalFolderPath: "",
-  selectionMode: "UNLIMITED", requiredPhotos: 100, includedPhotos: 100, allowExtraPhotos: true, strictLimit: false,
-  maxSelectionLimit: 100, photosPerSheet: 4, includedSheets: 25, enableExtraPhotoPricing: false, extraPhotoPrice: 50,
+  selectionMode: "UNLIMITED", requiredPhotos: "", includedPhotos: "", allowExtraPhotos: true, strictLimit: false,
+  maxSelectionLimit: "", photosPerSheet: 4, includedSheets: 25, enableExtraPhotoPricing: false, extraPhotoPrice: 50,
   enableExtraSheetPricing: false, extraSheetPrice: 300,
 };
 
@@ -107,9 +107,9 @@ function formFromAlbum(album) {
     photographerNotes: album.photographerNotes || "",
     welcomeMessage: album.welcomeMessage || "",
     originalFolderPath: album.originalFolderPath || "",
-    selectionMode: album.selectionMode || album.rules?.selectionMode || "FIXED",
-    requiredPhotos: album.requiredPhotos ?? album.rules?.requiredPhotos ?? 100,
-    includedPhotos: album.includedPhotos ?? album.rules?.includedPhotos ?? 100,
+    selectionMode: album.selectionMode || album.rules?.selectionMode || "UNLIMITED",
+    requiredPhotos: (album.selectionMode || album.rules?.selectionMode || "UNLIMITED") === "UNLIMITED" ? "" : (album.requiredPhotos ?? album.rules?.requiredPhotos ?? ""),
+    includedPhotos: (album.selectionMode || album.rules?.selectionMode || "UNLIMITED") === "UNLIMITED" ? "" : (album.includedPhotos ?? album.rules?.includedPhotos ?? ""),
     allowExtraPhotos: album.allowExtraPhotos ?? album.rules?.allowExtraPhotos ?? true,
     strictLimit: album.strictLimit ?? album.rules?.strictLimit ?? false,
     maxSelectionLimit: album.maxSelectionLimit ?? 100,
@@ -134,10 +134,10 @@ export default function PhotoSelectionCreate() {
   const [photoCount, setPhotoCount] = useState(0);
   const [photos, setPhotos] = useState([]);
   const [accessCode, setAccessCode] = useState("");
-  const [shareToken, setShareToken] = useState("");
   const [folderName, setFolderName] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [updatingCode, setUpdatingCode] = useState(false);
   const [work, setWork] = useState(null);
   const [error, setError] = useState("");
   const [published, setPublished] = useState(null);
@@ -199,7 +199,6 @@ export default function PhotoSelectionCreate() {
         }
         setAlbumId(album.id);
         setAccessCode(album.accessCode || "");
-        setShareToken(album.shareToken || "");
         setPhotoCount(album.photoCount || album.photos?.length || 0);
         setPhotos(album.photos || []);
         const nextForm = formFromAlbum(album);
@@ -220,12 +219,30 @@ export default function PhotoSelectionCreate() {
     setForm((current) => ({ ...current, [name]: value }));
   }
 
+  function rulesLimitError(source = form) {
+    if (source.selectionMode === "FIXED") {
+      if (source.requiredPhotos === "" || source.requiredPhotos == null || Number(source.requiredPhotos) <= 0) return "Enter the total photos required. Zero is not allowed.";
+      if (photoCount > 0 && Number(source.requiredPhotos) > photoCount) return `Only ${photoCount} photos uploaded. The target cannot exceed ${photoCount}.`;
+    }
+    if (source.selectionMode === "MIN_EXTRA") {
+      if (source.includedPhotos === "" || source.includedPhotos == null || Number(source.includedPhotos) <= 0) return "Enter the included photos. Zero is not allowed.";
+      if (photoCount > 0 && Number(source.includedPhotos) > photoCount) return `Only ${photoCount} photos uploaded. The package limit cannot exceed ${photoCount}.`;
+    }
+    return "";
+  }
+
   function patchForm(updates) {
-    setForm((current) => ({ ...current, ...updates }));
+    const next = { ...form, ...updates };
+    setForm(next);
+    if (!rulesLimitError(next)) setError("");
   }
 
   function payload(nextStep) {
-    return { ...form, id: albumId || crypto.randomUUID(), wizardStep: nextStep, phone: phoneDigits(form.phone), whatsapp: phoneDigits(form.whatsapp), eventDate: form.eventDate || null, selectionDeadline: form.selectionDeadline || null };
+    const count = (value) => {
+      const number = Number(value);
+      return number > 0 ? number : 1;
+    };
+    return { ...form, id: albumId || crypto.randomUUID(), wizardStep: nextStep, phone: phoneDigits(form.phone), whatsapp: phoneDigits(form.whatsapp), eventDate: form.eventDate || null, selectionDeadline: form.selectionDeadline || null, requiredPhotos: count(form.requiredPhotos), includedPhotos: count(form.includedPhotos), maxSelectionLimit: count(form.maxSelectionLimit || form.requiredPhotos) };
   }
 
   function currentMark() {
@@ -251,10 +268,21 @@ export default function PhotoSelectionCreate() {
     if (body.phone && !/^[6-9]\d{9}$/.test(body.phone)) throw new Error("Enter a 10-digit mobile number starting with 6, 7, 8, or 9.");
     if (body.whatsapp && !/^[6-9]\d{9}$/.test(body.whatsapp)) throw new Error("Enter a 10-digit WhatsApp number starting with 6, 7, 8, or 9.");
     if (!String(body.folderName || "").trim() || !String(body.clientName || "").trim()) throw new Error("Couple name and client name are required.");
-    if (nextStep === 4) {
-      if (form.selectionMode === "FIXED" && Number(form.requiredPhotos) > photoCount) throw new Error(`Required photos (${form.requiredPhotos}) cannot exceed the ${photoCount} uploaded photos.`);
-      if (form.selectionMode === "MIN_EXTRA" && Number(form.includedPhotos) > photoCount) throw new Error(`Included photos (${form.includedPhotos}) cannot exceed the ${photoCount} uploaded photos.`);
+    if (nextStep >= 4) {
+      const message = rulesLimitError();
+      if (message) throw new Error(message);
     }
+  }
+
+  function openWatermark() {
+    const message = rulesLimitError();
+    if (message) {
+      setError(message);
+      toast.error(message);
+      return;
+    }
+    setError("");
+    setRulesPane("watermark");
   }
 
   async function persist(nextStep) {
@@ -263,9 +291,9 @@ export default function PhotoSelectionCreate() {
     assertSavable(nextStep);
     const album = albumId ? await saveDraft(albumId, body) : await createDraft(body);
     setAlbumId(album.id);
-    setAccessCode(album.accessCode || "");
-    setShareToken(album.shareToken || "");
-    rememberForm(form, album.accessCode || accessCode);
+    const savedCode = album.accessCode || (/^\d{6}$/.test(accessCode) ? accessCode : "");
+    setAccessCode(savedCode);
+    rememberForm(form, savedCode);
     return album;
   }
 
@@ -274,24 +302,36 @@ export default function PhotoSelectionCreate() {
     if (albumId) router.replace(`${ROUTES.dashboardPhotoSelectionNew}?album=${albumId}&step=${savedStep}`);
   }
 
+  function nextAccessCode(current) {
+    let code = String(current || "");
+    while (code === String(current || "")) code = String(Math.floor(100000 + Math.random() * 900000));
+    return code;
+  }
+
   async function updateShare() {
-    if (!/^\d{6}$/.test(accessCode)) {
-      setError("The access code must be 6 digits.");
+    if (!albumId) {
+      setError("Save the gallery before updating the access code.");
       return;
     }
+    const previous = accessCode;
+    const stored = savedForm.current?.accessCode || "";
+    const typed = String(previous || "").replace(/\D/g, "").slice(0, 6);
+    const code = /^\d{6}$/.test(typed) && typed !== stored ? typed : nextAccessCode(stored || previous);
     setError("");
-    if (formUnchanged()) {
-      toast.success("Access code is already saved");
-      return;
-    }
-    setSaving(true);
+    setAccessCode(code);
+    setUpdatingCode(true);
     try {
-      await persist(4);
-      toast.success("Access code updated");
+      const album = await saveDraft(albumId, { accessCode: code });
+      const saved = album?.accessCode || code;
+      setAccessCode(saved);
+      rememberForm(form, saved);
+      toast.success(`Access code ${saved} saved`);
     } catch (saveError) {
-      setError(saveError.message || "Could not update gallery access.");
+      setAccessCode(previous);
+      setError(saveError.message || "Could not update the access code.");
+      toast.error(saveError.message || "Could not update the access code.");
     } finally {
-      setSaving(false);
+      setUpdatingCode(false);
     }
   }
 
@@ -436,7 +476,7 @@ export default function PhotoSelectionCreate() {
             <div className="grid size-10 place-items-center rounded-2xl bg-gradient-to-tr from-amber-600 to-amber-400 text-white shadow-lg shadow-amber-600/30"><Sparkles className="size-5" /></div>
             <div>
               <h1 className="font-sans text-xl font-bold text-stone-900">{resumeId ? "Resume client gallery" : "Create New Client Gallery"}</h1>
-              <p className="text-xs text-stone-500">Fill client & couple details and click Done. You can upload photos & set rules right after.</p>
+              <p className="text-xs text-stone-500">Fill client and couple details and click Done. {albumId ? "You can upload photos and set rules right after." : "Creating the gallery uses one photo-selection credit."}</p>
             </div>
           </div>
           <Link href={ROUTES.dashboardPhotoSelection} className="rounded-xl p-2 text-stone-400 hover:bg-stone-100 hover:text-stone-700" aria-label="Close"><X className="size-5" /></Link>
@@ -460,11 +500,11 @@ export default function PhotoSelectionCreate() {
         </div> : null}
         {error ? <p className="mb-4 rounded-xl bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</p> : null}
         <div className="overflow-hidden rounded-[28px] border border-stone-200 bg-white p-6 shadow-sm">
-          {step === 1 ? <StepIntro icon={User} title="Couple & Client Details" step={1}>Fill client and couple contact details and click <strong>Done</strong>. You can upload photos and set selection rules right after.</StepIntro> : null}
+          {step === 1 ? <StepIntro icon={User} title="Couple & Client Details" step={1}>Fill client and couple contact details and click <strong>Done</strong>. {albumId ? "You can upload photos and set selection rules right after." : "Creating this gallery uses one photo-selection credit."}</StepIntro> : null}
           {step === 2 ? <StepIntro icon={UploadCloud} title="Upload Photographs & Folders" step={2}>Upload photos or select entire ceremony folders. Subfolders are kept and filed under the active folder.</StepIntro> : null}
           {step === 3 ? <StepIntro icon={rulesPane === "watermark" ? Shield : Target} title={rulesPane === "watermark" ? "Watermark & Security Settings" : "Configure Photo Selection Mode"} step={3}>{rulesPane === "watermark" ? "Save the studio watermark that is drawn over client photos. It is not burned into the files." : "Choose how your client selects photos from their gallery."}</StepIntro> : null}
           {step === 4 ? <StepIntro icon={Shield} title="Share Client Photo Gallery" step={4}>Send the private gallery link, access code, and deadline to {form.clientName || "your client"}{form.folderName ? ` · ${form.folderName}` : ""}.</StepIntro> : null}
-          {step === 5 ? <StepIntro icon={Eye} title="Review & Publish" step={5}>Check the gallery, then publish. Publishing uses one photo-selection credit and opens the gallery.</StepIntro> : null}
+          {step === 5 ? <StepIntro icon={Eye} title="Review & Publish" step={5}>Check the gallery, then publish. Publishing opens the gallery for the client.</StepIntro> : null}
           {step === 1 ? (
             <div className="space-y-5">
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -505,7 +545,7 @@ export default function PhotoSelectionCreate() {
                 <div className="flex items-center gap-2">
                   <button type="button" onClick={() => setRulesPane("rules")} className={`inline-flex items-center gap-2 rounded-xl px-3 py-1.5 text-xs font-bold ${rulesPane === "rules" ? "border border-amber-500/40 bg-amber-500/20 text-amber-800" : "bg-stone-100 text-stone-600"}`}><Target className="size-3.5 text-amber-600" />1. Selection Rules</button>
                   <span className="font-bold text-stone-300">➔</span>
-                  <button type="button" onClick={() => setRulesPane("watermark")} className={`inline-flex items-center gap-2 rounded-xl px-3 py-1.5 text-xs font-bold ${rulesPane === "watermark" ? "border border-amber-500/40 bg-amber-500/20 text-amber-800" : "bg-stone-100 text-stone-600"}`}><Shield className="size-3.5 text-amber-600" />2. Watermark & Security</button>
+                  <button type="button" onClick={openWatermark} className={`inline-flex items-center gap-2 rounded-xl px-3 py-1.5 text-xs font-bold ${rulesPane === "watermark" ? "border border-amber-500/40 bg-amber-500/20 text-amber-800" : "bg-stone-100 text-stone-600"}`}><Shield className="size-3.5 text-amber-600" />2. Watermark & Security</button>
                 </div>
                 <span className="hidden font-mono text-[11px] text-stone-400 sm:inline">Step {rulesPane === "watermark" ? "2" : "1"} of 2</span>
               </div>
@@ -544,12 +584,10 @@ export default function PhotoSelectionCreate() {
             <GalleryAccess
               form={form}
               accessCode={accessCode}
-              shareToken={shareToken}
-              studioName={user?.studio_name}
+              updating={updatingCode}
               saving={saving}
               onCode={setAccessCode}
               onDeadline={(value) => change("selectionDeadline", value)}
-              onWhatsapp={(value) => change("whatsapp", value)}
               onWelcome={(value) => change("welcomeMessage", value)}
               onUpdate={updateShare}
             />
@@ -575,7 +613,7 @@ export default function PhotoSelectionCreate() {
                   </div>
                 ))}
               </div>
-              <p className="text-[11px] text-stone-500">Publishing uses one photo-selection credit and opens this gallery for the client.</p>
+              <p className="text-[11px] text-stone-500">Publishing opens this gallery for the client. The photo-selection credit was used when the gallery was created.</p>
               <div className="flex flex-wrap gap-1.5">
                 {STEPS.filter((item) => item.id < 5).map((item) => (
                   <button key={item.id} type="button" onClick={() => setStep(item.id)} className="inline-flex items-center gap-1.5 rounded-full border border-[#ead8c8] bg-white px-2.5 py-1 text-[11px] font-semibold text-[#6b5344] hover:border-[#c5a059]">
@@ -589,9 +627,9 @@ export default function PhotoSelectionCreate() {
             {step === 1 ? <Button variant="secondary" asChild><Link href={ROUTES.dashboardPhotoSelection}><ChevronLeft className="size-4" />Back</Link></Button> : step === 3 && rulesPane === "watermark" ? <button type="button" disabled={saving} onClick={() => setRulesPane("rules")} className="rounded-xl border border-stone-200 bg-white px-4 py-2 text-xs font-semibold text-stone-700">Back (Selection Rules)</button> : step === 3 ? <button type="button" disabled={saving} onClick={() => setStep(2)} className="rounded-xl border border-stone-200 bg-white px-4 py-2 text-xs font-semibold text-stone-700">Cancel</button> : <Button variant="secondary" disabled={saving || Boolean(work)} onClick={() => setStep((value) => value - 1)}><ChevronLeft className="size-4" />Back</Button>}
             <div className="flex gap-2">
               {step === 1 ? <button type="button" disabled={saving} onClick={() => go("done")} className={forwardButtonClass}>{saving ? <Loader2 className="size-4 animate-spin" /> : <Check className="size-4" />}{saving ? "Saving…" : "Done"}</button> : null}
-              {step === 3 && rulesPane === "rules" ? <button type="button" disabled={saving} onClick={() => setRulesPane("watermark")} className={forwardButtonClass}>{saving ? <Loader2 className="size-4 animate-spin" /> : null}Next: Watermark & Security <ArrowRight className="size-3.5" /></button> : null}
+              {step === 3 && rulesPane === "rules" ? <button type="button" disabled={saving} onClick={openWatermark} className={forwardButtonClass}>{saving ? <Loader2 className="size-4 animate-spin" /> : null}Next: Watermark & Security <ArrowRight className="size-3.5" /></button> : null}
               {step === 3 && rulesPane === "watermark" ? <button type="button" disabled={saving} onClick={saveWatermark} className={forwardButtonClass}>{saving ? <Loader2 className="size-4 animate-spin" /> : null}{saving ? "Saving…" : "Save watermark & continue"}</button> : null}
-              {step > 1 && step < 5 && step !== 3 ? <button type="button" disabled={saving || Boolean(work) || (step === 2 && !albumId)} onClick={() => go(step + 1)} className={forwardButtonClass}>{(saving || work) ? <Loader2 className="size-4 animate-spin" /> : null}{saving || work ? "Saving…" : "Save & continue"}</button> : null}
+              {step > 1 && step < 5 && step !== 3 ? <button type="button" disabled={saving || updatingCode || Boolean(work) || (step === 2 && !albumId)} onClick={() => go(step + 1)} className={forwardButtonClass}>{(saving || work) ? <Loader2 className="size-4 animate-spin" /> : null}{saving || work ? "Saving…" : "Save & continue"}</button> : null}
               {step === 5 ? <button type="button" disabled={saving || !photoCount} onClick={publish} className={forwardButtonClass}>{saving ? <Loader2 className="size-4 animate-spin" /> : null}{saving ? "Publishing…" : "Publish gallery"}</button> : null}
             </div>
           </div>
@@ -599,7 +637,8 @@ export default function PhotoSelectionCreate() {
       </div>
       {published ? (
         <div className="fixed inset-0 z-50 grid place-items-center bg-[#fdf7f4]/60 p-4 backdrop-blur-[2px]">
-          <div className="w-full max-w-md overflow-hidden rounded-3xl border border-[#ead8c8] bg-white text-center shadow-[0_20px_50px_-24px_rgba(120,72,48,0.45)]">
+          <div className="relative w-full max-w-md overflow-hidden rounded-3xl border border-[#ead8c8] bg-white text-center shadow-[0_20px_50px_-24px_rgba(120,72,48,0.45)]">
+            <Link href={ROUTES.dashboardPhotoSelection} aria-label="Close" className="absolute top-3 right-3 grid size-8 place-items-center rounded-full text-stone-400 hover:bg-stone-100 hover:text-stone-700"><X className="size-4" /></Link>
             <div className="bg-gradient-to-r from-[#fff8f3] to-[#fbf6f1] px-6 py-4">
               <span className="mx-auto grid size-9 place-items-center rounded-full bg-emerald-100 text-emerald-700"><Check className="size-4" /></span>
               <h2 className="mt-2 font-sans text-lg font-bold text-stone-900">Gallery published</h2>

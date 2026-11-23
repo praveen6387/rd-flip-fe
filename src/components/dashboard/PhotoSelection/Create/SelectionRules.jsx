@@ -1,12 +1,18 @@
 "use client";
 
-import { AlertCircle, BookOpen, Check, IndianRupee, Infinity, Layers, Sparkles, Target } from "lucide-react";
+import { AlertCircle, BookOpen, Check, ChevronDown, ChevronUp, IndianRupee, Infinity, Layers, Sparkles, Target } from "lucide-react";
+
+function countText(value) {
+  const digits = String(value ?? "").replace(/\D/g, "");
+  if (!digits) return "";
+  return digits.replace(/^0+(?=\d)/, "");
+}
 
 export default function SelectionRules({ form, photoCount = 0, onChange }) {
   const mode = form.selectionMode || "UNLIMITED";
   const perSheet = Math.max(1, Number(form.photosPerSheet) || 4);
-  const required = Number(form.requiredPhotos) || (photoCount > 0 ? photoCount : 50);
-  const included = Number(form.includedPhotos) || (photoCount > 0 ? photoCount : 50);
+  const required = form.requiredPhotos === "" || form.requiredPhotos == null ? 0 : Number(form.requiredPhotos);
+  const included = form.includedPhotos === "" || form.includedPhotos == null ? 0 : Number(form.includedPhotos);
   const sheetPrice = Number(form.extraSheetPrice ?? 300);
   const fixedSheets = Math.ceil(required / perSheet);
   const includedSheets = Math.ceil(included / perSheet);
@@ -24,9 +30,10 @@ export default function SelectionRules({ form, photoCount = 0, onChange }) {
   }
 
   function setTarget(field, value) {
-    const count = Number(value);
-    const sheets = count > 0 ? Math.ceil(count / perSheet) : form.includedSheets;
-    onChange({ [field]: count, includedSheets: sheets, maxSelectionLimit: count });
+    const text = countText(value);
+    const count = text === "" ? "" : Number(text);
+    const sheets = Number(count) > 0 ? Math.ceil(Number(count) / perSheet) : 0;
+    onChange({ [field]: count, includedSheets: sheets, maxSelectionLimit: count === "" ? "" : count });
   }
 
   function setPerSheet(value) {
@@ -44,7 +51,7 @@ export default function SelectionRules({ form, photoCount = 0, onChange }) {
             <span className="shrink-0 text-[11px] font-medium text-stone-400">{photoCount > 0 ? `Available: ${photoCount}` : hint}</span>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <input type="number" min="1" max={photoCount > 0 ? photoCount : 5000} value={form[field] ?? current} onChange={(event) => setTarget(field, event.target.value)} className="w-24 shrink-0 rounded-xl border border-stone-200 bg-stone-50 px-3 py-2 font-mono text-xs font-bold outline-none focus:ring-2 focus:ring-amber-500" />
+            <input inputMode="numeric" value={countText(form[field])} onChange={(event) => setTarget(field, event.target.value)} placeholder="" className="w-24 shrink-0 rounded-xl border border-stone-200 bg-stone-50 px-3 py-2 font-mono text-xs font-bold outline-none focus:ring-2 focus:ring-amber-500" />
             {photoCount > 0 ? <button type="button" onClick={() => setTarget(field, photoCount)} className={`rounded-lg px-2.5 py-1.5 text-xs font-bold whitespace-nowrap ${Number(form[field]) === photoCount ? "bg-amber-600 text-white" : "border border-amber-300/40 bg-amber-100 text-amber-900"}`}>All ({photoCount})</button> : null}
             {presets.map((value) => <button key={value} type="button" onClick={() => setTarget(field, value)} className={`rounded-lg px-2.5 py-1.5 text-xs font-semibold ${Number(form[field]) === value ? "bg-amber-600 text-white" : "bg-stone-100 text-stone-700"}`}>{value}</button>)}
           </div>
@@ -81,32 +88,32 @@ export default function SelectionRules({ form, photoCount = 0, onChange }) {
 
       {mode === "FIXED" ? (
         <div className="space-y-3.5 rounded-xl border border-stone-200 bg-white p-3.5">
-          {photoCount > 0 && required > photoCount ? (
+          {(form.requiredPhotos !== "" && form.requiredPhotos != null && required <= 0) || (photoCount > 0 && required > photoCount) ? (
             <div className="flex items-start gap-2.5 rounded-xl border border-rose-300 bg-rose-50 p-3 text-xs text-rose-800">
               <AlertCircle className="mt-0.5 size-4 shrink-0 text-rose-600" />
               <div>
-                <p className="text-xs font-bold">Error: Only {photoCount} photos uploaded, target cannot exceed {photoCount}!</p>
-                <p className="mt-0.5 text-[11px] text-rose-700">Client gallery cannot have a selection target higher than total uploaded photos.</p>
-                <button type="button" onClick={() => setTarget("requiredPhotos", photoCount)} className="mt-2 rounded-lg bg-rose-600 px-3 py-1 text-[11px] font-bold text-white">Fix: Set to Available Total ({photoCount} Photos)</button>
+                <p className="text-xs font-bold">{required <= 0 ? "Total photos required cannot be 0." : `Error: Only ${photoCount} photos uploaded, target cannot exceed ${photoCount}!`}</p>
+                {required > photoCount && photoCount > 0 ? <p className="mt-0.5 text-[11px] text-rose-700">Client gallery cannot have a selection target higher than total uploaded photos.</p> : null}
+                {photoCount > 0 && required > photoCount ? <button type="button" onClick={() => setTarget("requiredPhotos", photoCount)} className="mt-2 rounded-lg bg-rose-600 px-3 py-1 text-[11px] font-bold text-white">Fix: Set to Available Total ({photoCount} Photos)</button> : null}
               </div>
             </div>
           ) : null}
           {targetRow("requiredPhotos", "Total Photos Required", required, "Exact match required")}
           <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-amber-500/25 bg-amber-500/10 p-3 text-xs">
             <div className="flex items-center gap-2 text-stone-700"><BookOpen className="size-4 text-amber-600" />Formula: {required} photos ÷ {perSheet}/sheet = <strong className="font-mono text-sm text-amber-700">{fixedSheets} Final Album Sheets</strong></div>
-            <span className="rounded-md border border-emerald-300/50 bg-emerald-100/80 px-2 py-0.5 text-[11px] font-semibold text-emerald-700">✓ Client must select exactly {required} photos</span>
+            {required > 0 ? <span className="rounded-md border border-emerald-300/50 bg-emerald-100/80 px-2 py-0.5 text-[11px] font-semibold text-emerald-700">✓ Client must select exactly {required} photos</span> : null}
           </div>
         </div>
       ) : null}
 
       {mode === "MIN_EXTRA" ? (
         <div className="space-y-3.5 rounded-xl border border-stone-200 bg-white p-3.5">
-          {photoCount > 0 && included > photoCount ? (
+          {(form.includedPhotos !== "" && form.includedPhotos != null && included <= 0) || (photoCount > 0 && included > photoCount) ? (
             <div className="flex items-start gap-2.5 rounded-xl border border-rose-300 bg-rose-50 p-3 text-xs text-rose-800">
               <AlertCircle className="mt-0.5 size-4 shrink-0 text-rose-600" />
               <div>
-                <p className="text-xs font-bold">Error: Only {photoCount} photos uploaded, package limit cannot exceed {photoCount}!</p>
-                <button type="button" onClick={() => setTarget("includedPhotos", photoCount)} className="mt-2 rounded-lg bg-rose-600 px-3 py-1 text-[11px] font-bold text-white">Fix: Set to Available Total ({photoCount} Photos)</button>
+                <p className="text-xs font-bold">{included <= 0 ? "Included photos cannot be 0." : `Error: Only ${photoCount} photos uploaded, package limit cannot exceed ${photoCount}!`}</p>
+                {photoCount > 0 && included > photoCount ? <button type="button" onClick={() => setTarget("includedPhotos", photoCount)} className="mt-2 rounded-lg bg-rose-600 px-3 py-1 text-[11px] font-bold text-white">Fix: Set to Available Total ({photoCount} Photos)</button> : null}
               </div>
             </div>
           ) : null}
@@ -148,12 +155,19 @@ function ModeCard({ active, icon, title, text, onClick }) {
 }
 
 function SheetAverage({ value, onChange }) {
+  const count = Math.min(20, Math.max(1, Number(value) || 1));
   return (
     <div>
       <div className="mb-1.5 text-xs font-semibold text-stone-800">Photos Per Sheet (Average)</div>
       <div className="flex items-center gap-2">
-        <input type="number" min="1" max="20" value={value} onChange={(event) => onChange(event.target.value)} className="w-20 rounded-xl border border-stone-200 bg-stone-50 px-3 py-2 font-mono text-xs font-bold outline-none focus:ring-2 focus:ring-amber-500" />
-        <div className="flex items-center gap-1">{[3, 4, 5, 6].map((number) => <button key={number} type="button" onClick={() => onChange(number)} className={`rounded-lg px-2.5 py-1.5 text-xs font-bold ${Number(value) === number ? "bg-amber-600 text-white shadow-sm" : "bg-stone-100 text-stone-700"}`}>{number}p</button>)}</div>
+        <div className="flex h-10 w-24 overflow-hidden rounded-lg border border-stone-300 bg-white shadow-sm focus-within:border-amber-500 focus-within:ring-2 focus-within:ring-amber-500">
+          <input inputMode="numeric" value={value} onChange={(event) => onChange(event.target.value.replace(/\D/g, "").slice(0, 2))} className="w-full bg-transparent px-3 text-sm font-semibold text-stone-900 outline-none" />
+          <div className="flex w-7 shrink-0 flex-col border-l border-stone-200">
+            <button type="button" aria-label="Increase photos per sheet" onClick={() => onChange(Math.min(20, count + 1))} className="grid flex-1 place-items-center text-stone-600 hover:bg-stone-50"><ChevronUp className="size-3.5" /></button>
+            <button type="button" aria-label="Decrease photos per sheet" onClick={() => onChange(Math.max(1, count - 1))} className="grid flex-1 place-items-center border-t border-stone-200 text-stone-600 hover:bg-stone-50"><ChevronDown className="size-3.5" /></button>
+          </div>
+        </div>
+        <div className="flex items-center gap-1">{[4, 5, 6].map((number) => <button key={number} type="button" onClick={() => onChange(number)} className={`rounded-lg px-2.5 py-1.5 text-xs font-bold ${Number(value) === number ? "bg-amber-600 text-white shadow-sm" : "bg-stone-100 text-stone-700"}`}>{number}p</button>)}</div>
       </div>
     </div>
   );

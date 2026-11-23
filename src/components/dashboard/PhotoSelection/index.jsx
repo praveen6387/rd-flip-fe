@@ -5,7 +5,7 @@ import { createPortal } from "react-dom";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowRight, Bell, Calendar, Check, ChevronRight, Clock, Copy, Download, ImagePlus, Images, Loader2, Mail, Phone, Search, Send, Share2, Sparkles, Target, Trash2, UploadCloud, User } from "lucide-react";
+import { ArrowRight, Bell, Calendar, Check, ChevronRight, Clock, Copy, Download, Eye, EyeOff, ImagePlus, Images, KeyRound, Loader2, Mail, Phone, Search, Send, Sparkles, Target, Trash2, UploadCloud, User } from "lucide-react";
 import PagePanel from "@/components/dashboard/_builder/PagePanel";
 import { useDashboardTheme } from "@/lib/dashboard/ThemeProvider";
 import { ROUTES } from "@/lib/routes";
@@ -138,6 +138,7 @@ function eventLabel(value) {
 function GalleryCard({ album, onDeleted }) {
   const { user } = useAuth();
   const [copied, setCopied] = useState(false);
+  const [showCode, setShowCode] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [downloading, setDownloading] = useState(false);
@@ -175,10 +176,6 @@ function GalleryCard({ album, onDeleted }) {
       toast.error(error.message || "Could not delete the gallery.");
       setDeleting(false);
     }
-  }
-
-  function shareBlocked() {
-    toast.warning(totalPhotos === 0 ? "Upload photos first." : album.status === "draft" ? "Publish the gallery before sharing." : "Configure selection rules first.");
   }
 
   async function downloadSelected() {
@@ -244,6 +241,14 @@ function GalleryCard({ album, onDeleted }) {
                 </li>
               );
             })}
+            <li className="flex items-center gap-2">
+              <span className="grid size-5 shrink-0 place-items-center rounded-md bg-[#f8efe6] text-[#9a7040]"><KeyRound className="size-3" /></span>
+              <span className="w-14 shrink-0 text-[10px] font-semibold tracking-[0.12em] text-[#b08968] uppercase">Code</span>
+              <span className="flex min-w-0 items-center gap-1">
+                <span className={`truncate font-mono text-xs font-medium text-stone-800 ${album.accessCode && !showCode ? "tracking-[0.22em]" : "tracking-[0.14em]"}`}>{album.accessCode ? (showCode ? album.accessCode : "••••••") : "Not set"}</span>
+                {album.accessCode ? <button type="button" onClick={() => setShowCode((current) => !current)} aria-label={showCode ? "Hide access code" : "Show access code"} className="grid size-5 shrink-0 place-items-center rounded text-stone-400 hover:bg-stone-100 hover:text-stone-700">{showCode ? <EyeOff className="size-3.5" /> : <Eye className="size-3.5" />}</button> : null}
+              </span>
+            </li>
           </ul>
           <div className="mb-2 rounded-lg bg-[#fbf6f1] px-2.5 py-1.5">
             <div className="mb-1.5 flex items-baseline justify-between gap-3 text-xs">
@@ -287,7 +292,6 @@ function GalleryCard({ album, onDeleted }) {
           {album.status === "draft" ? (
             <Link href={setupHref(album)} className="inline-flex items-center gap-1 rounded-lg border border-amber-500/30 bg-amber-500/15 px-2.5 py-1.5 text-xs font-bold text-amber-700"><Sparkles className="size-3.5" />Resume</Link>
           ) : null}
-          <button type="button" onClick={canShare ? copyLink : shareBlocked} className={`rounded-lg p-1.5 ${canShare ? "text-stone-600 hover:bg-stone-100 hover:text-amber-700" : "text-stone-300"}`} aria-label="Share gallery"><Share2 className="size-4" /></button>
           <button type="button" onClick={() => setConfirmDelete(true)} className="rounded-lg p-1.5 text-stone-500 hover:bg-rose-50 hover:text-rose-600" aria-label="Delete gallery"><Trash2 className="size-4" /></button>
           {confirmDelete && typeof document !== "undefined" ? createPortal(
             <div className="fixed inset-0 z-50 grid place-items-center bg-[#fdf7f4]/70 p-4 backdrop-blur-[2px]" role="dialog" aria-modal="true" aria-labelledby={`delete-${album.id}`}>
