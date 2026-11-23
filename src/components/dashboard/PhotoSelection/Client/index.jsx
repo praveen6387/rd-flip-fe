@@ -83,8 +83,9 @@ function ConfirmLock({ album, name, notes, error, busy, onName, onNotes, onClose
   const tags = [...new Set([album?.clientName, "Groom", "Bride", "Father", "Family Member"].map((tag) => String(tag || "").trim()).filter(Boolean))];
   return (
     <div className="fixed inset-0 z-40 grid place-items-center bg-stone-950/70 p-4">
-      <form onSubmit={onSubmit} className="max-h-[90vh] w-full max-w-lg overflow-auto rounded-2xl bg-white p-6 text-stone-900">
-        <h2 className="font-sans text-xl font-bold">Confirm final photo selection</h2>
+      <form onSubmit={onSubmit} className="relative max-h-[90vh] w-full max-w-lg overflow-auto rounded-2xl bg-white p-6 text-stone-900">
+        <button type="button" onClick={onClose} aria-label="Close" className="absolute top-4 right-4 grid size-8 place-items-center rounded-full text-stone-400 hover:bg-stone-100 hover:text-stone-700"><X className="size-4" /></button>
+        <h2 className="pr-8 font-sans text-xl font-bold">Confirm final photo selection</h2>
         <p className="mt-1 text-xs text-stone-500">Finalize your choices for album printing and design.</p>
         <div className="mt-4 flex gap-2 rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-950">
           <Lock className="mt-0.5 size-4 shrink-0 text-amber-600" />
@@ -176,7 +177,6 @@ export default function ClientSelection({ token }) {
   const sawLock = useRef(false);
   const zoomTrail = useRef([]);
   const zoomAt = useRef(-1);
-  const [zoomTick, setZoomTick] = useState(0);
 
   function showAlbum(next, nextAccess) {
     sawLock.current = next?.status === "selected";
@@ -312,17 +312,7 @@ export default function ClientSelection({ token }) {
       zoomAt.current = trail.length - 1;
     }
     setOpenPhoto(photo);
-    setZoomTick((value) => value + 1);
     if (!window.history.state?.selectionZoom) window.history.pushState({ selectionZoom: true }, "", window.location.href);
-  }
-
-  function moveZoom(step) {
-    const nextAt = zoomAt.current + step;
-    const photo = zoomTrail.current[nextAt];
-    if (!photo) return;
-    zoomAt.current = nextAt;
-    setOpenPhoto(photo);
-    setZoomTick((value) => value + 1);
   }
 
   function closeZoom() {
@@ -333,6 +323,13 @@ export default function ClientSelection({ token }) {
     zoomTrail.current = [];
     zoomAt.current = -1;
     setOpenPhoto(null);
+  }
+
+  function dismissZoom() {
+    zoomTrail.current = [];
+    zoomAt.current = -1;
+    setOpenPhoto(null);
+    if (window.history.state?.selectionZoom) window.history.back();
   }
 
   useEffect(() => {
@@ -448,8 +445,8 @@ export default function ClientSelection({ token }) {
       <main className="mx-auto max-w-[1800px] px-3 py-5 sm:px-6">
         {visible.length ? <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">{visible.map((photo) => <GalleryPhotoCard key={photo.id} photo={photo} locked={locked} watermark={album.watermark} onToggle={choose} onOpen={rememberZoom} />)}</div> : <div className="py-20 text-center"><Camera className="mx-auto mb-3 size-12 text-stone-300" /><h2 className="font-sans text-xl font-bold text-stone-700">No photographs found</h2><p className="mt-1 text-xs text-stone-400">Try another filter or clear the search.</p></div>}
       </main>
-      {photos.length ? <GalleryFloatingBar project={project} rules={album.rules} selectedCount={album.selectedCount} totalCount={photos.length} saving={saving} locked={locked} onReview={() => setReviewOpen(true)} onConfirm={() => setConfirmOpen(true)} onSummary={() => setSummaryOpen(true)} /> : null}
-      {openPhoto ? <GalleryLightbox photo={photos.find((item) => item.id === openPhoto.id) || openPhoto} photos={visible.length ? visible : photos} locked={locked} watermark={album.watermark} canBack={zoomAt.current > 0} canForward={zoomAt.current < zoomTrail.current.length - 1} onBack={() => moveZoom(-1)} onForward={() => moveZoom(1)} onClose={closeZoom} onNavigate={rememberZoom} onToggle={choose} onUpdate={update} /> : null}
+      {photos.length && !openPhoto ? <GalleryFloatingBar project={project} rules={album.rules} selectedCount={album.selectedCount} totalCount={photos.length} saving={saving} locked={locked} onReview={() => setReviewOpen(true)} onConfirm={() => setConfirmOpen(true)} onSummary={() => setSummaryOpen(true)} /> : null}
+      {openPhoto ? <GalleryLightbox photo={photos.find((item) => item.id === openPhoto.id) || openPhoto} photos={visible.length ? visible : photos} locked={locked} watermark={album.watermark} onClose={closeZoom} onNavigate={rememberZoom} onToggle={choose} onUpdate={update} summary={<GalleryFloatingBar inline project={project} rules={album.rules} selectedCount={album.selectedCount} totalCount={photos.length} saving={saving} locked={locked} onReview={() => { dismissZoom(); setReviewOpen(true); }} onConfirm={() => { dismissZoom(); setConfirmOpen(true); }} onSummary={() => { dismissZoom(); setSummaryOpen(true); }} />} /> : null}
       {extraOpen ? <div className="fixed inset-0 z-40 grid place-items-center bg-stone-950/70 p-4"><div className="w-full max-w-md rounded-2xl bg-white p-6 text-stone-900"><h2 className="font-sans text-xl font-bold">Extra photo selection notice</h2><p className="mt-2 text-sm text-stone-600">Your package includes {album.rules?.includedPhotos} photos. Photos after that are extra{album.rules?.extraSheetPrice ? ` at ₹${album.rules.extraSheetPrice} per sheet` : ""}.</p><div className="mt-5 grid grid-cols-2 gap-2"><button type="button" onClick={() => { setExtraOpen(false); setPendingPhoto(null); }} className="rounded-xl border px-3 py-2.5 text-sm font-bold"><X className="mr-1 inline size-4 text-rose-500" />Cancel</button><button type="button" onClick={() => { setExtraAllowed(true); setExtraOpen(false); if (pendingPhoto) persist(pendingPhoto, true); setPendingPhoto(null); }} className="rounded-xl bg-amber-700 px-3 py-2.5 text-sm font-bold text-white">Continue</button></div></div></div> : null}
       {reviewOpen ? <div className="fixed inset-0 z-40 grid place-items-center bg-stone-950/70 p-4"><div className="max-h-[80vh] w-full max-w-lg overflow-auto rounded-2xl bg-white p-6"><div className="flex items-center justify-between"><h2 className="font-sans text-xl font-bold">Review selected photos</h2><button type="button" onClick={() => setReviewOpen(false)} aria-label="Close"><X /></button></div><p className="mt-1 text-xs text-stone-500">You have chosen {selectedPhotos.length} photograph{selectedPhotos.length === 1 ? "" : "s"} for your album.</p><ul className="mt-4 space-y-2 text-sm">{selectedPhotos.map((photo) => <li key={photo.id} className="flex items-center justify-between gap-3 border-b border-stone-100 py-2"><span className="truncate">{photo.originalFilename}</span><span className="shrink-0 text-xs text-stone-500">{photo.rating ? `${photo.rating}★ ` : ""}{photo.coverType || ""}</span></li>)}</ul><div className="mt-4 flex justify-end gap-2 border-t border-stone-100 pt-3"><button type="button" onClick={() => setReviewOpen(false)} className="rounded-xl border px-4 py-2 text-xs font-semibold">Back to gallery</button>{!locked && selectedPhotos.length ? <button type="button" onClick={() => { setReviewOpen(false); setConfirmOpen(true); }} className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-semibold text-white"><CheckCircle2 className="size-4" />Proceed to final confirmation</button> : null}</div></div></div> : null}
       {confirmOpen && !summaryOpen ? <ConfirmLock album={album} name={confirmName} notes={confirmNotes} error={confirmError} busy={busy} onName={(value) => { setConfirmName(value); setConfirmError(""); }} onNotes={setConfirmNotes} onClose={() => { setConfirmOpen(false); setConfirmError(""); }} onSubmit={confirmSelection} /> : null}
