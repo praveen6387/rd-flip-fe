@@ -2,8 +2,8 @@ import LegalDocument from "@/components/landing/legal/LegalDocument";
 import { getLegalSettings } from "@/lib/api/server/settings";
 
 export const metadata = {
-  title: "Refund Policy | RD Flip",
-  description: "Refund eligibility, processing, and related terms for RD Flip.",
+  title: "Refund Policy | Nexpic",
+  description: "Refund eligibility, processing, and related terms for Nexpic.",
 };
 
 export default async function RefundPage() {

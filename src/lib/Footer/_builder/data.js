@@ -1,6 +1,6 @@
 export const SOCIAL = {
-  instagram:
-    "https://www.instagram.com/rdphoto_570?igsh=MTNjZXpkbzc1NTRyZw%3D%3D",
+  instagram: "https://www.instagram.com/nexpic.official/",
+  facebook: "https://www.facebook.com/Nexpic.official/",
   whatsapp: "https://wa.me/919792098570",
 };
 

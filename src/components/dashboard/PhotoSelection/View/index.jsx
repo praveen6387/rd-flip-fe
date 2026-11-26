@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { useDashboardTheme } from "@/lib/dashboard/ThemeProvider";
 import { getAlbum, deleteAlbum, removePhoto, reopenAlbum } from "@/lib/photo-selection/store";
-import { copySelectedOriginals, downloadOriginals, folderBasename } from "@/lib/photo-selection/originals";
+import { downloadLocalOriginals } from "@/lib/photo-selection/originals";
 import { ROUTES } from "@/lib/routes";
 import { cn } from "@/lib/cn";
 import { selectionStatus } from "../_builder/panel";
@@ -90,64 +90,19 @@ export default function PhotoSelectionView({ albumId, initialAlbum = null, initi
     catch (e) { toast.error(e.message); }
     finally { setBusy(false); setWork(null); }
   }
-  async function allowExtract() {
-    if (!window.showDirectoryPicker) {
-      setExportJob({ kind: "extract", step: "error", message: "This browser cannot copy into a folder. Use Download selected ZIP instead.", current: 0, total: album.selectedCount });
-      return;
-    }
-    const picked = window.showDirectoryPicker({ mode: "readwrite", id: "rd-flip-selection-originals" });
-    let directory;
-    try {
-      directory = await picked;
-    } catch (error) {
-      if (error?.name !== "AbortError") {
-        setExportJob({ kind: "extract", step: "error", message: error?.message || "Could not open the original folder.", current: 0, total: album.selectedCount });
-      }
-      return;
-    }
-    setExportJob({ kind: "extract", step: "working", message: "", current: 0, total: album.selectedCount });
-    try {
-      const count = await copySelectedOriginals(album, Promise.resolve(directory), (progress) => {
-        setExportJob((job) => (job ? { ...job, step: "working", current: progress.current, total: progress.total } : job));
-      });
-      const folder = folderBasename(album.originalFolderPath);
-      setExportJob((job) => ({
-        ...job,
-        step: "done",
-        message: `Copied ${count} original photo${count === 1 ? "" : "s"} into the Selected folder inside “${folder}”.`,
-      }));
-    } catch (error) {
-      setExportJob((job) => ({ ...job, step: "error", message: error.message || "Could not copy the selected originals." }));
-    }
-  }
   async function allowZip() {
-    if (!window.showDirectoryPicker) {
-      setExportJob({ kind: "zip", step: "error", message: "This browser cannot choose a folder for the ZIP.", current: 0, total: album.selectedCount });
-      return;
-    }
-    const picked = window.showDirectoryPicker({ mode: "read", id: "rd-flip-selection-originals" });
-    let directory;
-    try {
-      directory = await picked;
-    } catch (error) {
-      if (error?.name !== "AbortError") {
-        setExportJob({ kind: "zip", step: "error", message: error?.message || "Could not open the original folder.", current: 0, total: album.selectedCount });
-      }
-      return;
-    }
     setExportJob({ kind: "zip", step: "working", message: "", current: 0, total: album.selectedCount });
     try {
-      await downloadOriginals(album, Promise.resolve(directory), (progress) => {
+      await downloadLocalOriginals(album, (progress) => {
         setExportJob((job) => (job ? { ...job, step: "working", current: progress.current, total: progress.total } : job));
       });
-      const folder = folderBasename(album.originalFolderPath);
       setExportJob((job) => ({
         ...job,
         step: "done",
-        message: `Downloaded the selected photos from “${folder}” as a ZIP.`,
+        message: "The ZIP contains the original photos from this computer. The folders inside match the saved photo paths.",
       }));
     } catch (error) {
-      setExportJob((job) => ({ ...job, step: "error", message: error.message || "Could not download the originals." }));
+      setExportJob((job) => ({ ...job, step: "error", message: error.message || "Could not download the selected photos." }));
     }
   }
   const backToFolders = (
@@ -203,7 +158,6 @@ export default function PhotoSelectionView({ albumId, initialAlbum = null, initi
         {album.status === "draft" ? <Link className={viewGold} href={`${ROUTES.dashboardPhotoSelectionNew}?album=${album.id}&step=${album.photoCount ? Math.min(5, Math.max(1, album.wizardStep || 2)) : 2}`}>{album.photoCount ? "Resume setup" : "Upload photos"}</Link> : null}
         {selected && <>
           <button type="button" disabled={busy} onClick={() => action(() => reopenAlbum(albumId), "Selection reopened for the client")} className={viewQuiet}>Reopen selection</button>
-          <button type="button" disabled={Boolean(exportJob)} onClick={allowExtract} className={viewQuiet}>Extract selected originals</button>
           <button type="button" disabled={Boolean(exportJob)} onClick={allowZip} className={viewQuiet}><Download className="size-3.5" />Download selected ZIP</button>
         </>}
         <button type="button" disabled={busy} onClick={() => setConfirmDelete(true)} className={viewDanger}><Trash2 className="size-3.5" />Delete folder</button>
@@ -264,22 +218,20 @@ export default function PhotoSelectionView({ albumId, initialAlbum = null, initi
       >
         <DialogTitle>
           {exportJob?.step === "working"
-            ? exportJob.kind === "zip" ? "Preparing ZIP" : "Copying originals"
+            ? "Preparing ZIP"
             : exportJob?.step === "done"
-              ? "Originals ready"
+              ? "ZIP ready"
               : "Could not finish"}
         </DialogTitle>
         <DialogDescription className={cn("text-sm", isDark ? "text-slate-300" : "text-slate-600")}>
           {exportJob?.step === "working"
-            ? exportJob.kind === "zip"
-              ? "Packing the original files into a ZIP."
-              : "Copying the original files into a Selected folder."
+            ? "Reading the original photos from this computer and packing them into a ZIP."
             : exportJob?.message}
         </DialogDescription>
         {exportJob?.step === "working" ? (
           <div className="flex items-center gap-3 py-2">
             <Loader2 className="size-5 animate-spin text-sky-600" />
-            <p className="text-sm font-medium">{exportJob.kind === "zip" ? `Adding ${exportJob.current} of ${exportJob.total} to the ZIP` : `Copying ${exportJob.current} of ${exportJob.total}`}</p>
+            <p className="text-sm font-medium">{exportJob.total ? `Adding ${exportJob.current} of ${exportJob.total} original photos` : "Finding the original photos on this computer."}</p>
           </div>
         ) : null}
         {exportJob?.step === "done" || exportJob?.step === "error" ? (

@@ -8,6 +8,14 @@ function InstagramIcon({ className }) {
   );
 }
 
+function FacebookIcon({ className }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden>
+      <path d="M22 12.07C22 6.48 17.52 2 12 2S2 6.48 2 12.07C2 17.1 5.66 21.24 10.44 22v-7.03H7.9v-2.91h2.54V9.84c0-2.5 1.49-3.89 3.78-3.89 1.09 0 2.24.2 2.24.2v2.46h-1.26c-1.24 0-1.63.77-1.63 1.56v1.88h2.78l-.44 2.91h-2.34V22C18.34 21.24 22 17.1 22 12.07z" />
+    </svg>
+  );
+}
+
 function WhatsAppIcon({ className }) {
   return (
     <svg viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden>
@@ -27,6 +35,15 @@ export default function SocialLinks() {
         className="inline-flex size-11 items-center justify-center rounded-xl bg-linear-to-br from-fuchsia-500 via-rose-500 to-orange-400 text-white shadow-lg shadow-rose-500/20 transition hover:scale-105"
       >
         <InstagramIcon className="size-5" />
+      </a>
+      <a
+        href={SOCIAL.facebook}
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label="Facebook"
+        className="inline-flex size-11 items-center justify-center rounded-xl bg-[#1877F2] text-white shadow-lg shadow-sky-500/20 transition hover:scale-105"
+      >
+        <FacebookIcon className="size-5" />
       </a>
       <a
         href={SOCIAL.whatsapp}

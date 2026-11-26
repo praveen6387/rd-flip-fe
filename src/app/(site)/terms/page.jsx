@@ -2,8 +2,8 @@ import LegalDocument from "@/components/landing/legal/LegalDocument";
 import { getLegalSettings } from "@/lib/api/server/settings";
 
 export const metadata = {
-  title: "Terms & Conditions | RD Flip",
-  description: "Terms and conditions for using RD Flip.",
+  title: "Terms & Conditions | Nexpic",
+  description: "Terms and conditions for using Nexpic.",
 };
 
 export default async function TermsPage() {

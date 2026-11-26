@@ -1,8 +1,9 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { Check, Folder, FolderTree, Heart, Image as ImageIcon, Loader2, Pencil, Plus, RotateCw, UploadCloud, X } from "lucide-react";
+import { Check, Eye, EyeOff, Folder, FolderTree, Heart, Image as ImageIcon, Loader2, Pencil, Plus, RotateCw, UploadCloud, X } from "lucide-react";
 import { sourceRelativePath } from "@/lib/photo-selection/folder";
+import { collectDirectoryFiles } from "@/lib/photo-selection/originals";
 import { rotationClass } from "../Gallery/rotation";
 import SelectionProgress from "../_builder/SelectionProgress";
 
@@ -38,7 +39,7 @@ async function scanEntry(entry, path = "") {
   return nested.flat();
 }
 
-export default function OccasionUpload({ photos = [], disabled = false, onUpload, onRotate, work = null }) {
+export default function OccasionUpload({ photos = [], disabled = false, onUpload, onRotate, onRememberFolder, work = null }) {
   const folderRef = useRef(null);
   const fileRef = useRef(null);
   const [active, setActive] = useState("Pre-Wedding");
@@ -51,12 +52,13 @@ export default function OccasionUpload({ photos = [], disabled = false, onUpload
   const [dragOver, setDragOver] = useState(false);
   const [queue, setQueue] = useState([]);
   const [openQueue, setOpenQueue] = useState("");
+  const [galleryOpen, setGalleryOpen] = useState(true);
+  const [showAll, setShowAll] = useState(false);
   const saved = [...new Set(photos.map((photo) => photo.category).filter(Boolean))];
   const categories = [...OCCASIONS.filter((name) => !hidden.includes(name)), ...custom, ...saved.filter((name) => !OCCASIONS.includes(name) && !custom.includes(name))];
   const countOf = (name) => photos.filter((photo) => photo.category === name).length;
-  const uploadedCount = categories.filter((name) => countOf(name) > 0).length;
   const folderPhotos = photos.filter((photo) => photo.category === active);
-  const shown = folderPhotos.length ? folderPhotos : photos;
+  const shown = showAll ? photos : folderPhotos;
   const queueStructure = queue.reduce((structure, file) => {
     const parts = String(file.selectionRelativePath || file.name).split("/").filter(Boolean);
     const main = file.selectionCategory || active;
@@ -132,6 +134,21 @@ export default function OccasionUpload({ photos = [], disabled = false, onUpload
     enqueue(fileList);
   }
 
+  async function browseFolders() {
+    if (window.showDirectoryPicker) {
+      try {
+        const directory = await window.showDirectoryPicker({ mode: "read", id: "rd-flip-selection-upload" });
+        const files = await collectDirectoryFiles(directory);
+        await onRememberFolder?.(directory);
+        send(files);
+        return;
+      } catch (error) {
+        if (error?.name === "AbortError") return;
+      }
+    }
+    folderRef.current?.click();
+  }
+
   async function dropFiles(event) {
     event.preventDefault();
     setDragOver(false);
@@ -151,13 +168,17 @@ export default function OccasionUpload({ photos = [], disabled = false, onUpload
     <div>
       <div className="mb-3 space-y-2 rounded-xl border border-stone-200/80 bg-stone-50 p-2.5">
         <div className="flex flex-wrap items-center justify-between gap-1.5">
-          <span className="flex items-center gap-1.5 text-xs font-bold text-stone-800"><Folder className="size-3.5 text-amber-500" />Target Folder:{uploadedCount ? <span className="rounded-full border border-emerald-300 bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-800">{uploadedCount} uploaded ({photos.length} photos)</span> : null}</span>
+          <span className="flex items-center gap-1.5 text-xs font-bold text-stone-800"><Folder className="size-3.5 text-amber-500" />Target Folder:</span>
           <span className="text-[11px] text-stone-500">Active: <strong className={countOf(active) ? "text-emerald-600" : "text-amber-600"}>{active}</strong></span>
         </div>
         <div className="flex flex-wrap items-center gap-1.5">
+          <button type="button" disabled={disabled} onClick={() => setShowAll(true)} className={`inline-flex items-center gap-1.5 rounded-xl px-2.5 py-1 text-xs font-semibold ${showAll ? "bg-emerald-600 text-white shadow-md" : "border border-stone-200 bg-white text-stone-700"}`}>
+            All
+            <span className={`rounded-full px-1.5 font-mono text-[10px] font-bold ${showAll ? "bg-emerald-700/80 text-white" : "bg-stone-100 text-stone-700"}`}>{photos.length}</span>
+          </button>
           {categories.map((name) => {
             const count = countOf(name);
-            const selected = active === name;
+            const selected = !showAll && active === name;
             if (editing === name) {
               return (
                 <div key={name} className="inline-flex items-center gap-1 rounded-xl border-2 border-amber-500 bg-white p-1">
@@ -169,7 +190,7 @@ export default function OccasionUpload({ photos = [], disabled = false, onUpload
             }
             return (
               <div key={name} className={`inline-flex items-center rounded-xl text-xs font-semibold ${selected ? (count ? "bg-emerald-600 text-white shadow-md" : "bg-amber-500 text-white shadow-md") : count ? "border-2 border-emerald-400 bg-emerald-50 text-emerald-800" : "border border-stone-200 bg-white text-stone-700"}`}>
-                <button type="button" disabled={disabled} onClick={() => setActive(name)} className="inline-flex items-center gap-1.5 px-2.5 py-1">
+                <button type="button" disabled={disabled} onClick={() => { setActive(name); setShowAll(false); }} className="inline-flex items-center gap-1.5 px-2.5 py-1">
                   {count ? <Check className="size-3" /> : selected ? <Folder className="size-3 fill-amber-200/40" /> : null}
                   {name}
                   {count ? <span className={`rounded-full px-1.5 font-mono text-[10px] font-bold ${selected ? "bg-emerald-700/80 text-white" : "bg-emerald-200 text-emerald-900"}`}>{count}</span> : null}
@@ -201,7 +222,7 @@ export default function OccasionUpload({ photos = [], disabled = false, onUpload
         <p className="text-sm font-semibold text-stone-800">Drag & drop photos or entire ceremony folders here</p>
         <p className="mb-2.5 text-[11px] text-stone-500">Photos are filed under {active}. Each folder you add stays separate.</p>
         <div className="flex flex-wrap items-center justify-center gap-2.5">
-          <button type="button" disabled={disabled} onClick={() => folderRef.current?.click()} className="inline-flex items-center gap-2 rounded-xl bg-amber-500 px-4 py-2 text-xs font-bold text-white shadow-sm"><FolderTree className="size-4" />Browse Ceremony Folders</button>
+          <button type="button" disabled={disabled} onClick={browseFolders} className="inline-flex items-center gap-2 rounded-xl bg-amber-500 px-4 py-2 text-xs font-bold text-white shadow-sm"><FolderTree className="size-4" />Browse Ceremony Folders</button>
           <button type="button" disabled={disabled} onClick={() => fileRef.current?.click()} className="inline-flex items-center gap-2 rounded-xl border border-stone-200 bg-white px-3.5 py-2 text-xs font-semibold text-stone-800"><ImageIcon className="size-3.5 text-amber-600" />Select Photos</button>
         </div>
         <input ref={folderRef} className="hidden" type="file" multiple webkitdirectory="" directory="" disabled={disabled} onChange={(event) => { send(event.target.files); event.target.value = ""; }} />
@@ -259,32 +280,42 @@ export default function OccasionUpload({ photos = [], disabled = false, onUpload
         </div>
       ) : null}
       <div className="mt-4">
-        <h3 className="font-sans text-lg font-bold text-stone-900">Photo Gallery Manager ({shown.length})</h3>
-        <p className="text-xs text-stone-500">{folderPhotos.length ? `Photos in ${active}` : "Uploaded photos from every folder"}</p>
-        {shown.length ? (
-          <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-            {shown.map((photo) => (
-              <figure key={photo.id} className="overflow-hidden rounded-xl border border-stone-200 bg-white shadow-sm">
-                <div className="relative aspect-[4/3] bg-stone-100">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={photo.imageUrl} alt={photo.name} className={`size-full object-cover ${rotationClass(photo.rotation)}`} />
-                  <button type="button" disabled={disabled} onClick={() => onRotate?.(photo)} className="absolute right-2 bottom-2 grid size-8 place-items-center rounded-full bg-stone-950/75 text-white disabled:opacity-40" aria-label={`Rotate ${photo.name}`}><RotateCw className="size-4" /></button>
-                  {photo.selected ? <span className="absolute top-2 left-2 inline-flex items-center gap-1 rounded-full bg-rose-600 px-2 py-0.5 text-[10px] font-bold text-white"><Heart className="size-3 fill-white" />Selected</span> : null}
-                </div>
-                <figcaption className="flex items-center justify-between gap-2 border-t border-stone-100 p-2 text-[11px]">
-                  <span className="truncate font-mono text-stone-700" title={photo.name}>{photo.name}</span>
-                  {photo.category || photo.subfolder ? <span className="shrink-0 rounded bg-stone-100 px-1.5 py-0.5 text-[10px] font-medium text-stone-500">{[photo.category, photo.subfolder].filter(Boolean).join(" / ")}</span> : null}
-                </figcaption>
-              </figure>
-            ))}
+        <div className="flex items-center justify-between gap-3">
+          <div className="min-w-0">
+            <h3 className="font-sans text-lg font-bold text-stone-900">Photo Gallery Manager ({shown.length})</h3>
+            <p className="text-xs text-stone-500">{showAll ? "All uploaded photos" : `Photos in ${active}`}</p>
           </div>
-        ) : (
-          <div className="mt-3 rounded-2xl border border-stone-200 bg-white px-6 py-10 text-center">
-            <ImageIcon className="mx-auto mb-2 size-10 text-stone-300" />
-            <p className="text-sm font-semibold text-stone-700">No photos in this view</p>
-            <p className="mt-0.5 text-xs text-stone-500">Upload photos above and they will appear here.</p>
-          </div>
-        )}
+          <button type="button" onClick={() => setGalleryOpen((open) => !open)} className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-stone-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-stone-700 hover:bg-stone-50" aria-expanded={galleryOpen}>
+            {galleryOpen ? <EyeOff className="size-3.5" /> : <Eye className="size-3.5" />}
+            {galleryOpen ? "Hide" : "Show"}
+          </button>
+        </div>
+        {galleryOpen ? (
+          shown.length ? (
+            <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+              {shown.map((photo) => (
+                <figure key={photo.id} className="overflow-hidden rounded-xl border border-stone-200 bg-white shadow-sm">
+                  <div className="relative aspect-[4/3] bg-stone-100">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={photo.imageUrl} alt={photo.name} className={`size-full object-cover ${rotationClass(photo.rotation)}`} />
+                    <button type="button" disabled={disabled} onClick={() => onRotate?.(photo)} className="absolute right-2 bottom-2 grid size-8 place-items-center rounded-full bg-stone-950/75 text-white disabled:opacity-40" aria-label={`Rotate ${photo.name}`}><RotateCw className="size-4" /></button>
+                    {photo.selected ? <span className="absolute top-2 left-2 inline-flex items-center gap-1 rounded-full bg-rose-600 px-2 py-0.5 text-[10px] font-bold text-white"><Heart className="size-3 fill-white" />Selected</span> : null}
+                  </div>
+                  <figcaption className="flex items-center justify-between gap-2 border-t border-stone-100 p-2 text-[11px]">
+                    <span className="truncate font-mono text-stone-700" title={photo.name}>{photo.name}</span>
+                    {photo.category || photo.subfolder ? <span className="shrink-0 rounded bg-stone-100 px-1.5 py-0.5 text-[10px] font-medium text-stone-500">{[photo.category, photo.subfolder].filter(Boolean).join(" / ")}</span> : null}
+                  </figcaption>
+                </figure>
+              ))}
+            </div>
+          ) : (
+            <div className="mt-3 rounded-2xl border border-stone-200 bg-white px-6 py-10 text-center">
+              <ImageIcon className="mx-auto mb-2 size-10 text-stone-300" />
+              <p className="text-sm font-semibold text-stone-700">No photos in this view</p>
+              <p className="mt-0.5 text-xs text-stone-500">Upload photos above and they will appear here.</p>
+            </div>
+          )
+        ) : null}
       </div>
     </div>
   );

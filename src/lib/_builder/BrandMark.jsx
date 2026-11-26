@@ -4,7 +4,7 @@ export default function BrandMark({ className, light = false, compact = false })
   return (
     <span className={cn("flex items-center", className)}>
       <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-linear-to-br from-[#6d3d5c] to-[#8f5678] text-lg font-bold leading-none text-white shadow-lg shadow-[#6d3d5c]/30">
-        R
+        N
       </span>
       <span
         className={cn(
@@ -18,7 +18,7 @@ export default function BrandMark({ className, light = false, compact = false })
             light ? "text-white" : "text-slate-900",
           )}
         >
-          RD Flip
+          Nexpic
         </span>
         <span
           className={cn(
@@ -26,7 +26,7 @@ export default function BrandMark({ className, light = false, compact = false })
             light ? "text-white/60" : "text-[#5a324c]/80",
           )}
         >
-          Flip studio
+          Photo studio
         </span>
       </span>
     </span>

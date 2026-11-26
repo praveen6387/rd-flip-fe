@@ -6,6 +6,7 @@ export const ROUTES = {
   dashboardPlans: "/dashboard/plans",
   dashboardUsers: "/dashboard/users",
   dashboardOrders: "/dashboard/orders",
+  dashboardContact: "/dashboard/contact",
   dashboardPhotoSelection: "/dashboard/photo-selection",
   dashboardPhotoSelectionNew: "/dashboard/photo-selection/new",
   dashboardPhotoSelectionView: (id) => `/dashboard/photo-selection/${id}`,

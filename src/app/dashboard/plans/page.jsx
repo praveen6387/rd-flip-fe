@@ -2,7 +2,7 @@ import { Plans } from "@/components/dashboard";
 import { listPlans } from "@/lib/api/server/plans";
 
 export const metadata = {
-  title: "Plans & Credits | RD Flip",
+  title: "Plans & Credits | Nexpic",
 };
 
 export default async function PlansPage() {

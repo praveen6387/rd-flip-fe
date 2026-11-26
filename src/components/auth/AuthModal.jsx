@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { cn } from "@/lib/cn";
 import { Button } from "@/components/ui/button";
 import { ROUTES } from "@/lib/routes";
 import { useAuth } from "./AuthProvider";
@@ -10,7 +11,7 @@ import LoginForm from "./_builder/LoginForm";
 import SignupForm from "./_builder/SignupForm";
 import UserMenu from "./_builder/UserMenu";
 
-export default function AuthModal({ appearance = "light" }) {
+export default function AuthModal({ appearance = "light", fill = false }) {
   const router = useRouter();
   const { user, logout, ready, authMode, setAuthMode } = useAuth();
   const isDark = appearance === "dark";
@@ -35,8 +36,8 @@ export default function AuthModal({ appearance = "light" }) {
       <div
         className={
           isDark
-            ? "h-10 w-40 rounded-full bg-white/15"
-            : "h-10 w-40 rounded-full bg-white/70"
+            ? cn("h-9 rounded-full bg-white/15 md:h-10", fill ? "w-full" : "w-28 md:w-40")
+            : cn("h-9 rounded-full bg-white/70 md:h-10", fill ? "w-full" : "w-28 md:w-40")
         }
         aria-hidden
       />
@@ -45,19 +46,24 @@ export default function AuthModal({ appearance = "light" }) {
 
   return (
     <>
-      <div className="flex items-center gap-2">
+      <div className={cn("flex items-center gap-2", fill && "w-full")}>
         <Button
-          className={
+          className={cn(
+            "h-9 rounded-full px-3 text-sm shadow-sm md:h-10 md:px-5 md:text-base",
+            fill && "min-w-0 flex-1",
             isDark
-              ? "rounded-full border border-white/25 bg-white/10 px-5 text-base text-white shadow-sm hover:bg-white/16"
-              : "rounded-full border border-[#6d3d5c]/55 bg-white/70 px-5 text-base text-[#5a324c] shadow-sm hover:bg-white"
-          }
+              ? "border border-white/25 bg-white/10 text-white hover:bg-white/16"
+              : "border border-[#6d3d5c]/55 bg-white/70 text-[#5a324c] hover:bg-white"
+          )}
           onClick={() => setAuthMode("login")}
         >
           Login
         </Button>
         <Button
-          className="rounded-full bg-linear-to-r from-[#8f5678] to-[#c48a9e] px-5 text-base text-white shadow-md hover:from-[#7a4868] hover:to-[#b87a90]"
+          className={cn(
+            "h-9 rounded-full bg-linear-to-r from-[#8f5678] to-[#c48a9e] px-3 text-sm text-white shadow-md hover:from-[#7a4868] hover:to-[#b87a90] md:h-10 md:px-5 md:text-base",
+            fill && "min-w-0 flex-1"
+          )}
           onClick={() => setAuthMode("signup")}
         >
           Signup

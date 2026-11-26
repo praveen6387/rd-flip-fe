@@ -11,8 +11,8 @@ import { useDashboardTheme } from "@/lib/dashboard/ThemeProvider";
 import { ROUTES } from "@/lib/routes";
 import { cn } from "@/lib/cn";
 import { formatSelectionDate, selectionPanel, selectionStage, selectionStatus, clientShareMessage } from "./_builder/panel";
-import { deleteAlbum } from "@/lib/photo-selection/store";
-import { downloadOriginals } from "@/lib/photo-selection/originals";
+import { deleteAlbum, getAlbum } from "@/lib/photo-selection/store";
+import { downloadLocalOriginals } from "@/lib/photo-selection/originals";
 import { useAuth } from "@/components/auth";
 import NexpicCanvas from "./_builder/NexpicCanvas";
 
@@ -139,6 +139,7 @@ function GalleryCard({ album, onDeleted }) {
   const { user } = useAuth();
   const [copied, setCopied] = useState(false);
   const [showCode, setShowCode] = useState(false);
+  const [showPhone, setShowPhone] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [downloading, setDownloading] = useState(false);
@@ -147,7 +148,7 @@ function GalleryCard({ album, onDeleted }) {
   const folderStatus = selectionStatus(album);
   const rulesConfigured = Boolean(album.rules?.rulesConfigured);
   const totalPhotos = album.photoCount || 0;
-  const canShare = totalPhotos > 0 && rulesConfigured && album.status !== "draft";
+  const canShare = album.status !== "draft";
   const mode = album.rules?.selectionMode;
   const targetCount = !rulesConfigured ? totalPhotos : mode === "FIXED" ? Number(album.rules?.requiredPhotos || 0) : mode === "MIN_EXTRA" ? Number(album.rules?.includedPhotos || 0) : totalPhotos;
   const percentage = targetCount > 0 ? Math.round(((album.selectedCount || 0) / targetCount) * 100) : 0;
@@ -179,21 +180,11 @@ function GalleryCard({ album, onDeleted }) {
   }
 
   async function downloadSelected() {
-    if (!window.showDirectoryPicker) {
-      toast.error("This browser cannot choose a folder for the ZIP.");
-      return;
-    }
-    let directory;
-    try {
-      directory = await window.showDirectoryPicker({ mode: "read", id: "rd-flip-selection-originals" });
-    } catch (error) {
-      if (error?.name !== "AbortError") toast.error(error?.message || "Could not open the original folder.");
-      return;
-    }
     setDownloading(true);
     try {
-      await downloadOriginals(album, Promise.resolve(directory));
-      toast.success("Selected photos downloaded.");
+      const source = album.photos?.length ? album : await getAlbum(album.id);
+      await downloadLocalOriginals(source);
+      toast.success("Original photos downloaded.");
     } catch (error) {
       toast.error(error.message || "Could not download the selected photos.");
     } finally {
@@ -213,7 +204,7 @@ function GalleryCard({ album, onDeleted }) {
     { label: "Mode", value: modeLabel, icon: Sparkles },
     { label: "Created", value: formatSelectionDate(album.createdAt), icon: Clock },
     { label: "Client", value: album.clientName || "Not set", icon: User },
-    ...(phone ? [{ label: "Mobile", value: phone, icon: Phone }] : []),
+    ...(phone ? [{ label: "Mobile" }] : []),
     { label: "Event", value: eventLabel(album.eventDate), icon: Calendar },
     ...(album.selectionDeadline ? [{ label: "Deadline", value: eventLabel(album.selectionDeadline), icon: Clock, accent: true }] : []),
   ];
@@ -230,6 +221,18 @@ function GalleryCard({ album, onDeleted }) {
         <div className="px-3.5 pt-2">
           <ul className="mb-2 space-y-0.5">
             {rows.map((row) => {
+              if (row.label === "Mobile") {
+                return (
+                  <li key="Mobile" className="flex items-center gap-2">
+                    <span className="grid size-5 shrink-0 place-items-center rounded-md bg-[#f8efe6] text-[#9a7040]"><Phone className="size-3" /></span>
+                    <span className="w-14 shrink-0 text-[10px] font-semibold tracking-[0.12em] text-[#b08968] uppercase">Mobile</span>
+                    <span className="flex min-w-0 items-center gap-1">
+                      <span className={`truncate text-xs font-medium text-stone-800 ${showPhone ? "" : "tracking-[0.12em]"}`}>{showPhone ? phone : "+91 ••••• •••••"}</span>
+                      <button type="button" onClick={() => setShowPhone((current) => !current)} aria-label={showPhone ? "Hide mobile number" : "Show mobile number"} className="grid size-5 shrink-0 place-items-center rounded text-stone-400 hover:bg-stone-100 hover:text-stone-700">{showPhone ? <EyeOff className="size-3.5" /> : <Eye className="size-3.5" />}</button>
+                    </span>
+                  </li>
+                );
+              }
               const Icon = row.icon;
               return (
                 <li key={row.label} className="flex items-center gap-2">
@@ -308,7 +311,7 @@ function GalleryCard({ album, onDeleted }) {
           ) : null}
         </div>
         <div className="flex items-center gap-2">
-          {locked ? <button type="button" disabled={downloading || !(album.selectedCount > 0)} onClick={downloadSelected} className="inline-flex items-center gap-1 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-emerald-500 disabled:opacity-50"><Download className="size-3.5" />{downloading ? "Downloading…" : "Download"}</button> : null}
+          {locked ? <button type="button" disabled={downloading || !(album.selectedCount > 0)} onClick={downloadSelected} className={`inline-flex items-center gap-1 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-emerald-500 ${downloading ? "" : "disabled:opacity-50"}`}>{downloading ? <Loader2 className="size-3.5 animate-spin" /> : <Download className="size-3.5" />}Download</button> : null}
           <Link href={ROUTES.dashboardPhotoSelectionView(album.id)} className="inline-flex items-center gap-1 rounded-lg bg-amber-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-amber-500">Open <ChevronRight className="size-3.5" /></Link>
         </div>
       </div>

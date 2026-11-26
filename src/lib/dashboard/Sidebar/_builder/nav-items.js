@@ -3,6 +3,7 @@ import {
   FileText,
   Images,
   PlusCircle,
+  Mail,
   Receipt,
   UserRound,
   Users,
@@ -53,6 +54,12 @@ export const DASHBOARD_NAV_ITEMS = [
     label: "Orders",
     href: ROUTES.dashboardOrders,
     icon: Receipt,
+    roles: ["admin"],
+  },
+  {
+    label: "Contact Us",
+    href: ROUTES.dashboardContact,
+    icon: Mail,
     roles: ["admin"],
   },
 ];

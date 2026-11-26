@@ -127,7 +127,7 @@ export default function SelectionRules({ form, photoCount = 0, onChange }) {
               </div>
               <div className="flex shrink-0 items-center gap-1.5">
                 <span className="text-xs font-bold text-stone-600">₹</span>
-                <input type="number" min="0" step="50" value={form.extraSheetPrice ?? 300} onChange={(event) => onChange({ extraSheetPrice: Number(event.target.value), enableExtraSheetPricing: Number(event.target.value) > 0 })} className="w-24 rounded-lg border border-stone-200 bg-white px-2.5 py-1.5 font-mono text-xs font-bold outline-none focus:ring-2 focus:ring-amber-500" />
+                <input type="number" min="0" step="50" value={Number(form.extraSheetPrice ?? 300) || 0} onChange={(event) => { const raw = event.target.value.replace(/^0+(?=\d)/, ""); event.target.value = raw; const amount = raw === "" ? 0 : Number(raw); onChange({ extraSheetPrice: Number.isFinite(amount) ? amount : 0, enableExtraSheetPricing: amount > 0 }); }} className="w-24 rounded-lg border border-stone-200 bg-white px-2.5 py-1.5 font-mono text-xs font-bold outline-none focus:ring-2 focus:ring-amber-500" />
                 <span className="text-[11px] whitespace-nowrap text-stone-500">/ extra sheet</span>
               </div>
             </div>

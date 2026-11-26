@@ -21,6 +21,7 @@ export const ENDPOINTS = {
   paymentsVerify: "/api/payments/verify/",
   settingsLegal: "/api/settings/legal/",
   contactCreate: "/api/contact/create/",
+  adminContact: "/api/contact/",
   songs: "/api/songs/",
   songsCreate: "/api/songs/create/",
   adminUsers: "/api/auth/users/",

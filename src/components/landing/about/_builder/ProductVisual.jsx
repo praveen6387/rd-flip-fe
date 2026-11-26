@@ -13,7 +13,7 @@ export default function ProductVisual({ isDark = false }) {
     >
       <Image
         src="/v2/product/product-content.png"
-        alt="RD Flip flipbooks with QR sharing on mobile"
+        alt="Nexpic flipbooks with QR sharing on mobile"
         width={1374}
         height={1145}
         priority

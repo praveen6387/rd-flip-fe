@@ -1,7 +1,7 @@
 import ResetPasswordForm from "@/components/auth/_builder/ResetPasswordForm";
 
 export const metadata = {
-  title: "Reset password | RD Flip",
+  title: "Reset password | Nexpic",
 };
 
 export default async function ResetPasswordPage({ searchParams }) {

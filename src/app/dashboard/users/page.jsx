@@ -3,7 +3,7 @@ import { AdminGuard } from "@/lib/dashboard";
 import { listAdminUsers } from "@/lib/api/server/users";
 
 export const metadata = {
-  title: "Users | RD Flip",
+  title: "Users | Nexpic",
 };
 
 export default async function UsersPage() {

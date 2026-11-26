@@ -2,7 +2,7 @@ import { CreateFlipbook } from "@/components/dashboard";
 import { listSongs } from "@/lib/api/server/songs";
 
 export const metadata = {
-  title: "Create Flipbook | RD Flip",
+  title: "Create Flipbook | Nexpic",
 };
 
 export default async function CreateFlipbookPage() {

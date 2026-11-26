@@ -2,7 +2,7 @@ import { PhotoSelectionView } from "@/components/dashboard";
 import { getPhotoSelection } from "@/lib/api/server/photo-selection";
 
 export const metadata = {
-  title: "Selection folder | RD Flip",
+  title: "Selection folder | Nexpic",
 };
 
 export default async function PhotoSelectionViewPage({ params }) {

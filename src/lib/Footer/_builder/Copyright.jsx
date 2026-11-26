@@ -5,7 +5,7 @@ export default function Copyright() {
   return (
     <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
       <p className="text-sm text-white/45">
-        © {new Date().getFullYear()} RD Flip. All rights reserved.
+        © {new Date().getFullYear()} Nexpic. All rights reserved.
       </p>
       <div className="flex items-center gap-5 text-sm text-white/45">
         <Link href={ROUTES.privacy} className="transition hover:text-white/80">

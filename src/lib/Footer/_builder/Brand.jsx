@@ -12,7 +12,7 @@ export default function Brand({ pathname }) {
         <Camera className="size-5" strokeWidth={2.25} />
       </span>
       <span className="text-lg font-semibold tracking-tight text-white">
-        RD Flip
+        Nexpic
       </span>
     </Link>
   );

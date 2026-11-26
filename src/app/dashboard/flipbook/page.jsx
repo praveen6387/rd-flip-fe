@@ -2,7 +2,7 @@ import { Flipbook } from "@/components/dashboard";
 import { listFlipbooks } from "@/lib/api/server/flipbook";
 
 export const metadata = {
-  title: "Flipbook | RD Flip",
+  title: "Flipbook | Nexpic",
 };
 
 export default async function FlipbookPage() {

@@ -16,13 +16,14 @@ import { addPhotos, createDraft, getAlbum, publishAlbum, rotatePhoto, saveDraft 
 import { acceptedSelectionFiles, clientShareMessage } from "../_builder/panel";
 import { prepareSelectionPhotos } from "../_builder/prepare";
 import OccasionUpload from "./OccasionUpload";
+import { rememberSelectionFolder } from "@/lib/photo-selection/originals";
 import SelectionRules from "./SelectionRules";
 import GalleryAccess from "./GalleryAccess";
 import NexpicCanvas from "../_builder/NexpicCanvas";
 
 const forwardButtonClass = "inline-flex items-center gap-2 rounded-xl bg-amber-700 px-6 py-2.5 text-xs font-bold text-white shadow-md shadow-amber-700/30 hover:bg-amber-600 disabled:opacity-50";
 
-function StepIntro({ icon: Icon, title, step, children }) {
+function StepIntro({ icon: Icon, title, step, count, children }) {
   return (
     <div className="-mx-6 -mt-6 mb-4 flex items-center gap-2.5 border-b border-[#ead8c8] bg-gradient-to-r from-[#fff8f3] to-[#fbf6f1] px-6 py-2.5">
       <div className="grid size-8 shrink-0 place-items-center rounded-full bg-[#f6e4cf] text-[#8f6834]"><Icon className="size-3.5" /></div>
@@ -30,6 +31,7 @@ function StepIntro({ icon: Icon, title, step, children }) {
         <h2 className="truncate text-sm font-bold text-stone-900">{title}</h2>
         <p className="truncate text-[11px] leading-4 text-stone-500">{children}</p>
       </div>
+      {count != null ? <span className="shrink-0 rounded-full border border-emerald-300 bg-emerald-100 px-2.5 py-1 text-[11px] font-bold text-emerald-800">{count} {count === 1 ? "photo" : "photos"} uploaded</span> : null}
       <span className="shrink-0 text-[10px] font-semibold tracking-[0.14em] text-[#b08968] uppercase">Step {step} of 5</span>
     </div>
   );
@@ -501,7 +503,7 @@ export default function PhotoSelectionCreate() {
         {error ? <p className="mb-4 rounded-xl bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</p> : null}
         <div className="overflow-hidden rounded-[28px] border border-stone-200 bg-white p-6 shadow-sm">
           {step === 1 ? <StepIntro icon={User} title="Couple & Client Details" step={1}>Fill client and couple contact details and click <strong>Done</strong>. {albumId ? "You can upload photos and set selection rules right after." : "Creating this gallery uses one photo-selection credit."}</StepIntro> : null}
-          {step === 2 ? <StepIntro icon={UploadCloud} title="Upload Photographs & Folders" step={2}>Upload photos or select entire ceremony folders. Subfolders are kept and filed under the active folder.</StepIntro> : null}
+          {step === 2 ? <StepIntro icon={UploadCloud} title="Upload Photographs & Folders" step={2} count={photos.length}>Upload photos or select entire ceremony folders. Subfolders are kept and filed under the active folder.</StepIntro> : null}
           {step === 3 ? <StepIntro icon={rulesPane === "watermark" ? Shield : Target} title={rulesPane === "watermark" ? "Watermark & Security Settings" : "Configure Photo Selection Mode"} step={3}>{rulesPane === "watermark" ? "Save the studio watermark that is drawn over client photos. It is not burned into the files." : "Choose how your client selects photos from their gallery."}</StepIntro> : null}
           {step === 4 ? <StepIntro icon={Shield} title="Share Client Photo Gallery" step={4}>Send the private gallery link, access code, and deadline to {form.clientName || "your client"}{form.folderName ? ` · ${form.folderName}` : ""}.</StepIntro> : null}
           {step === 5 ? <StepIntro icon={Eye} title="Review & Publish" step={5}>Check the gallery, then publish. Publishing opens the gallery for the client.</StepIntro> : null}
@@ -525,7 +527,7 @@ export default function PhotoSelectionCreate() {
                     <span className="flex items-center gap-1.5 text-xs font-bold text-stone-700"><Clock className="size-3.5 text-amber-500" />Selection Deadline</span>
                     <div className="flex gap-1">{[{ label: "+7 Days", days: 7 }, { label: "+15 Days", days: 15 }, { label: "+30 Days", days: 30 }, { label: "+60 Days", days: 60 }].map((preset) => { const target = localOffsetDate(preset.days); return <button key={preset.days} type="button" onClick={() => change("selectionDeadline", target)} className={`rounded-md px-1.5 py-0.5 text-[10px] font-bold ${form.selectionDeadline === target ? "bg-amber-500 text-stone-950" : "border border-stone-200 bg-stone-100 text-stone-600"}`}>{preset.label}</button>; })}</div>
                   </div>
-                  <input type="date" value={form.selectionDeadline} onChange={(event) => change("selectionDeadline", event.target.value)} className="w-full cursor-pointer rounded-xl border border-stone-200 bg-stone-50 px-3.5 py-2.5 text-xs outline-none focus:ring-2 focus:ring-amber-500" />
+                  <input type="date" min={localOffsetDate(0)} value={form.selectionDeadline} onChange={(event) => { const today = localOffsetDate(0); const value = event.target.value; if (value && value < today) { event.target.value = form.selectionDeadline && form.selectionDeadline >= today ? form.selectionDeadline : ""; return; } change("selectionDeadline", value); }} className="w-full cursor-pointer rounded-xl border border-stone-200 bg-stone-50 px-3.5 py-2.5 text-xs outline-none focus:ring-2 focus:ring-amber-500" />
                 </div>
                 <div className="sm:col-span-2">
                   <div className="mb-1.5 flex items-center justify-between"><span className="flex items-center gap-1.5 text-xs font-bold text-stone-700"><Mail className="size-3.5 text-amber-600" />Email Address</span><span className="text-[11px] text-stone-400">(Optional)</span></div>
@@ -538,7 +540,7 @@ export default function PhotoSelectionCreate() {
               </div>
             </div>
           ) : null}
-          {step === 2 ? <OccasionUpload photos={photos} disabled={Boolean(work) || !albumId} work={work} onUpload={uploadChosen} onRotate={rotateChosen} /> : null}
+          {step === 2 ? <OccasionUpload photos={photos} disabled={Boolean(work) || !albumId} work={work} onUpload={uploadChosen} onRotate={rotateChosen} onRememberFolder={(handle) => rememberSelectionFolder(albumId, handle)} /> : null}
           {step === 3 ? (
             <div>
               <div className="mb-4 flex items-center justify-between border-b border-stone-200 pb-3">
@@ -587,7 +589,7 @@ export default function PhotoSelectionCreate() {
               updating={updatingCode}
               saving={saving}
               onCode={setAccessCode}
-              onDeadline={(value) => change("selectionDeadline", value)}
+              onDeadline={(value) => { if (value && value < localOffsetDate(0)) return; change("selectionDeadline", value); }}
               onWelcome={(value) => change("welcomeMessage", value)}
               onUpdate={updateShare}
             />

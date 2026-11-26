@@ -77,7 +77,7 @@ function FlipbookViewInner({ flipbook }) {
         <header className="pointer-events-none absolute inset-x-0 top-[max(0.35rem,env(safe-area-inset-top))] z-20 grid grid-cols-[1fr_auto_1fr] items-center gap-2 px-3 sm:top-[40px] sm:gap-4 sm:px-4">
           <div className="pointer-events-auto min-w-0">
             <p className="truncate text-[11px] font-medium tracking-[0.18em] text-amber-200/85 uppercase sm:text-xs sm:tracking-[0.22em]">
-              {flipbook.studio_name || "RD Flip"}
+              {flipbook.studio_name || "Nexpic"}
             </p>
             <ViewerSocialLinks flipbook={flipbook} />
           </div>
@@ -124,7 +124,7 @@ function ExpiredView({ flipbook, error, details }) {
       <header className="relative z-10 grid shrink-0 grid-cols-[1fr_auto_1fr] items-center gap-2 px-3 py-2 sm:gap-3 sm:px-6 sm:py-3">
         <div className="min-w-0">
           <p className="truncate text-[10px] font-medium tracking-[0.18em] text-amber-200/85 uppercase sm:text-[11px] sm:tracking-[0.22em]">
-            {flipbook?.studio_name || "RD Flip"}
+            {flipbook?.studio_name || "Nexpic"}
           </p>
           {flipbook ? <ViewerSocialLinks flipbook={flipbook} /> : null}
         </div>
@@ -164,7 +164,7 @@ function NotFoundView({ error, details }) {
     <main className="grid min-h-dvh place-items-center bg-[#07070a] px-6 text-center text-white">
       <div>
         <p className="text-[11px] font-medium tracking-[0.22em] text-amber-200/80 uppercase">
-          RD Flip
+          Nexpic
         </p>
         <h1 className="mt-3 font-heading text-2xl tracking-tight">
           Flipbook not found

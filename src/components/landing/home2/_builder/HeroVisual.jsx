@@ -17,7 +17,7 @@ export default function HeroVisual({ isDark = true }) {
       <div className="animate-[float_6s_ease-in-out_infinite] will-change-transform">
         <Image
           src="/v2/home/right-home-trans.png"
-          alt="RD Flip album preview on desktop and mobile with QR sharing"
+          alt="Nexpic album preview on desktop and mobile with QR sharing"
           width={1536}
           height={1024}
           priority

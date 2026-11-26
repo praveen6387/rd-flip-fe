@@ -27,8 +27,8 @@ const cormorant = Cormorant_Garamond({
 });
 
 export const metadata = {
-  title: "RD Flip",
-  description: "RD Flip frontend",
+  title: "Nexpic",
+  description: "Nexpic",
   icons: {
     icon: [{ url: "/favicon.svg", type: "image/svg+xml" }],
     apple: [{ url: "/favicon.svg", type: "image/svg+xml" }],

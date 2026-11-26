@@ -3,7 +3,7 @@ import { AdminGuard } from "@/lib/dashboard";
 import { listAdminOrders } from "@/lib/api/server/orders";
 
 export const metadata = {
-  title: "Orders | RD Flip",
+  title: "Orders | Nexpic",
 };
 
 export default async function OrdersPage() {

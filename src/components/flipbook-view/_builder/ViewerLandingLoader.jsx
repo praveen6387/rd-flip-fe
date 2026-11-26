@@ -2,7 +2,7 @@
 
 export default function ViewerLandingLoader({
   progress = 0,
-  studioName = "RD Flip",
+  studioName = "Nexpic",
   title = "Flipbook",
 }) {
   const percent = Math.round(Math.min(1, Math.max(0, progress)) * 100);

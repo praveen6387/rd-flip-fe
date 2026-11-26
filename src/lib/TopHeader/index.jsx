@@ -48,22 +48,24 @@ export default function TopHeader() {
           : "border-b border-transparent bg-transparent"
       )}
     >
-      <div className="mx-auto flex h-20 w-full max-w-7xl items-center justify-between gap-6 px-4">
+      <div className="mx-auto flex h-14 w-full max-w-7xl items-center justify-between gap-2 px-3 md:h-20 md:gap-6 md:px-4">
         <Logo pathname={pathname} light={isDark} />
         <NavLinks pathname={pathname} active={active} light={isDark} />
-        <div className="flex items-center gap-2 sm:gap-3">
-          <LandingThemeToggle light={isDark} />
-          <GoogleTranslate appearance={isDark ? "dark" : "light"} />
+        <div className="flex shrink-0 items-center gap-1.5 md:gap-2">
+          <div className="hidden items-center gap-2 md:flex">
+            <LandingThemeToggle light={isDark} />
+            <GoogleTranslate appearance={isDark ? "dark" : "light"} />
+          </div>
           <AuthButtons light={isDark} />
+          <MobileNav
+            pathname={pathname}
+            active={active}
+            solid={solid}
+            light={isDark}
+            darkSolid={solid && isDark}
+          />
         </div>
       </div>
-      <MobileNav
-        pathname={pathname}
-        active={active}
-        solid={solid}
-        light={isDark}
-        darkSolid={solid && isDark}
-      />
     </header>
   );
 }

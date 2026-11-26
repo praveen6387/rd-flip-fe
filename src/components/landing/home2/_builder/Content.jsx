@@ -23,13 +23,7 @@ export default function Content({ isDark = true }) {
     <div className="flex w-full max-w-none flex-col lg:pr-2">
       <div className="lg:pt-2">
         <m.div
-          className={cn(
-            "inline-flex max-w-full items-stretch overflow-hidden rounded-full border backdrop-blur-md",
-            isDark
-              ? "border-white/15 bg-white/5"
-              : "border-white/50 bg-white/20"
-          )}
-          style={{ borderRadius: 9999 }}
+          className="flex max-w-full flex-wrap items-center gap-2"
           variants={fadeUp}
           initial="hidden"
           animate="show"
@@ -37,8 +31,10 @@ export default function Content({ isDark = true }) {
         >
           <span
             className={cn(
-              "inline-flex shrink-0 items-center gap-1.5 rounded-l-full px-3 py-1.5 sm:px-3.5 sm:py-2",
-              isDark ? "bg-violet-300/12" : "bg-[#d8c4eb]/28"
+              "inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 backdrop-blur-md sm:px-3.5 sm:py-2",
+              isDark
+                ? "border-white/15 bg-white/8"
+                : "border-white/50 bg-white/35"
             )}
           >
             <Sparkles
@@ -59,8 +55,10 @@ export default function Content({ isDark = true }) {
           </span>
           <span
             className={cn(
-              "inline-flex items-center gap-1.5 rounded-r-full bg-transparent px-3 py-1.5 text-[11px] font-medium sm:px-3.5 sm:py-2 sm:text-xs",
-              isDark ? "text-violet-100/90" : "text-[#5a3d72]"
+              "inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[11px] font-medium backdrop-blur-md sm:px-3.5 sm:py-2 sm:text-xs",
+              isDark
+                ? "border-white/15 bg-white/5 text-violet-100/90"
+                : "border-white/50 bg-white/25 text-[#5a3d72]"
             )}
           >
             Loved by 500+ Studios

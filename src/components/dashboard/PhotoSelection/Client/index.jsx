@@ -427,7 +427,7 @@ export default function ClientSelection({ token }) {
     <NexpicCanvas className="min-h-screen pb-28 text-stone-900">
       <header className="border-b border-stone-200 bg-gradient-to-b from-stone-100/80 to-transparent">
         <div className="flex items-center justify-between border-b border-stone-200/70 bg-white/70 px-4 py-2.5 text-xs sm:px-8">
-          <span className="font-sans text-sm font-bold tracking-wide">RD Flip · Client selection</span>
+          <span className="font-sans text-sm font-bold tracking-wide">Nexpic · Client selection</span>
           <div className="flex items-center gap-2">
             <GoogleTranslate />
             <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 font-semibold text-emerald-800"><span className="size-2 animate-ping rounded-full bg-emerald-400" /><Users className="size-3.5" />Live family sync</span>

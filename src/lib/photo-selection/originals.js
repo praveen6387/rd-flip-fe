@@ -148,11 +148,11 @@ function crc32(bytes) {
   return (crc ^ 0xffffffff) >>> 0;
 }
 function header(size) { const bytes = new Uint8Array(size); return { bytes, view: new DataView(bytes.buffer) }; }
-export async function originalsZip(files, onProgress) {
+export async function originalsZip(files, onProgress, prefix = "Selected/") {
   const chunks = [], central = [];
   let offset = 0, centralSize = 0;
   for (const [index, file] of files.entries()) {
-    const name = new TextEncoder().encode(`Selected/${file.zipPath || `Images/${file.name}`}`);
+    const name = new TextEncoder().encode(`${prefix}${file.zipPath || `Images/${file.name}`}`);
     const bytes = new Uint8Array(await file.arrayBuffer());
     if (bytes.length > 0xffffffff || offset + bytes.length > 0xffffffff) throw new Error("Export is too large for a ZIP. Use Extract selected originals instead.");
     const crc = crc32(bytes);
@@ -184,6 +184,181 @@ export async function originalsZip(files, onProgress) {
   end.view.setUint32(12, centralSize, true); end.view.setUint32(16, offset, true);
   return new Blob([...chunks, ...central, end.bytes], { type: "application/zip" });
 }
+async function storedPhotoBlob(photo) {
+  if (!photo.imageUrl) throw new Error(`“${photo.name}” has no saved photo to download.`);
+  const response = await fetch(photo.imageUrl);
+  if (!response.ok) throw new Error(`Could not download “${photo.name}”.`);
+  return response.blob();
+}
+
+export async function downloadStoredSelection(album, onProgress, loadPhoto) {
+  if (album.status !== "selected") throw new Error("The client must submit their selection before downloading.");
+  const selected = (album.photos || []).filter((photo) => photo.selected);
+  if (!selected.length) throw new Error("No photos have been selected.");
+  const files = [];
+  onProgress?.({ current: 0, total: selected.length });
+  for (const photo of selected) {
+    const blob = loadPhoto ? await loadPhoto(photo) : await storedPhotoBlob(photo);
+    const file = new File([blob], photo.name || "photo");
+    file.zipPath = exportRelativePath(photo);
+    files.push(file);
+    onProgress?.({ current: files.length, total: selected.length });
+  }
+  const url = URL.createObjectURL(await originalsZip(files));
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `${String(album.folderName || "selection").replace(/[^a-z0-9_-]/gi, "_")}-selected.zip`;
+  link.click();
+  setTimeout(() => URL.revokeObjectURL(url), 60000);
+}
+
+const FOLDER_DB = "rd-flip-selection-folders";
+const FOLDER_STORE = "folders";
+
+function folderDatabase() {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open(FOLDER_DB, 1);
+    request.onupgradeneeded = () => request.result.createObjectStore(FOLDER_STORE);
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+}
+
+function folderKey(albumId, handle) {
+  return `${albumId}:${handle?.name || ""}`;
+}
+
+export async function rememberSelectionFolder(albumId, handle) {
+  if (!albumId || !handle) return;
+  const database = await folderDatabase();
+  await new Promise((resolve, reject) => {
+    const tx = database.transaction(FOLDER_STORE, "readwrite");
+    tx.objectStore(FOLDER_STORE).put(handle, folderKey(albumId, handle));
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+async function rememberedFolders(albumId) {
+  const database = await folderDatabase();
+  const prefix = `${albumId}:`;
+  const keys = await new Promise((resolve, reject) => {
+    const tx = database.transaction(FOLDER_STORE, "readonly");
+    const request = tx.objectStore(FOLDER_STORE).getAllKeys();
+    request.onsuccess = () => resolve(request.result || []);
+    request.onerror = () => reject(request.error);
+  });
+  const handles = [];
+  for (const key of keys) {
+    if (!String(key).startsWith(prefix)) continue;
+    const handle = await new Promise((resolve, reject) => {
+      const tx = database.transaction(FOLDER_STORE, "readonly");
+      const request = tx.objectStore(FOLDER_STORE).get(key);
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+    if (handle) handles.push(handle);
+  }
+  return handles;
+}
+
+async function grantFolderRead(handle) {
+  const mode = { mode: "read" };
+  if ((await handle.queryPermission(mode)) === "granted") return handle;
+  if ((await handle.requestPermission(mode)) === "granted") return handle;
+  throw new Error("Allow this site to read the original photo folder.");
+}
+
+function savedFolderRoot(handles) {
+  return {
+    name: "",
+    async getDirectoryHandle(name) {
+      for (const handle of handles) {
+        if (handle.name === name) return handle;
+        try { return await handle.getDirectoryHandle(name); } catch (error) {
+          if (error.name !== "NotFoundError" && error.name !== "TypeMismatchError") throw error;
+        }
+      }
+      throw Object.assign(new Error("Missing"), { name: "NotFoundError" });
+    },
+    async getFileHandle(name) {
+      for (const handle of handles) {
+        try { return await handle.getFileHandle(name); } catch (error) {
+          if (error.name !== "NotFoundError" && error.name !== "TypeMismatchError") throw error;
+        }
+      }
+      throw Object.assign(new Error("Missing"), { name: "NotFoundError" });
+    },
+    async *entries() {
+      for (const handle of handles) yield [handle.name, handle];
+    },
+  };
+}
+
+async function chooseOriginalFolder(albumId) {
+  if (!window.showDirectoryPicker) throw new Error("Use Chrome to read the original photos from this computer.");
+  const handle = await sourceDirectory(window.showDirectoryPicker({ mode: "read", id: `rd-flip-originals-${albumId}` }));
+  await rememberSelectionFolder(albumId, handle);
+  await grantFolderRead(handle);
+  return handle;
+}
+
+export async function collectDirectoryFiles(directory) {
+  const files = [];
+  async function walk(dir, prefix) {
+    for await (const [name, handle] of dir.entries()) {
+      const relative = `${prefix}/${name}`;
+      if (handle.kind === "directory") await walk(handle, relative);
+      else if (/\.(jpe?g|png|webp)$/i.test(name) || String(handle.type || "").startsWith("image/")) {
+        const file = await handle.getFile();
+        file.selectionRelativePath = relative;
+        files.push(file);
+      }
+    }
+  }
+  await walk(directory, directory.name);
+  return files;
+}
+
+async function zipOriginalFiles(album, source, onProgress) {
+  const originals = await selectedOriginals(album, source);
+  const selected = (album.photos || []).filter((photo) => photo.selected);
+  const files = [];
+  onProgress?.({ current: 0, total: selected.length });
+  for (const photo of selected) {
+    const found = originals.get(photo.originalRelativePath || photo.name);
+    const file = await found.handle.getFile();
+    file.zipPath = found.outputPath;
+    files.push(file);
+    onProgress?.({ current: files.length, total: selected.length });
+  }
+  const url = URL.createObjectURL(await originalsZip(files, null, ""));
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `${String(album.folderName || "selection").replace(/[^a-z0-9_-]/gi, "_")}-selected.zip`;
+  link.click();
+  setTimeout(() => URL.revokeObjectURL(url), 60000);
+}
+
+export async function downloadLocalOriginals(album, onProgress) {
+  if (album.status !== "selected") throw new Error("The client must submit their selection before downloading.");
+  if (!(album.photos || []).some((photo) => photo.selected)) throw new Error("No photos have been selected.");
+  const saved = [];
+  for (const handle of await rememberedFolders(album.id)) {
+    try { saved.push(await grantFolderRead(handle)); } catch { /* Ask for the folder again when a saved handle cannot be read. */ }
+  }
+  if (saved.length) {
+    try {
+      await zipOriginalFiles(album, savedFolderRoot(saved), onProgress);
+      return;
+    } catch (error) {
+      if (!window.showDirectoryPicker) throw error;
+    }
+  }
+  const picked = await chooseOriginalFolder(album.id);
+  await zipOriginalFiles(album, savedFolderRoot([...saved, picked]), onProgress);
+}
+
 export async function downloadOriginals(album, directoryPromise, onProgress) {
   if (!directoryPromise && !window.showDirectoryPicker) throw new Error("This browser cannot choose a folder for the ZIP.");
   if (album.status !== "selected") throw new Error("The client must submit their selection before downloading originals.");

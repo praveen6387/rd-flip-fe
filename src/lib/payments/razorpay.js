@@ -21,7 +21,7 @@ export function openRazorpayCheckout({
     key: razorpay.key_id,
     amount: razorpay.amount,
     currency: razorpay.currency || "INR",
-    name: "RD Flip",
+    name: "Nexpic",
     description: order?.plan_name
       ? `${order.plan_name} credits`
       : "Plan purchase",
