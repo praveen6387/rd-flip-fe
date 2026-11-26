@@ -12,25 +12,7 @@ async function request(path, options = {}, publicRequest = false) {
 }
 const root = "/api/photo-selection/";
 const json = (body) => ({ method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
-export async function listAlbums() { return (await request(root)).albums; }
 export async function getAlbum(id) { return (await request(`${root}${id}/`)).album; }
-export async function downloadSelectionArchive(albumId) {
-  const response = await authenticatedFetch(`${root}${albumId}/download/`);
-  if (!response.ok) {
-    const result = await response.json().catch(() => null);
-    throw new Error(result?.message || "Could not download the selected photos.");
-  }
-  const blob = await response.blob();
-  const header = response.headers.get("Content-Disposition") || "";
-  const match = /filename="([^"]+)"/.exec(header);
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = match?.[1] || "selection-selected.zip";
-  link.click();
-  setTimeout(() => URL.revokeObjectURL(url), 60000);
-}
-export async function listPhotos(id) { return (await getAlbum(id)).photos; }
 export async function publishAlbum(id) { return (await request(`${root}${id}/`, json({ action: "publish" }))).album; }
 export async function createDraft(values) { return (await request(root, json({ ...values, photos: [] }))).album; }
 export async function saveDraft(id, values) { return (await request(`${root}${id}/`, json({ action: "save", ...values }))).album; }
@@ -134,9 +116,6 @@ function withSelectionAccess(options, access = {}) {
 }
 export async function getPublicAlbum(token, access = {}) {
   return (await request(`${root}public/${token}/`, withSelectionAccess({ cache: "no-store" }, access), true)).album;
-}
-export async function submitSelection(token, selectedIds, access = {}) {
-  return (await request(`${root}public/${token}/`, withSelectionAccess(json({ selectedIds }), access), true)).album;
 }
 export async function togglePublicPhoto(token, photoId, selected, access = {}) {
   return request(`${root}public/${token}/photos/${photoId}/`, withSelectionAccess(json({ selected }), access), true);

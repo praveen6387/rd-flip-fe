@@ -99,7 +99,7 @@ export default function PhotoSelectionView({ albumId, initialAlbum = null, initi
       setExportJob((job) => ({
         ...job,
         step: "done",
-        message: "The ZIP contains the original photos from this computer. The folders inside match the saved photo paths.",
+        message: "The ZIP contains the original photos from the parent folder you chose.",
       }));
     } catch (error) {
       setExportJob((job) => ({ ...job, step: "error", message: error.message || "Could not download the selected photos." }));
@@ -225,7 +225,7 @@ export default function PhotoSelectionView({ albumId, initialAlbum = null, initi
         </DialogTitle>
         <DialogDescription className={cn("text-sm", isDark ? "text-slate-300" : "text-slate-600")}>
           {exportJob?.step === "working"
-            ? "Reading the original photos from this computer and packing them into a ZIP."
+            ? "Choose the parent folder. The ZIP is built from the original photos inside it."
             : exportJob?.message}
         </DialogDescription>
         {exportJob?.step === "working" ? (

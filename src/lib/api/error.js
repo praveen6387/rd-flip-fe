@@ -22,12 +22,3 @@ export function formatFailResult(result, fallback = "Request failed") {
 
   return unique.join(" — ") || fallback;
 }
-
-export function parseS3Error(text) {
-  if (!text) return "";
-  const code = text.match(/<Code>([^<]+)<\/Code>/i)?.[1];
-  const message = text.match(/<Message>([^<]+)<\/Message>/i)?.[1];
-  if (code && message) return `${code}: ${message}`;
-  if (message) return message;
-  return text.slice(0, 180);
-}

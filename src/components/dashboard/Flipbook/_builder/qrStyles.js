@@ -102,10 +102,6 @@ export const QR_COLORS = [
 export const DEFAULT_QR_DESIGN_ID = QR_DESIGNS[0].id;
 export const DEFAULT_QR_COLOR_ID = QR_COLORS[0].id;
 
-export function getQrDesign(id) {
-  return QR_DESIGNS.find((item) => item.id === id) || QR_DESIGNS[0];
-}
-
 export function getQrColor(id) {
   return QR_COLORS.find((item) => item.id === id) || QR_COLORS[0];
 }

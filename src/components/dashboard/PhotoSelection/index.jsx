@@ -149,7 +149,8 @@ function GalleryCard({ album, onDeleted }) {
   const rulesConfigured = Boolean(album.rules?.rulesConfigured);
   const totalPhotos = album.photoCount || 0;
   const canShare = album.status !== "draft";
-  const mode = album.rules?.selectionMode;
+  const rules = album.rules || {};
+  const mode = rules.selectionMode;
   const targetCount = !rulesConfigured ? totalPhotos : mode === "FIXED" ? Number(album.rules?.requiredPhotos || 0) : mode === "MIN_EXTRA" ? Number(album.rules?.includedPhotos || 0) : totalPhotos;
   const percentage = targetCount > 0 ? Math.round(((album.selectedCount || 0) / targetCount) * 100) : 0;
   const galleryUrl = typeof window === "undefined" ? "" : `${window.location.origin}/photo-selection/${album.shareToken}`;
@@ -261,7 +262,20 @@ function GalleryCard({ album, onDeleted }) {
             <div className="h-1.5 overflow-hidden rounded-full bg-[#eadccf]"><div className={`h-full rounded-full ${stage === "Locked" ? "bg-emerald-500" : "bg-gradient-to-r from-[#8f6834] to-[#c5a059]"}`} style={{ width: `${Math.min(100, percentage)}%` }} /></div>
           </div>
 
-        {canShare ? (
+        {locked ? (
+          <div className="mb-2 grid grid-cols-3 gap-1.5">
+            {[
+              ["Confirmed", rules.confirmedByName || "Client"],
+              ["Sheets", String(rules.estimatedSheets || 0)],
+              ["Extra", Number(rules.totalExtraCharge) > 0 ? `₹${Number(rules.totalExtraCharge).toLocaleString("en-IN")}` : "None"],
+            ].map(([label, value]) => (
+              <div key={label} className="min-w-0 rounded-lg bg-[#fbf6f1] px-2 py-1.5">
+                <p className="text-[9px] font-semibold tracking-[0.12em] text-[#b08968] uppercase">{label}</p>
+                <p className="truncate text-xs font-bold text-stone-800" title={value}>{value}</p>
+              </div>
+            ))}
+          </div>
+        ) : canShare ? (
           <div className="mb-2 grid grid-cols-[1fr_1fr_auto] gap-1.5">
             <button type="button" onClick={openWhatsApp} className="inline-flex h-8 items-center justify-center gap-1.5 rounded-lg bg-emerald-600 px-2 text-[11px] font-bold text-white shadow-sm hover:bg-emerald-500"><Send className="size-3.5" />WhatsApp</button>
             <a href={`mailto:${album.clientEmail || ""}?subject=${encodeURIComponent(`Photo selection gallery - ${album.folderName}`)}&body=${encodeURIComponent(`${galleryUrl}\nCode: ${album.accessCode}`)}`} className="inline-flex h-8 items-center justify-center gap-1.5 rounded-lg bg-sky-600 px-2 text-[11px] font-bold text-white shadow-sm hover:bg-sky-500"><Mail className="size-3.5" />Email</a>
